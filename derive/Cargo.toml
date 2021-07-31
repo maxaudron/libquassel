@@ -1,8 +1,10 @@
+cargo-features = ["edition2021"]
+
 [package]
 name = "libquassel-derive"
 version = "0.1.0"
 authors = ["Max Audron <audron@cocaine.farm>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 proc-macro = true
