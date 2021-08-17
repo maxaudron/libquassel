@@ -61,7 +61,6 @@ pub trait Syncable {
     }
 }
 
-// TODO handle client vs server with feature flag
 /// A Stateful Syncable Object
 #[allow(unused_variables)]
 pub trait StatefulSyncable: Syncable {

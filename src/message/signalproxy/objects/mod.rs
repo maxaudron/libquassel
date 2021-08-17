@@ -29,7 +29,7 @@ pub use networkinfo::*;
 use libquassel_derive::From;
 use log::debug;
 
-use super::Network;
+use super::{Network, NetworkList, NetworkMap};
 use crate::primitive::VariantList;
 
 /// Central Enum containing and identifying all Quassel Protocol Types:
@@ -72,7 +72,7 @@ impl Types {
     pub fn to_network(&self) -> VariantList {
         debug!("converting to network object: {:#?}", self);
         match self {
-            Types::AliasManager(val) => val.to_network(),
+            Types::AliasManager(val) => val.to_network_list(),
             Types::BufferSyncer(val) => val.to_network(),
             Types::BufferViewConfig(val) => val.to_network(),
             Types::BufferViewManager(val) => val.to_network(),
@@ -94,7 +94,7 @@ impl Types {
             class_name, input
         );
         match class_name {
-            "AliasManager" => Types::AliasManager(AliasManager::from_network(input)),
+            "AliasManager" => Types::AliasManager(AliasManager::from_network_list(input)),
             "BufferSyncer" => Types::BufferSyncer(BufferSyncer::from_network(input)),
             "BufferViewConfig" => Types::BufferViewConfig(BufferViewConfig::from_network(input)),
             "BufferViewManager" => Types::BufferViewManager(BufferViewManager::from_network(input)),

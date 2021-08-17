@@ -1,12 +1,15 @@
-use libquassel_derive::Network;
+use libquassel_derive::{Network, NetworkList, NetworkMap};
 
 use crate::message::{StatefulSyncable, SyncProxy, Syncable};
+
+use crate::message::signalproxy::translation::Network;
+use crate::primitive::{VariantList, VariantMap};
 
 /// AliasManager
 /// keeps a list of all registered aliases
 /// syncable
-#[derive(Clone, Debug, std::cmp::PartialEq, Network)]
-#[network(repr = "list")]
+#[derive(Clone, Debug, std::cmp::PartialEq, NetworkList, NetworkMap)]
+#[network]
 pub struct AliasManager {
     #[network(rename = "Aliases", variant = "VariantMap", network)]
     pub aliases: Vec<Alias>,
