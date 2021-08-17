@@ -26,11 +26,11 @@ pub struct NetworkInfo {
     pub sasl_password: String,
 
     // ByteArray
-    #[network(rename = "codecForServer", override_type = "ByteArray")]
+    #[network(rename = "codecForServer", type = "ByteArray")]
     pub codec_for_server: String,
-    #[network(rename = "codecForEncoding", override_type = "ByteArray")]
+    #[network(rename = "codecForEncoding", type = "ByteArray")]
     pub codec_for_encoding: String,
-    #[network(rename = "codecForDecoding", override_type = "ByteArray")]
+    #[network(rename = "codecForDecoding", type = "ByteArray")]
     pub codec_for_decoding: String,
 
     // TODO add these type aliases or usertypes in variants

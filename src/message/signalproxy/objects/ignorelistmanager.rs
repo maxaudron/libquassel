@@ -35,15 +35,15 @@ pub struct IgnoreListManager {
 #[derive(Debug, Clone, PartialEq, Network)]
 #[network(repr = "maplist")]
 pub struct IgnoreListItem {
-    #[network(rename = "ignoreType", network, override_type = "u8")]
+    #[network(rename = "ignoreType", network, type = "u8")]
     ignore_type: IgnoreType,
     #[network(rename = "ignoreRule")]
     ignore_rule: String,
     #[network(rename = "isRegEx")]
     is_reg_ex: bool,
-    #[network(rename = "strictness", network, override_type = "u8")]
+    #[network(rename = "strictness", network, type = "u8")]
     strictness: StrictnessType,
-    #[network(rename = "scope", network, override_type = "u8")]
+    #[network(rename = "scope", network, type = "u8")]
     scope: ScopeType,
     #[network(rename = "scopeRule")]
     scope_rule: String,

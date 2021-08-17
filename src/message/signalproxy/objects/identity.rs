@@ -9,7 +9,7 @@ pub struct Identity {
     identity_name: String,
     #[network(rename = "realName")]
     real_name: String,
-    #[network(rename = "nicks", override_type = "StringList")]
+    #[network(rename = "nicks", type = "StringList")]
     nicks: Vec<String>,
     #[network(rename = "awayNick")]
     away_nick: String,
