@@ -71,4 +71,4 @@ tokio-test = { version = "0.4" }
 pretty_assertions = "0.6"
 
 [workspace]
-members = ["derive", "examples/quasselproxy"]
+members = ["derive", "examples/quasselproxy", "examples/statetracker"]
