@@ -1,14 +1,18 @@
 #![feature(type_name_of_val)]
 
-use std::sync::Arc;
+use std::{ops::Deref, sync::Arc};
 
 use aliasmanager::AliasManagerWidget;
 use druid::{
+    lens,
     widget::{Align, Either, Flex, Label, List, Split},
     AppDelegate, Command,
 };
 use druid::{AppLauncher, Data, Env, Lens, LocalizedString, Widget, WidgetExt, WindowDesc};
+
 use libquassel::message::objects::AliasManager;
+use libquassel::message::NetworkMap;
+
 use tracing::debug;
 
 use crate::server::{Message, ServerWidget};
@@ -31,7 +35,8 @@ struct StateTracker {
     messages: Arc<Vec<server::Message>>,
     alias_manager: Arc<AliasManager>,
     connected: bool,
-    test: i32,
+    #[data(ignore)]
+    syncer: Syncer,
 }
 
 impl StateTracker {
@@ -43,7 +48,7 @@ impl StateTracker {
                 aliases: Vec::new(),
             }),
             connected: false,
-            test: 0,
+            syncer: Syncer {},
         }
     }
 
@@ -96,16 +101,40 @@ impl AppDelegate<StateTracker> for StateTrackerDelegate {
             debug!("got ADD_MESSAGE command");
 
             let list = Arc::make_mut(&mut data.messages);
-            list.push(msg.clone());
+            list.push(msg.take().unwrap());
         } else if let Some(alias) = cmd.get(command::ALIASMANAGER_ADD_ALIAS) {
             let mut alias_manager = Arc::make_mut(&mut data.alias_manager).clone();
-            alias_manager.add_alias(alias.to_owned());
+            alias_manager.add_alias(alias.take().unwrap());
             data.alias_manager = Arc::new(alias_manager);
         } else if let Some(alias_manager) = cmd.get(command::ALIASMANAGER_INIT) {
-            data.alias_manager = Arc::new(alias_manager.to_owned());
+            data.alias_manager = Arc::new(alias_manager.take().unwrap());
+        } else if let Some(msg) = cmd.get(command::ALIASMANAGER_UPDATE) {
+            let syncer = data.syncer.clone();
+            let mut alias_manager = Arc::make_mut(&mut data.alias_manager).clone();
+            alias_manager.handle_syncmessage(syncer, msg.take().unwrap());
+            data.alias_manager = Arc::new(alias_manager);
         }
 
         druid::Handled::No
+    }
+}
+
+// TODO make this somehow deref or smth
+#[derive(Clone)]
+pub struct Syncer;
+impl libquassel::message::SyncProxy for Syncer {
+    fn sync(
+        &self,
+        class_name: &str,
+        object_name: Option<&str>,
+        function: &str,
+        params: libquassel::primitive::VariantList,
+    ) {
+        todo!()
+    }
+
+    fn rpc(&self, function: &str, params: libquassel::primitive::VariantList) {
+        todo!()
     }
 }
 
@@ -119,8 +148,6 @@ fn main() {
 
     // create the initial app state
     let initial_state = StateTracker::new();
-
-    // let state = Arc::new(RwLock::new(initial_state));
 
     // start the application
     AppLauncher::with_window(main_window)

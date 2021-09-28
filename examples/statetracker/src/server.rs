@@ -1,16 +1,19 @@
 use anyhow::{bail, Error};
 
+use std::convert::TryFrom;
+
 use druid::{
     widget::{
         Align, Button, Checkbox, Container, Controller, ControllerHost, Flex, Label, TextBox,
     },
-    Command, Data, ExtEventSink, Lens, Target, Widget, WidgetExt,
+    Command, Data, ExtEventSink, Lens, SingleUse, Target, Widget, WidgetExt,
 };
 
 use libquassel::{
     deserialize::Deserialize,
     frame::QuasselCodec,
     message::{self, objects, ConnAck, HandshakeMessage, Init},
+    primitive::VariantMap,
 };
 
 use futures::{
@@ -130,7 +133,7 @@ impl Server {
                     .unwrap(),
             };
 
-            ctx.submit_command(command::ADD_MESSAGE, msg, Target::Global)
+            ctx.submit_command(command::ADD_MESSAGE, SingleUse::new(msg), Target::Global)
                 .unwrap();
         }
     }
@@ -170,16 +173,30 @@ impl Server {
 
         match message::Message::parse(buf) {
             Ok((_size, res)) => {
+                let re = res.clone();
+
                 #[allow(unused_variables)]
-                match &res {
-                    message::Message::SyncMessage(msg) => (),
+                match res {
+                    message::Message::SyncMessage(msg) => match msg.class_name.as_str() {
+                        "AliasManager" => match msg.slot_name.as_str() {
+                            "update" => ctx
+                                .submit_command(
+                                    command::ALIASMANAGER_UPDATE,
+                                    SingleUse::new(msg),
+                                    Target::Global,
+                                )
+                                .unwrap(),
+                            _ => (),
+                        },
+                        _ => (),
+                    },
                     message::Message::RpcCall(msg) => (),
                     message::Message::InitRequest(msg) => (),
-                    message::Message::InitData(msg) => match &msg.init_data {
+                    message::Message::InitData(msg) => match msg.init_data {
                         objects::Types::AliasManager(alias_manager) => ctx
                             .submit_command(
                                 command::ALIASMANAGER_INIT,
-                                alias_manager.clone(),
+                                SingleUse::new(alias_manager),
                                 Target::Global,
                             )
                             .unwrap(),
@@ -189,7 +206,7 @@ impl Server {
                     message::Message::HeartBeatReply(msg) => (),
                 }
 
-                return Ok(Message::SignalProxy(res));
+                return Ok(Message::SignalProxy(re));
             }
             Err(e) => {
                 bail!("failed to parse message {}", e);

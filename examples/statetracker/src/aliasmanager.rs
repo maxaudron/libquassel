@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use druid::widget::Label;
+use druid::widget::{Align, Label};
 use druid::{lens, Lens, Point, WidgetPod};
 use druid::{widget::Flex, Widget};
 
@@ -48,17 +48,23 @@ impl Widget<Arc<AliasManager>> for AliasManagerWidget {
     ) {
         let aliases = lens!(AliasManager, aliases);
 
-        let mut widget: Flex<Arc<AliasManager>> = Flex::column();
+        let mut names: Flex<Arc<AliasManager>> = Flex::column();
+        let mut sign: Flex<Arc<AliasManager>> = Flex::column();
+        let mut expansions: Flex<Arc<AliasManager>> = Flex::column();
 
+        // TODO optimise this whole thing
         aliases.with(data, |aliases| {
             for alias in aliases {
-                widget.add_child(
-                    Flex::row()
-                        .with_child(Label::new(alias.name.clone()))
-                        .with_child(Label::new(alias.expansion.clone())),
-                )
+                names.add_child(Align::right(Label::new(alias.name.clone())));
+                sign.add_child(Label::new("=>"));
+                expansions.add_child(Align::left(Label::new(alias.expansion.clone())));
             }
         });
+
+        let widget: Flex<Arc<AliasManager>> = Flex::row()
+            .with_flex_child(names, 1.0)
+            .with_flex_child(sign, 1.0)
+            .with_flex_child(expansions, 1.0);
 
         self.inner = WidgetPod::new(widget).boxed();
 

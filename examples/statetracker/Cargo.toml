@@ -10,8 +10,6 @@ libquassel = { path = "../../", features = ["framing", "all-quassel-features"] }
 druid = { git = "https://github.com/linebender/druid", features = ["im"] }
 druid-widget-nursery = { path = "/home/audron/repo/github.com/linebender/druid-widget-nursery" }
 
-# iced = { version = "0.3", features = ["tokio"]}
-
 anyhow = "*"
 
 tracing = "0.1"
