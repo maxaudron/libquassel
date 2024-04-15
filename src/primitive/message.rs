@@ -3,7 +3,7 @@ use std::{collections::HashMap, vec::Vec};
 use crate::error::ProtocolError;
 use crate::{deserialize::*, serialize::*};
 
-use crate::primitive::BufferInfo;
+use crate::primitive::{BufferInfo, MsgId};
 
 use super::{Variant, VariantList};
 
@@ -13,13 +13,7 @@ use super::{Variant, VariantList};
 #[derive(Clone, Debug, std::cmp::PartialEq)]
 pub struct Message {
     /// The unique, sequential id for the message
-    /// i32 by default i64 if long-message-id features is enabled
-    #[cfg(feature = "long-message-id")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "long-message-id")))]
-    pub msg_id: i64,
-    #[cfg(not(feature = "long-message-id"))]
-    #[cfg_attr(docsrs, doc(cfg(not(feature = "long-message-id"))))]
-    pub msg_id: i32,
+    pub msg_id: MsgId,
     /// The timestamp of the message in UNIX time.
     /// If long-time is disabled this is an i32 representing the seconds since EPOCH.
     /// If long-time is enabled this is an i64 representing the miliseconds since EPOCH.
@@ -57,10 +51,7 @@ impl Serialize for Message {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
 
-        #[cfg(feature = "long-message-id")]
-        values.append(&mut i64::serialize(&self.msg_id)?);
-        #[cfg(not(feature = "long-message-id"))]
-        values.append(&mut i32::serialize(&self.msg_id)?);
+        values.append(&mut MsgId::serialize(&self.msg_id)?);
 
         #[cfg(feature = "long-time")]
         values.append(&mut i64::serialize(&self.timestamp)?);
@@ -90,10 +81,7 @@ impl Serialize for Message {
 impl Deserialize for Message {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let mut pos = 0;
-        #[cfg(feature = "long-message-id")]
-        let (parsed, msg_id) = i64::parse(&b[pos..])?;
-        #[cfg(not(feature = "long-message-id"))]
-        let (parsed, msg_id) = i32::parse(&b[pos..])?;
+        let (parsed, msg_id) = MsgId::parse(&b[pos..])?;
         pos += parsed;
 
         // TODO LONGMESSAGES feature
@@ -268,7 +256,7 @@ mod tests {
     #[test]
     fn message_serialize() {
         let message = Message {
-            msg_id: 1,
+            msg_id: MsgId(1),
             timestamp: 1609846597,
             msg_type: MessageType::PLAIN,
             flags: 0,
@@ -301,7 +289,7 @@ mod tests {
     #[test]
     fn message_deserialize() {
         let message = Message {
-            msg_id: 1,
+            msg_id: MsgId(1),
             timestamp: 1609846597,
             msg_type: MessageType::PLAIN,
             flags: 0,
