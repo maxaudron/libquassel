@@ -8,7 +8,7 @@ use crate::primitive;
 use crate::primitive::StringList;
 use crate::{deserialize::*, serialize::*};
 
-use crate::primitive::{BufferInfo, Date, DateTime, Message, Time, VariantList, VariantMap};
+use crate::primitive::{BufferInfo, Date, DateTime, Message, MsgId, Time, VariantList, VariantMap};
 
 use libquassel_derive::From;
 
@@ -28,6 +28,7 @@ pub enum Variant {
     UserType(String, Vec<u8>),
     BufferInfo(BufferInfo),
     Message(Message),
+    MsgId(MsgId),
     Time(Time),
     Date(Date),
     DateTime(DateTime),
@@ -253,6 +254,11 @@ impl Serialize for Variant {
                 let user = Variant::UserType("Message".to_string(), bytes);
                 Variant::serialize(&user).unwrap();
             }
+            Variant::MsgId(v) => {
+                let bytes = MsgId::serialize(v)?;
+                let user = Variant::UserType("MsgId".to_string(), bytes);
+                return Variant::serialize(&user);
+            }
             Variant::DateTime(v) => {
                 res.extend(primitive::QDATETIME.to_be_bytes().iter());
                 res.extend(unknown.to_be_bytes().iter());
@@ -389,20 +395,6 @@ impl Deserialize for Variant {
                         let (vlen, value) = i32::parse(&b[(len + user_type_len)..])?;
                         return Ok((len + user_type_len + vlen, Variant::i32(value)));
                     }
-                    #[cfg(not(feature = "long-message-id"))]
-                    "MsgId" => {
-                        trace!(target: "primitive::Variant", "UserType is i32");
-
-                        let (vlen, value) = i32::parse(&b[(len + user_type_len)..])?;
-                        return Ok((len + user_type_len + vlen, Variant::i32(value)));
-                    }
-                    #[cfg(feature = "long-message-id")]
-                    "MsgId" => {
-                        trace!(target: "primitive::Variant", "UserType is i64");
-
-                        let (vlen, value) = i64::parse(&b[(len + user_type_len)..])?;
-                        return Ok((len + user_type_len + vlen, Variant::i64(value)));
-                    }
                     // As i64
                     "PeerPtr" => {
                         trace!(target: "primitive::Variant", "UserType is i64");
@@ -418,6 +410,11 @@ impl Deserialize for Variant {
                         trace!(target: "primitive::Variant", "UserType is Message");
                         let (vlen, value) = Message::parse(&b[(len + user_type_len)..])?;
                         return Ok((len + user_type_len + vlen, Variant::Message(value)));
+                    }
+                    "MsgId" => {
+                        trace!(target: "primitive::Variant", "UserType is MsgId");
+                        let (vlen, value) = MsgId::parse(&b[(len + user_type_len)..])?;
+                        return Ok((len + user_type_len + vlen, Variant::MsgId(value)));
                     }
                     _ => unimplemented!(),
                 }
@@ -760,6 +757,28 @@ mod tests {
         assert_eq!(
             (9, time),
             Variant::parse(&[0, 0, 0, 0x0f, 0, 2, 202, 28, 128]).unwrap()
+        );
+    }
+
+    #[test]
+    fn msgid_serialize() {
+        let test_msg_id = Variant::MsgId(MsgId(1));
+
+        assert_eq!(
+            test_msg_id.serialize().unwrap(),
+            [0, 0, 0, 127, 0, 0, 0, 0, 5, 77, 115, 103, 73, 100, 0, 0, 0, 0, 0, 0, 0, 1]
+        );
+    }
+
+    #[test]
+    fn msgid_deserialize() {
+        let test_bytes = vec![
+            0, 0, 0, 127, 0, 0, 0, 0, 5, 77, 115, 103, 73, 100, 0, 0, 0, 0, 0, 0, 0, 1,
+        ];
+
+        assert_eq!(
+            (test_bytes.len(), Variant::MsgId(MsgId(1))),
+            Variant::parse(&test_bytes).unwrap()
         );
     }
 }

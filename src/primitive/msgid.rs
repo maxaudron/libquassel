@@ -4,19 +4,17 @@ pub struct MsgId(
     #[cfg(feature = "long-message-id")] pub i64,
 );
 
-use failure::Error;
-
-use crate::primitive::signedint;
+use crate::error::ProtocolError;
 use crate::{deserialize::*, serialize::*};
 
 impl Serialize for MsgId {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         self.0.serialize()
     }
 }
 
 impl Deserialize for MsgId {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         #[cfg(not(feature = "long-message-id"))]
         let (size, value) = i32::parse(b)?;
         #[cfg(feature = "long-message-id")]
