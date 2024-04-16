@@ -1,5 +1,6 @@
 use std::vec::Vec;
 
+use crate::primitive::BufferId;
 use crate::{deserialize::*, error::ProtocolError, serialize::*};
 
 /// The BufferInfo struct represents a BufferInfo as received in IRC
@@ -8,7 +9,7 @@ use crate::{deserialize::*, error::ProtocolError, serialize::*};
 #[derive(Clone, Debug, std::cmp::PartialEq)]
 pub struct BufferInfo {
     /// a unique, sequential id for the buffer
-    pub id: i32,
+    pub id: BufferId,
     /// NetworkId of the network the buffer belongs to
     pub network_id: i32,
     /// The Type of the Buffer
@@ -21,7 +22,7 @@ impl Serialize for BufferInfo {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
 
-        values.append(&mut i32::serialize(&self.id)?);
+        values.append(&mut BufferId::serialize(&self.id)?);
         values.append(&mut i32::serialize(&self.network_id)?);
         values.append(&mut i16::serialize(&(self.buffer_type as i16))?);
         values.append(&mut vec![0, 0, 0, 0]);
@@ -33,7 +34,7 @@ impl Serialize for BufferInfo {
 
 impl Deserialize for BufferInfo {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
-        let (_, id) = i32::parse(&b[0..4])?;
+        let (_, id) = BufferId::parse(&b[0..4])?;
         let (_, network_id) = i32::parse(&b[4..8])?;
         let (_, buffer_type) = i16::parse(&b[8..10])?;
 
@@ -83,7 +84,7 @@ mod tests {
     #[test]
     fn bufferinfo_serialize() {
         let buffer = BufferInfo {
-            id: 1,
+            id: BufferId(1),
             network_id: 1,
             buffer_type: BufferType::Channel,
             name: "#test".to_string(),
@@ -98,7 +99,7 @@ mod tests {
     #[test]
     fn bufferinfo_deserialize() {
         let buffer = BufferInfo {
-            id: 1,
+            id: BufferId(1),
             network_id: 1,
             buffer_type: BufferType::Channel,
             name: "#test".to_string(),

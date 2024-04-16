@@ -605,7 +605,7 @@ mod tests {
     #[test]
     pub fn buffer_info_serialize() {
         let test_buffer_info = BufferInfo {
-            id: 0,
+            id: BufferId(0),
             network_id: 0,
             buffer_type: primitive::BufferType::Status,
             name: "test".to_string(),
@@ -621,7 +621,7 @@ mod tests {
     #[test]
     pub fn buffer_info_deserialize() {
         let test_buffer_info = BufferInfo {
-            id: 0,
+            id: BufferId(0),
             network_id: 0,
             buffer_type: primitive::BufferType::Status,
             name: "test".to_string(),
