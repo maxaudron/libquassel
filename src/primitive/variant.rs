@@ -8,7 +8,7 @@ use crate::primitive;
 use crate::primitive::StringList;
 use crate::{deserialize::*, serialize::*};
 
-use crate::primitive::{BufferInfo, Date, DateTime, Message, MsgId, Time, VariantList, VariantMap};
+use crate::primitive::{BufferId, BufferInfo, Date, DateTime, Message, MsgId, Time, VariantList, VariantMap};
 
 use libquassel_derive::From;
 
@@ -26,6 +26,7 @@ pub enum Variant {
     Unknown,
     #[from(ignore)]
     UserType(String, Vec<u8>),
+    BufferId(BufferId),
     BufferInfo(BufferInfo),
     Message(Message),
     MsgId(MsgId),
@@ -244,6 +245,11 @@ impl Serialize for Variant {
                 res.append(&mut name.serialize_utf8()?);
                 res.extend(bytes);
             }
+            Variant::BufferId(v) => {
+                let bytes = BufferId::serialize(v)?;
+                let user = Variant::UserType("BufferId".to_string(), bytes);
+                return Variant::serialize(&user);
+            }
             Variant::BufferInfo(v) => {
                 let bytes = BufferInfo::serialize(v)?;
                 let user = Variant::UserType("BufferInfo".to_string(), bytes);
@@ -382,6 +388,11 @@ impl Deserialize for Variant {
                 // TODO implement all these types
                 // Match Possible User Types to basic structures
                 match user_type.as_str() {
+                    "BufferId" => {
+                        trace!(target: "primitive::Variant", "UserType is BufferId");
+                        let (vlen, value) = BufferId::parse(&b[(len + user_type_len)..])?;
+                        return Ok((len + user_type_len + vlen, Variant::BufferId(value)));
+                    }
                     // As VariantMap
                     "IrcUser" | "IrcChannel" | "Identity" | "NetworkInfo" | "Network::Server" => {
                         trace!(target: "primitive::Variant", "UserType is VariantMap");
@@ -389,7 +400,7 @@ impl Deserialize for Variant {
                         return Ok((len + user_type_len + vlen, Variant::VariantMap(value)));
                     }
                     // As i32
-                    "BufferId" | "IdentityId" | "NetworkId" => {
+                    "IdentityId" | "NetworkId" => {
                         trace!(target: "primitive::Variant", "UserType is i32");
 
                         let (vlen, value) = i32::parse(&b[(len + user_type_len)..])?;
@@ -778,6 +789,26 @@ mod tests {
 
         assert_eq!(
             (test_bytes.len(), Variant::MsgId(MsgId(1))),
+            Variant::parse(&test_bytes).unwrap()
+        );
+    }
+
+    #[test]
+    fn bufferid_serialize() {
+        let test_buffer_id = Variant::BufferId(BufferId(1));
+        assert_eq!(
+            test_buffer_id.serialize().unwrap(),
+            [0, 0, 0, 127, 0, 0, 0, 0, 8, 66, 117, 102, 102, 101, 114, 73, 100, 0, 0, 0, 1]
+        );
+    }
+
+    #[test]
+    fn bufferid_deserialize() {
+        let test_bytes = vec![
+            0, 0, 0, 127, 0, 0, 0, 0, 8, 66, 117, 102, 102, 101, 114, 73, 100, 0, 0, 0, 1
+        ];
+        assert_eq!(
+            (test_bytes.len(), Variant::BufferId(BufferId(1))),
             Variant::parse(&test_bytes).unwrap()
         );
     }
