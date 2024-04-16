@@ -1,3 +1,4 @@
+mod bufferid;
 mod bufferinfo;
 mod datetime;
 mod message;
@@ -10,6 +11,7 @@ mod variant;
 mod variantlist;
 mod variantmap;
 
+pub use bufferid::*;
 pub use bufferinfo::*;
 pub use datetime::*;
 pub use message::*;
