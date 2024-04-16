@@ -251,7 +251,7 @@ where
 #[cfg(feature = "all-quassel-features")]
 mod tests {
     use super::*;
-    use crate::primitive::{BufferInfo, BufferType};
+    use crate::primitive::{BufferId, BufferInfo, BufferType};
 
     #[test]
     fn message_serialize() {
@@ -261,7 +261,7 @@ mod tests {
             msg_type: MessageType::PLAIN,
             flags: 0,
             buffer: BufferInfo {
-                id: 1,
+                id: BufferId(1),
                 network_id: 1,
                 buffer_type: BufferType::Channel,
                 name: "#test".to_string(),
@@ -294,7 +294,7 @@ mod tests {
             msg_type: MessageType::PLAIN,
             flags: 0,
             buffer: BufferInfo {
-                id: 1,
+                id: BufferId(1),
                 network_id: 1,
                 buffer_type: BufferType::Channel,
                 name: "#test".to_string(),
