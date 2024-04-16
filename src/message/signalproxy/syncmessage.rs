@@ -6,6 +6,7 @@ use crate::{deserialize::Deserialize, serialize::Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Class {
     AliasManager,
+    BacklogManager,
     BufferSyncer,
     BufferViewConfig,
     BufferViewManager,
@@ -33,6 +34,7 @@ impl From<&str> for Class {
     fn from(class: &str) -> Self {
         match class {
             "AliasManager" => Self::AliasManager,
+            "BacklogManager" => Class::BacklogManager,
             "BufferSyncer" => Self::BufferSyncer,
             "BufferViewConfig" => Self::BufferViewConfig,
             "BufferViewManager" => Self::BufferViewManager,
@@ -56,6 +58,7 @@ impl Class {
     pub fn as_str(&self) -> &str {
         match self {
             Class::AliasManager => "AliasManager",
+            Class::BacklogManager => "BacklogManager",
             Class::BufferSyncer => "BufferSyncer",
             Class::BufferViewConfig => "BufferViewConfig",
             Class::BufferViewManager => "BufferViewManager",
