@@ -51,6 +51,7 @@ pub trait SessionManager {
     {
         match msg.class_name {
             Class::AliasManager => self.alias_manager().sync(msg),
+            Class::BacklogManager => self.backlog_manager().sync(msg),
             Class::BufferSyncer => self.buffer_syncer().sync(msg),
             Class::BufferViewConfig => (),
             Class::BufferViewManager => self.buffer_view_manager().sync(msg),
