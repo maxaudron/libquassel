@@ -1,5 +1,5 @@
 use crate::{
-    message::{Syncable, Class},
+    message::{Class, Syncable},
     primitive::{DateTime, StringList},
 };
 
@@ -45,7 +45,7 @@ pub struct IrcUser {
 impl IrcUser {
     pub fn add_user_modes(&mut self, modes: String) {
         for mode in modes.chars() {
-            if ! self.user_modes.contains(mode) {
+            if !self.user_modes.contains(mode) {
                 self.user_modes.push(mode);
             }
         }
@@ -65,12 +65,10 @@ impl IrcUser {
         sync!("removeUserModes", [modes]);
     }
 
-    pub fn update_hostmask(&mut self, mask: String) {
-
-    }
+    pub fn update_hostmask(&mut self, mask: String) {}
 
     pub fn join_channel(&mut self, channel: String) {
-        if ! self.channels.contains(&channel) {
+        if !self.channels.contains(&channel) {
             self.channels.push(channel.clone())
         }
 
@@ -126,12 +124,12 @@ mod tests {
             account: s!(""),
             away: false,
             away_message: s!(""),
-            idle_time: OffsetDateTime::unix_epoch(),
-            login_time: OffsetDateTime::unix_epoch(),
+            idle_time: OffsetDateTime::UNIX_EPOCH,
+            login_time: OffsetDateTime::UNIX_EPOCH,
             server: s!(""),
             irc_operator: s!(""),
             // last_away_message: 0,
-            last_away_message_time: OffsetDateTime::unix_epoch(),
+            last_away_message_time: OffsetDateTime::UNIX_EPOCH,
             whois_service_reply: s!(""),
             suser_host: s!(""),
             encrypted: false,
@@ -152,7 +150,7 @@ mod tests {
             s!("lastAwayMessageTime") => Variant::VariantList(vec!
                 [
                     Variant::DateTime(
-                        OffsetDateTime::unix_epoch() ,
+                        OffsetDateTime::UNIX_EPOCH,
                     ),
                 ],
             ),
@@ -180,7 +178,7 @@ mod tests {
             s!("loginTime") => Variant::VariantList(vec!
                 [
                     Variant::DateTime(
-                        OffsetDateTime::unix_epoch()
+                        OffsetDateTime::UNIX_EPOCH
                     ),
                 ],
             ),
@@ -229,7 +227,7 @@ mod tests {
             s!("idleTime") => Variant::VariantList(vec!
                 [
                     Variant::DateTime(
-                        OffsetDateTime::unix_epoch()
+                        OffsetDateTime::UNIX_EPOCH
                     ),
                 ],
             ),

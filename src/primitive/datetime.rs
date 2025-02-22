@@ -46,7 +46,7 @@ impl Serialize for OffsetDateTime {
     fn serialize(&self) -> Result<Vec<u8>, failure::Error> {
         let mut values: Vec<u8> = Vec::new();
 
-        values.extend(i32::serialize(&(self.date().julian_day() as i32))?);
+        values.extend(i32::serialize(&(self.date().to_julian_day() as i32))?);
 
         let time: i32 = {
             let hour: i32 = self.time().hour() as i32;
@@ -59,7 +59,7 @@ impl Serialize for OffsetDateTime {
 
         values.extend(i32::serialize(&time)?);
         values.extend(u8::serialize(&(TimeSpec::OffsetFromUTC as u8))?);
-        values.extend(i32::serialize(&self.offset().as_seconds())?);
+        values.extend(i32::serialize(&self.offset().whole_seconds())?);
 
         Ok(values)
     }
@@ -77,13 +77,13 @@ impl Deserialize for OffsetDateTime {
 
         // Default to unix epoch when one of these is set to -1
         if julian_day == -1 || millis_of_day == -1 {
-            return Ok((pos, OffsetDateTime::unix_epoch()));
+            return Ok((pos, OffsetDateTime::UNIX_EPOCH));
         }
 
         let offset: UtcOffset;
         match zone {
             TimeSpec::LocalUnknown | TimeSpec::LocalStandard | TimeSpec::LocalDST => {
-                offset = UtcOffset::try_current_local_offset().unwrap_or_else(|_| {
+                offset = UtcOffset::current_local_offset().unwrap_or_else(|_| {
                     log::warn!("could not get local offset defaulting to utc");
                     UtcOffset::UTC
                 })
@@ -92,19 +92,18 @@ impl Deserialize for OffsetDateTime {
             TimeSpec::OffsetFromUTC => {
                 let (_, tmp_offset) = i32::parse(&b[9..13])?;
                 pos += 4;
-                offset = UtcOffset::seconds(tmp_offset)
+                offset = UtcOffset::from_whole_seconds(tmp_offset).unwrap_or(UtcOffset::UTC)
             }
         }
 
-        let date = Date::from_julian_day(julian_day as i64);
+        let date = Date::from_julian_day(julian_day)?;
 
         let hour = millis_of_day / 60 / 60000;
         let minute = (millis_of_day - (hour * 60 * 60000)) / 60000;
         let seconds = (millis_of_day - (hour * 60 * 60000) - (minute * 60000)) / 1000;
         let millis = millis_of_day - (hour * 60 * 60000) - (minute * 60000) - (seconds * 1000);
 
-        let time =
-            Time::try_from_hms_milli(hour as u8, minute as u8, seconds as u8, millis as u16)?;
+        let time = Time::from_hms_milli(hour as u8, minute as u8, seconds as u8, millis as u16)?;
         let primitivedatetime = PrimitiveDateTime::new(date, time);
         let datetime = primitivedatetime.assume_offset(offset);
 
@@ -116,7 +115,7 @@ impl Serialize for Date {
     fn serialize(&self) -> Result<Vec<std::primitive::u8>, failure::Error> {
         let mut values: Vec<u8> = Vec::new();
 
-        values.extend(i32::serialize(&(self.julian_day() as i32))?);
+        values.extend(i32::serialize(&(self.to_julian_day() as i32))?);
 
         Ok(values)
     }
@@ -125,7 +124,7 @@ impl Serialize for Date {
 impl Deserialize for Date {
     fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), failure::Error> {
         let (_, julian_day) = i32::parse(&b[0..4])?;
-        let date = Date::from_julian_day(julian_day as i64);
+        let date = Date::from_julian_day(julian_day)?;
 
         Ok((4, date))
     }
@@ -159,8 +158,7 @@ impl Deserialize for Time {
         let seconds = (millis_of_day - (hour * 60 * 60000) - (minute * 60000)) / 1000;
         let millis = millis_of_day - (hour * 60 * 60000) - (minute * 60000) - (seconds * 1000);
 
-        let time =
-            Time::try_from_hms_milli(hour as u8, minute as u8, seconds as u8, millis as u16)?;
+        let time = Time::from_hms_milli(hour as u8, minute as u8, seconds as u8, millis as u16)?;
 
         Ok((4, time))
     }
@@ -168,7 +166,13 @@ impl Deserialize for Time {
 
 #[test]
 pub fn datetime_serialize() {
-    let datetime = DateTime::parse("2020-02-19 13:00 +0200", "%Y-%m-%d %R %z").unwrap();
+    let datetime = DateTime::parse(
+        "2020-02-19 13:00 +0200",
+        time::macros::format_description!(
+            "[year]-[month]-[day] [hour]:[minute] [offset_hour sign:mandatory][offset_minute]"
+        ),
+    )
+    .unwrap();
 
     let sers = datetime.serialize().unwrap();
     let bytes = vec![0, 37, 133, 19, 2, 202, 28, 128, 3, 0, 0, 28, 32];
@@ -178,7 +182,13 @@ pub fn datetime_serialize() {
 
 #[test]
 pub fn datetime_deserialize() {
-    let datetime = DateTime::parse("2020-02-19 13:00 +0200", "%Y-%m-%d %R %z").unwrap();
+    let datetime = DateTime::parse(
+        "2020-02-19 13:00 +0200",
+        time::macros::format_description!(
+            "[year]-[month]-[day] [hour]:[minute] [offset_hour sign:mandatory][offset_minute]"
+        ),
+    )
+    .unwrap();
 
     let bytes = vec![0, 37, 133, 19, 2, 202, 28, 128, 3, 0, 0, 28, 32];
     let (_, res): (usize, DateTime) = Deserialize::parse(&bytes).unwrap();
@@ -188,7 +198,7 @@ pub fn datetime_deserialize() {
 
 #[test]
 pub fn datetime_deserialize_epoch() {
-    let datetime = DateTime::unix_epoch();
+    let datetime = DateTime::UNIX_EPOCH;
 
     let bytes = vec![0, 37, 133, 19, 0xff, 0xff, 0xff, 0xff, 3, 0, 0, 28, 32];
     let (_, res): (usize, DateTime) = Deserialize::parse(&bytes).unwrap();

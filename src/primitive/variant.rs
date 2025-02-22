@@ -434,6 +434,8 @@ impl Deserialize for Variant {
 
 #[cfg(test)]
 mod tests {
+    use time::macros::format_description;
+
     use super::*;
 
     #[test]
@@ -460,10 +462,7 @@ mod tests {
             i_n_64.serialize().unwrap(),
             [0, 0, 0, 129, 0, 255, 252, 253, 100, 160, 148, 133, 168]
         );
-        assert_eq!(
-            i_n_32.serialize().unwrap(),
-            [0, 0, 0, 2, 0, 202, 122, 245, 31]
-        );
+        assert_eq!(i_n_32.serialize().unwrap(), [0, 0, 0, 2, 0, 202, 122, 245, 31]);
         assert_eq!(i_n_16.serialize().unwrap(), [0, 0, 0, 130, 0, 224, 13]);
         assert_eq!(i_n_8.serialize().unwrap(), [0, 0, 0, 131, 0, 178]);
     }
@@ -496,8 +495,7 @@ mod tests {
         let i_n_16 = Variant::i16(-8179);
         let i_n_8 = Variant::i8(-78);
 
-        let (_, v_i_64) =
-            Variant::parse(&[0, 0, 0, 129, 0, 0, 3, 2, 155, 95, 107, 122, 88]).unwrap();
+        let (_, v_i_64) = Variant::parse(&[0, 0, 0, 129, 0, 0, 3, 2, 155, 95, 107, 122, 88]).unwrap();
         let (_, v_i_32) = Variant::parse(&[0, 0, 0, 2, 0, 53, 133, 10, 225]).unwrap();
         let (_, v_i_16) = Variant::parse(&[0, 0, 0, 130, 0, 31, 243]).unwrap();
         let (_, v_i_8) = Variant::parse(&[0, 0, 0, 131, 0, 78]).unwrap();
@@ -526,8 +524,7 @@ mod tests {
         let u_16 = Variant::u16(8179);
         let u_8 = Variant::u8(78);
 
-        let (_, v_u_64) =
-            Variant::parse(&[0, 0, 0, 132, 0, 0, 3, 2, 155, 95, 107, 122, 88]).unwrap();
+        let (_, v_u_64) = Variant::parse(&[0, 0, 0, 132, 0, 0, 3, 2, 155, 95, 107, 122, 88]).unwrap();
         let (_, v_u_32) = Variant::parse(&[0, 0, 0, 3, 0, 53, 133, 10, 225]).unwrap();
         let (_, v_u_16) = Variant::parse(&[0, 0, 0, 133, 0, 31, 243]).unwrap();
         let (_, v_u_8) = Variant::parse(&[0, 0, 0, 134, 0, 78]).unwrap();
@@ -579,8 +576,8 @@ mod tests {
         let mut test_variantmap = VariantMap::new();
         test_variantmap.insert("Configured".to_string(), Variant::bool(true));
         let bytes = [
-            0, 0, 0, 1, 0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114,
-            0, 101, 0, 100, 0, 0, 0, 1, 0, 1,
+            0, 0, 0, 1, 0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114, 0, 101,
+            0, 100, 0, 0, 0, 1, 0, 1,
         ]
         .to_vec();
         assert_eq!(test_variantmap.serialize().unwrap(), bytes);
@@ -589,8 +586,8 @@ mod tests {
     #[test]
     pub fn variantmap_deserialize() {
         let test_bytes: &[u8] = &[
-            0, 0, 0, 1, 0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114,
-            0, 101, 0, 100, 0, 0, 0, 1, 0, 1,
+            0, 0, 0, 1, 0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114, 0, 101,
+            0, 100, 0, 0, 0, 1, 0, 1,
         ];
         let (len, res) = VariantMap::parse(test_bytes).unwrap();
         let mut test_variantmap = VariantMap::new();
@@ -609,8 +606,8 @@ mod tests {
         };
 
         let bytes = vec![
-            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-            0x4, 0x74, 0x65, 0x73, 0x74,
+            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x74,
+            0x65, 0x73, 0x74,
         ];
         assert_eq!(test_buffer_info.serialize().unwrap(), bytes);
     }
@@ -625,8 +622,8 @@ mod tests {
         };
 
         let bytes = vec![
-            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-            0x5, 0x74, 0x65, 0x73, 0x74, 0x0,
+            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x5, 0x74,
+            0x65, 0x73, 0x74, 0x0,
         ];
         let (len, res) = BufferInfo::parse(&bytes).unwrap();
 
@@ -636,10 +633,7 @@ mod tests {
 
     #[test]
     fn char_serialize() {
-        assert_eq!(
-            Variant::char('z').serialize().unwrap(),
-            [0, 0, 0, 7, 0, 0, 122]
-        );
+        assert_eq!(Variant::char('z').serialize().unwrap(), [0, 0, 0, 7, 0, 0, 122]);
     }
 
     #[test]
@@ -658,23 +652,23 @@ mod tests {
         assert_eq!(
             Variant::String(test_string.clone()).serialize().unwrap(),
             [
-                0, 0, 0, 10, 0, 0, 0, 0, 36, 0, 0x54, 0, 0x68, 0, 0x69, 0, 0x73, 0, 0x20, 0, 0x69,
-                0, 0x73, 0, 0x20, 0, 0x61, 0, 0x20, 0, 0x54, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x21, 0,
-                0x31, 0, 0x21, 0, 0x21
+                0, 0, 0, 10, 0, 0, 0, 0, 36, 0, 0x54, 0, 0x68, 0, 0x69, 0, 0x73, 0, 0x20, 0, 0x69, 0, 0x73,
+                0, 0x20, 0, 0x61, 0, 0x20, 0, 0x54, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x21, 0, 0x31, 0, 0x21, 0,
+                0x21
             ]
         );
         assert_eq!(
             Variant::ByteArray(test_string.clone()).serialize().unwrap(),
             [
-                0, 0, 0, 12, 0, 0, 0, 0, 18, 0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x61,
-                0x20, 0x54, 0x65, 0x73, 0x74, 0x21, 0x31, 0x21, 0x21
+                0, 0, 0, 12, 0, 0, 0, 0, 18, 0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x61, 0x20,
+                0x54, 0x65, 0x73, 0x74, 0x21, 0x31, 0x21, 0x21
             ]
         );
         assert_eq!(
             Variant::StringList(test_string_list).serialize().unwrap(),
             [
-                0, 0, 0, 11, 0, 0, 0, 0, 2, 0, 0, 0, 10, 0, 0x74, 0, 0x65, 0, 0x73, 0, 0x74, 0,
-                0x31, 0, 0, 0, 12, 0, 0x74, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x20, 0, 0x32
+                0, 0, 0, 11, 0, 0, 0, 0, 2, 0, 0, 0, 10, 0, 0x74, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x31, 0, 0,
+                0, 12, 0, 0x74, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x20, 0, 0x32
             ]
         );
     }
@@ -685,19 +679,18 @@ mod tests {
         let test_string_list = vec!["test1".to_string(), "test 2".to_string()];
 
         let test_string_src = vec![
-            0, 0, 0, 10, 0, 0, 0, 0, 36, 0, 0x54, 0, 0x68, 0, 0x69, 0, 0x73, 0, 0x20, 0, 0x69, 0,
-            0x73, 0, 0x20, 0, 0x61, 0, 0x20, 0, 0x54, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x21, 0, 0x31,
-            0, 0x21, 0, 0x21,
+            0, 0, 0, 10, 0, 0, 0, 0, 36, 0, 0x54, 0, 0x68, 0, 0x69, 0, 0x73, 0, 0x20, 0, 0x69, 0, 0x73, 0,
+            0x20, 0, 0x61, 0, 0x20, 0, 0x54, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x21, 0, 0x31, 0, 0x21, 0, 0x21,
         ];
 
         let test_string_src_utf8 = vec![
-            0, 0, 0, 12, 0, 0, 0, 0, 18, 0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x61,
-            0x20, 0x54, 0x65, 0x73, 0x74, 0x21, 0x31, 0x21, 0x21, 0,
+            0, 0, 0, 12, 0, 0, 0, 0, 18, 0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x61, 0x20, 0x54,
+            0x65, 0x73, 0x74, 0x21, 0x31, 0x21, 0x21, 0,
         ];
 
         let test_string_list_src = vec![
-            0, 0, 0, 11, 0, 0, 0, 0, 2, 0, 0, 0, 10, 0, 0x74, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x31,
-            0, 0, 0, 12, 0, 0x74, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x20, 0, 0x32,
+            0, 0, 0, 11, 0, 0, 0, 0, 2, 0, 0, 0, 10, 0, 0x74, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x31, 0, 0, 0,
+            12, 0, 0x74, 0, 0x65, 0, 0x73, 0, 0x74, 0, 0x20, 0, 0x32,
         ];
 
         assert_eq!(
@@ -716,38 +709,49 @@ mod tests {
 
     #[test]
     fn datetime_serialize() {
-        let datetime =
-            Variant::DateTime(DateTime::parse("2020-02-19 13:00 +0200", "%Y-%m-%d %R %z").unwrap());
-        let date = Variant::Date(Date::parse("2020-02-19", "%Y-%m-%d").unwrap());
-        let time = Variant::Time(Time::parse("13:00", "%R").unwrap());
+        let datetime = Variant::DateTime(
+            DateTime::parse(
+                "2020-02-19 13:00 +0200",
+                format_description!(
+                    "[year]-[month]-[day] [hour]:[minute] [offset_hour sign:mandatory][offset_minute]"
+                ),
+            )
+            .unwrap(),
+        );
+
+        let date =
+            Variant::Date(Date::parse("2020-02-19", format_description!("[year]-[month]-[day]")).unwrap());
+        let time = Variant::Time(Time::parse("13:00", format_description!("[hour]:[minute]")).unwrap());
 
         assert_eq!(
             datetime.serialize().unwrap(),
             [0, 0, 0, 0x10, 0, 0, 37, 133, 19, 2, 202, 28, 128, 3, 0, 0, 28, 32]
         );
 
-        assert_eq!(
-            date.serialize().unwrap(),
-            [0, 0, 0, 0x0e, 0, 0, 37, 133, 19]
-        );
+        assert_eq!(date.serialize().unwrap(), [0, 0, 0, 0x0e, 0, 0, 37, 133, 19]);
 
-        assert_eq!(
-            time.serialize().unwrap(),
-            [0, 0, 0, 0x0f, 0, 2, 202, 28, 128]
-        );
+        assert_eq!(time.serialize().unwrap(), [0, 0, 0, 0x0f, 0, 2, 202, 28, 128]);
     }
 
     #[test]
     fn datetime_deserialize() {
-        let datetime =
-            Variant::DateTime(DateTime::parse("2020-02-19 13:00 +0200", "%Y-%m-%d %R %z").unwrap());
-        let date = Variant::Date(Date::parse("2020-02-19", "%Y-%m-%d").unwrap());
-        let time = Variant::Time(Time::parse("13:00", "%R").unwrap());
+        let datetime = Variant::DateTime(
+            DateTime::parse(
+                "2020-02-19 13:00 +0200",
+                format_description!(
+                    "[year]-[month]-[day] [hour]:[minute] [offset_hour sign:mandatory][offset_minute]"
+                ),
+            )
+            .unwrap(),
+        );
+
+        let date =
+            Variant::Date(Date::parse("2020-02-19", format_description!("[year]-[month]-[day]")).unwrap());
+        let time = Variant::Time(Time::parse("13:00", format_description!("[hour]:[minute]")).unwrap());
 
         assert_eq!(
             (18, datetime),
-            Variant::parse(&[0, 0, 0, 0x10, 0, 0, 37, 133, 19, 2, 202, 28, 128, 3, 0, 0, 28, 32])
-                .unwrap()
+            Variant::parse(&[0, 0, 0, 0x10, 0, 0, 37, 133, 19, 2, 202, 28, 128, 3, 0, 0, 28, 32]).unwrap()
         );
 
         assert_eq!(

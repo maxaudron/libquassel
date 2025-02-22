@@ -1,7 +1,7 @@
 use libquassel_derive::{NetworkList, NetworkMap};
 
 use crate::message::signalproxy::translation::NetworkMap;
-use crate::message::{Syncable, Class};
+use crate::message::{Class, Syncable};
 use crate::primitive::{DateTime, StringList};
 
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
@@ -68,7 +68,7 @@ pub struct CoreData {
     #[network(
         rename = "sessionConnectedClientData",
         variant = "VariantList",
-        network = "map",
+        network = "map"
     )]
     pub session_connected_client_data: Vec<ConnectedClient>,
 }
@@ -78,7 +78,7 @@ impl Default for CoreData {
         Self {
             quassel_version: Default::default(),
             quassel_build_date: Default::default(),
-            start_time:DateTime::unix_epoch(),
+            start_time: DateTime::UNIX_EPOCH,
             session_connected_clients: Default::default(),
             session_connected_client_data: Default::default(),
         }
