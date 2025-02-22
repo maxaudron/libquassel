@@ -1,7 +1,6 @@
+use crate::error::ProtocolError;
 use crate::primitive::{Variant, VariantMap};
 use crate::HandshakeSerialize;
-
-use failure::Error;
 
 /// ClientInitReject is received when the initialization fails
 #[derive(Debug, Clone)]
@@ -11,16 +10,13 @@ pub struct ClientInitReject {
 }
 
 impl HandshakeSerialize for ClientInitReject {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut values: VariantMap = VariantMap::with_capacity(2);
         values.insert(
             "MsgType".to_string(),
             Variant::String("ClientInitReject".to_string()),
         );
-        values.insert(
-            "ErrorString".to_string(),
-            Variant::String(self.error.clone()),
-        );
+        values.insert("ErrorString".to_string(), Variant::String(self.error.clone()));
         return HandshakeSerialize::serialize(&values);
     }
 }

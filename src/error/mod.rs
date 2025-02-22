@@ -1,22 +1,26 @@
- #[derive(Debug, Fail)]
+use thiserror::Error;
+
+#[derive(Debug, Error)]
 pub enum ProtocolError {
-    #[fail(display = "message has wrong type")]
+    #[error("message has wrong type")]
     WrongMsgType,
-    #[fail(display = "bool value is neither 0 nor 1")]
+    #[error("bool value is neither 0 nor 1")]
     BoolOutOfRange,
-    #[fail(display = "QVariant is not known")]
+    #[error("QVariant is not known")]
     UnknownVariant,
-    #[fail(display = "wrong variant has been given")]
+    #[error("wrong variant has been given")]
     WrongVariant,
-    #[fail(display = "io error")]
-    IOError(std::io::Error),
-    #[fail(display = "could not convert from int")]
-    TryFromIntError(std::num::TryFromIntError),
-    #[fail(display = "utf8 error")]
-    Utf8Error(std::string::FromUtf8Error),
-    #[fail(display = "failed to parse char as utf16")]
+    #[error("io error: {0}")]
+    IOError(#[from] std::io::Error),
+    #[error("could not convert from int: {0}")]
+    TryFromIntError(#[from] std::num::TryFromIntError),
+    #[error("utf8 error: {0}")]
+    Utf8Error(#[from] std::string::FromUtf8Error),
+    #[error("errored to parse char as utf16")]
     CharError,
- }
+    #[error("failed to deal with time: {0}")]
+    TimeError(#[from] time::error::ComponentRange),
+}
 
 // impl std::error::Error for ErrorKind {}
 //

@@ -1,8 +1,7 @@
+use crate::error::ProtocolError;
 use crate::message::objects::Identity;
 use crate::primitive::{BufferInfo, Variant, VariantMap};
 use crate::HandshakeSerialize;
-
-use failure::Error;
 
 /// SessionInit is received along with ClientLoginAck to initialize that user Session
 // TODO Replace with proper types
@@ -46,12 +45,9 @@ impl From<VariantMap> for SessionInit {
 }
 
 impl HandshakeSerialize for SessionInit {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut values: VariantMap = VariantMap::with_capacity(4);
-        values.insert(
-            "MsgType".to_string(),
-            Variant::String("SessionInit".to_string()),
-        );
+        values.insert("MsgType".to_string(), Variant::String("SessionInit".to_string()));
         // values.insert(
         //     "Identities".to_string(),
         //     Variant::VariantList(

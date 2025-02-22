@@ -1,7 +1,5 @@
 use std::{collections::HashMap, vec::Vec};
 
-use failure::Error;
-
 use itertools::Itertools;
 use log::{error, trace};
 
@@ -155,13 +153,13 @@ where
 }
 
 impl Serialize for Variant {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let unknown: u8 = 0x00;
         let mut res: Vec<u8> = Vec::new();
 
         match self {
             Variant::Unknown => {
-                bail!(ProtocolError::UnknownVariant);
+                return Err(ProtocolError::UnknownVariant);
             }
             Variant::VariantMap(v) => {
                 res.extend(primitive::QVARIANTMAP.to_be_bytes().iter());
@@ -277,7 +275,7 @@ impl Serialize for Variant {
 }
 
 impl Deserialize for Variant {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         trace!("trying to parse variant with bytes: {:?}", b);
         let (_, qtype) = i32::parse(&b[0..4])?;
         let qtype = qtype as u32;
@@ -426,7 +424,7 @@ impl Deserialize for Variant {
             }
             err => {
                 error!(target: "parser", "UnknownVariant: {:x?}", err);
-                bail!(ProtocolError::UnknownVariant);
+                return Err(ProtocolError::UnknownVariant);
             }
         }
     }

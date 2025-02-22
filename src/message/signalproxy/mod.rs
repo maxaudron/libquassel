@@ -1,5 +1,6 @@
 use crate::{
     deserialize::Deserialize,
+    error::ProtocolError,
     primitive::{Variant, VariantList},
     serialize::Serialize,
 };
@@ -57,13 +58,7 @@ impl SyncProxy {
     }
 
     /// Send a SyncMessage
-    fn sync(
-        &self,
-        class_name: Class,
-        object_name: Option<&str>,
-        function: &str,
-        params: VariantList,
-    ) {
+    fn sync(&self, class_name: Class, object_name: Option<&str>, function: &str, params: VariantList) {
         let msg = SyncMessage {
             class_name,
             object_name: object_name.unwrap_or("").to_string(),
@@ -91,12 +86,10 @@ pub trait Syncable {
 
     /// Send a SyncMessage.
     fn send_sync(&self, function: &str, params: VariantList) {
-        crate::message::signalproxy::SYNC_PROXY.get().unwrap().sync(
-            Self::CLASS,
-            None,
-            function,
-            params,
-        );
+        crate::message::signalproxy::SYNC_PROXY
+            .get()
+            .unwrap()
+            .sync(Self::CLASS, None, function, params);
     }
 
     /// Send a RpcCall
@@ -125,10 +118,9 @@ where
         Self: Sized,
     {
         match msg.slot_name.as_str() {
-            "requestUpdate" => StatefulSyncableServer::request_update(
-                self,
-                msg.params.pop().unwrap().try_into().unwrap(),
-            ),
+            "requestUpdate" => {
+                StatefulSyncableServer::request_update(self, msg.params.pop().unwrap().try_into().unwrap())
+            }
             _ => StatefulSyncableServer::sync_custom(self, msg),
         }
     }
@@ -167,9 +159,7 @@ pub trait StatefulSyncableClient: Syncable + translation::NetworkMap {
         Self: Sized,
     {
         match msg.slot_name.as_str() {
-            "update" => {
-                StatefulSyncableClient::update(self, msg.params.pop().unwrap().try_into().unwrap())
-            }
+            "update" => StatefulSyncableClient::update(self, msg.params.pop().unwrap().try_into().unwrap()),
             _ => StatefulSyncableClient::sync_custom(self, msg),
         }
     }
@@ -229,7 +219,7 @@ pub enum Message {
 // }
 
 impl Serialize for Message {
-    fn serialize(&self) -> Result<Vec<std::primitive::u8>, failure::Error> {
+    fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         match &self {
             Message::SyncMessage(value) => value.serialize(),
             Message::RpcCall(value) => value.serialize(),
@@ -242,7 +232,7 @@ impl Serialize for Message {
 }
 
 impl Deserialize for Message {
-    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), failure::Error> {
+    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
         let (_, message_type) = i32::parse(&b[9..13])?;
 
         match MessageType::from(message_type) {

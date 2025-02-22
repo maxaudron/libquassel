@@ -1,8 +1,6 @@
 use std::vec::Vec;
 
-use failure::Error;
-
-use crate::{deserialize::*, serialize::*};
+use crate::{deserialize::*, error::ProtocolError, serialize::*};
 
 /// The BufferInfo struct represents a BufferInfo as received in IRC
 ///
@@ -20,7 +18,7 @@ pub struct BufferInfo {
 }
 
 impl Serialize for BufferInfo {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
 
         values.append(&mut i32::serialize(&self.id)?);
@@ -34,7 +32,7 @@ impl Serialize for BufferInfo {
 }
 
 impl Deserialize for BufferInfo {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (_, id) = i32::parse(&b[0..4])?;
         let (_, network_id) = i32::parse(&b[4..8])?;
         let (_, buffer_type) = i16::parse(&b[8..10])?;

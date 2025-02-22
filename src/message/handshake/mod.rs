@@ -24,6 +24,7 @@ pub use protocol::*;
 pub use sessioninit::*;
 pub use types::*;
 
+use crate::error::ProtocolError;
 use crate::primitive::VariantMap;
 use crate::{HandshakeDeserialize, HandshakeSerialize};
 
@@ -39,7 +40,7 @@ pub enum HandshakeMessage {
 }
 
 impl HandshakeSerialize for HandshakeMessage {
-    fn serialize(&self) -> Result<Vec<u8>, failure::Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         match self {
             HandshakeMessage::ClientInit(inner) => inner.serialize(),
             HandshakeMessage::ClientInitAck(inner) => inner.serialize(),
@@ -53,7 +54,7 @@ impl HandshakeSerialize for HandshakeMessage {
 }
 
 impl HandshakeDeserialize for HandshakeMessage {
-    fn parse(b: &[u8]) -> Result<(usize, Self), failure::Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (size, res) = VariantMap::parse(b)?;
 
         let msgtype: String = (&res["MsgType"]).into();

@@ -4,57 +4,55 @@ use std::io::Cursor;
 use std::result::Result;
 use std::vec::Vec;
 
-use failure::Error;
-
-use crate::{deserialize::*, serialize::*};
+use crate::{deserialize::*, error::ProtocolError, serialize::*};
 
 impl Serialize for i64 {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         Ok(Vec::from(self.to_be_bytes()))
     }
 }
 
 impl Deserialize for i64 {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let mut rdr = Cursor::new(&b[0..8]);
         return Ok((8, rdr.read_i64::<BigEndian>()?));
     }
 }
 
 impl Serialize for i32 {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         Ok(Vec::from(self.to_be_bytes()))
     }
 }
 
 impl Deserialize for i32 {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let mut rdr = Cursor::new(&b[0..4]);
         return Ok((4, rdr.read_i32::<BigEndian>()?));
     }
 }
 
 impl Serialize for i16 {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         Ok(Vec::from(self.to_be_bytes()))
     }
 }
 
 impl Deserialize for i16 {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let mut rdr = Cursor::new(&b[0..2]);
         return Ok((2, rdr.read_i16::<BigEndian>()?));
     }
 }
 
 impl Serialize for i8 {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         Ok(Vec::from(self.to_be_bytes()))
     }
 }
 
 impl Deserialize for i8 {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let mut rdr = Cursor::new(&b[0..1]);
         return Ok((1, rdr.read_i8()?));
     }

@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 use std::vec::Vec;
 
-use failure::Error;
-
 use log::trace;
 
+use crate::error::ProtocolError;
 use crate::{deserialize::*, serialize::*};
 
 use crate::primitive::Variant;
@@ -16,7 +15,7 @@ use crate::util;
 pub type VariantMap = HashMap<String, Variant>;
 
 impl Serialize for VariantMap {
-    fn serialize<'a>(&'a self) -> Result<Vec<u8>, Error> {
+    fn serialize<'a>(&'a self) -> Result<Vec<u8>, ProtocolError> {
         let mut res: Vec<u8> = Vec::new();
 
         for (k, v) in self {
@@ -32,7 +31,7 @@ impl Serialize for VariantMap {
 }
 
 impl Deserialize for VariantMap {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (_, len) = i32::parse(&b[0..4])?;
         trace!(target: "primitive::VariantMap", "Parsing VariantMap with {:?} elements", len);
 

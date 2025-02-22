@@ -1,9 +1,8 @@
 use std::vec::Vec;
 
-use failure::Error;
-
 use log::trace;
 
+use crate::error::ProtocolError;
 use crate::{deserialize::*, serialize::*};
 
 use crate::primitive::Variant;
@@ -14,7 +13,7 @@ use crate::primitive::Variant;
 pub type VariantList = Vec<Variant>;
 
 impl Serialize for VariantList {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let len: i32 = self.len().try_into()?;
         let mut res: Vec<u8> = Vec::new();
 
@@ -28,7 +27,7 @@ impl Serialize for VariantList {
 }
 
 impl Deserialize for VariantList {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (_, len) = i32::parse(&b[0..4])?;
         trace!(target: "primitive::VariantList", "Parsing VariantList with {:?} elements", len);
 

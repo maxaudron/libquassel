@@ -1,4 +1,4 @@
-use crate::{deserialize::*, serialize::*};
+use crate::{deserialize::*, error::ProtocolError, serialize::*};
 
 use time::{OffsetDateTime, PrimitiveDateTime, UtcOffset};
 
@@ -43,7 +43,7 @@ impl From<i8> for TimeSpec {
 }
 
 impl Serialize for OffsetDateTime {
-    fn serialize(&self) -> Result<Vec<u8>, failure::Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
 
         values.extend(i32::serialize(&(self.date().to_julian_day() as i32))?);
@@ -66,7 +66,7 @@ impl Serialize for OffsetDateTime {
 }
 
 impl Deserialize for OffsetDateTime {
-    fn parse(b: &[u8]) -> Result<(usize, Self), failure::Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (_, julian_day) = i32::parse(&b[0..4])?;
         let (_, millis_of_day) = i32::parse(&b[4..8])?;
         let (_, zone) = u8::parse(&b[8..9])?;
@@ -112,7 +112,7 @@ impl Deserialize for OffsetDateTime {
 }
 
 impl Serialize for Date {
-    fn serialize(&self) -> Result<Vec<std::primitive::u8>, failure::Error> {
+    fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
 
         values.extend(i32::serialize(&(self.to_julian_day() as i32))?);
@@ -122,7 +122,7 @@ impl Serialize for Date {
 }
 
 impl Deserialize for Date {
-    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), failure::Error> {
+    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
         let (_, julian_day) = i32::parse(&b[0..4])?;
         let date = Date::from_julian_day(julian_day)?;
 
@@ -131,7 +131,7 @@ impl Deserialize for Date {
 }
 
 impl Serialize for Time {
-    fn serialize(&self) -> Result<Vec<std::primitive::u8>, failure::Error> {
+    fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
 
         let time: i32 = {
@@ -150,7 +150,7 @@ impl Serialize for Time {
 }
 
 impl Deserialize for Time {
-    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), failure::Error> {
+    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
         let (_, millis_of_day) = i32::parse(&b[0..4])?;
 
         let hour = millis_of_day / 60 / 60000;

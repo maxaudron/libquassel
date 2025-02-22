@@ -1,4 +1,4 @@
-use failure::Error;
+use crate::error::ProtocolError;
 
 /// Data received right after initializing the connection
 ///
@@ -30,7 +30,7 @@ impl Default for ConnAck {
 }
 
 impl crate::serialize::Serialize for ConnAck {
-    fn serialize(&self) -> Result<Vec<std::primitive::u8>, Error> {
+    fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         let mut bytes: Vec<u8> = Vec::new();
 
         bytes.append(&mut self.flags.serialize()?);
@@ -42,7 +42,7 @@ impl crate::serialize::Serialize for ConnAck {
 }
 
 impl crate::deserialize::Deserialize for ConnAck {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (flen, flags) = u8::parse(b)?;
         let (elen, extra) = i16::parse(&b[flen..])?;
         let (vlen, version) = i8::parse(&b[(flen + elen)..])?;

@@ -3,11 +3,9 @@ extern crate byteorder;
 use std::result::Result;
 use std::vec::Vec;
 
-use failure::Error;
-
 use log::trace;
 
-use crate::{deserialize::*, serialize::*};
+use crate::{deserialize::*, error::ProtocolError, serialize::*};
 
 /// StringList are represented as a Vec of Strings
 ///
@@ -15,7 +13,7 @@ use crate::{deserialize::*, serialize::*};
 pub type StringList = Vec<String>;
 
 impl Serialize for StringList {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let len: i32 = self.len().try_into()?;
         let mut res: Vec<u8> = Vec::new();
 
@@ -29,7 +27,7 @@ impl Serialize for StringList {
 }
 
 impl Deserialize for StringList {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (_, len) = i32::parse(&b[0..4])?;
         trace!(target: "primitive::StringList", "Parsing with length: {:?}, from bytes: {:x?}", len, &b[0..4]);
         let mut res: StringList = StringList::new();
@@ -54,8 +52,8 @@ pub fn string_list_serialize() {
     assert_eq!(
         test_list.serialize().unwrap(),
         [
-            0, 0, 0, 1, 0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114,
-            0, 101, 0, 100
+            0, 0, 0, 1, 0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114, 0, 101,
+            0, 100
         ]
     )
 }
@@ -63,8 +61,8 @@ pub fn string_list_serialize() {
 #[test]
 pub fn string_list_deserialize() {
     let test_bytes: &[u8] = &[
-        0, 0, 0, 1, 0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114, 0,
-        101, 0, 100, 0, 0, 0, 1,
+        0, 0, 0, 1, 0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114, 0, 101, 0,
+        100, 0, 0, 0, 1,
     ];
     let mut test_list = StringList::new();
     test_list.push("Configured".to_string());

@@ -48,6 +48,8 @@
 //     receiveBacklogAllFiltered(first: MsgId, last: MsgId, limit: Int, additional: Int, type: Int, flags: Int, messages: QVariantList)
 // }
 
+#![allow(non_snake_case, dead_code)]
+
 use crate::primitive::VariantList;
 
 /// Receive and Request Backlog
@@ -59,14 +61,7 @@ impl BacklogManager {
     /// Loads backlog for `bufferId`, starting at message `first`, up to `last`
     /// (plus `additional` more messages after `last`) but at most `limit`
     /// messages total.
-    fn requestBacklog(
-        self: Self,
-        buffer_id: u32,
-        first: u32,
-        last: u32,
-        limit: u32,
-        additional: u32,
-    ) {
+    fn requestBacklog(self: Self, buffer_id: u32, first: u32, last: u32, limit: u32, additional: u32) {
         unimplemented!()
     }
 

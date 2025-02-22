@@ -1,3 +1,4 @@
+use crate::error::ProtocolError;
 use crate::message::MessageType;
 use crate::primitive::{DateTime, Variant, VariantList};
 use crate::{deserialize::Deserialize, serialize::Serialize};
@@ -8,7 +9,7 @@ pub struct HeartBeat {
 }
 
 impl Serialize for HeartBeat {
-    fn serialize(&self) -> Result<Vec<std::primitive::u8>, failure::Error> {
+    fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         let mut res = VariantList::new();
 
         res.push(Variant::i32(MessageType::HeartBeat as i32));
@@ -19,7 +20,7 @@ impl Serialize for HeartBeat {
 }
 
 impl Deserialize for HeartBeat {
-    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), failure::Error> {
+    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
         let (size, mut res) = VariantList::parse(&b)?;
 
         res.remove(0);
@@ -39,7 +40,7 @@ pub struct HeartBeatReply {
 }
 
 impl Serialize for HeartBeatReply {
-    fn serialize(&self) -> Result<Vec<std::primitive::u8>, failure::Error> {
+    fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         let mut res = VariantList::new();
 
         res.push(Variant::i32(MessageType::HeartBeatReply as i32));
@@ -50,7 +51,7 @@ impl Serialize for HeartBeatReply {
 }
 
 impl Deserialize for HeartBeatReply {
-    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), failure::Error> {
+    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
         let (size, mut res) = VariantList::parse(&b)?;
 
         res.remove(0);

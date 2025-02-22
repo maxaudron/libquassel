@@ -1,7 +1,6 @@
+use crate::error::ProtocolError;
 use crate::primitive::{Variant, VariantMap};
 use crate::HandshakeSerialize;
-
-use failure::Error;
 
 /// Login to the core with user data
 /// username and password are transmitted in plain text
@@ -12,17 +11,11 @@ pub struct ClientLogin {
 }
 
 impl HandshakeSerialize for ClientLogin {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut values: VariantMap = VariantMap::new();
-        values.insert(
-            "MsgType".to_string(),
-            Variant::String("ClientLogin".to_string()),
-        );
+        values.insert("MsgType".to_string(), Variant::String("ClientLogin".to_string()));
         values.insert("User".to_string(), Variant::String(self.user.clone()));
-        values.insert(
-            "Password".to_string(),
-            Variant::String(self.password.clone()),
-        );
+        values.insert("Password".to_string(), Variant::String(self.password.clone()));
         return HandshakeSerialize::serialize(&values);
     }
 }

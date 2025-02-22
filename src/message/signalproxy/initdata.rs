@@ -1,3 +1,4 @@
+use crate::error::ProtocolError;
 use crate::message::MessageType;
 use crate::primitive::{Variant, VariantList};
 use crate::{deserialize::Deserialize, serialize::Serialize};
@@ -12,7 +13,7 @@ pub struct InitData {
 }
 
 impl Serialize for InitData {
-    fn serialize(&self) -> Result<Vec<std::primitive::u8>, failure::Error> {
+    fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         let mut res = VariantList::new();
 
         res.push(Variant::i32(MessageType::InitData as i32));
@@ -26,7 +27,7 @@ impl Serialize for InitData {
 }
 
 impl Deserialize for InitData {
-    fn parse(b: &[u8]) -> Result<(usize, Self), failure::Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (size, mut res) = VariantList::parse(&b)?;
 
         res.remove(0);

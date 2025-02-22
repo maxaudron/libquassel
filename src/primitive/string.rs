@@ -3,14 +3,12 @@ extern crate byteorder;
 use std::result::Result;
 use std::vec::Vec;
 
-use failure::Error;
-
 use log::trace;
 
 use crate::{deserialize::*, error::ProtocolError, serialize::*, util};
 
 impl Deserialize for char {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (slen, qchar): (usize, u16) = u16::parse(&b[0..2])?;
         let qchar = char::from_u32(qchar as u32).ok_or(ProtocolError::CharError)?;
 
@@ -19,7 +17,7 @@ impl Deserialize for char {
 }
 
 impl Serialize for char {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut b = [0, 0];
         self.encode_utf16(&mut b);
 
@@ -33,7 +31,7 @@ impl Serialize for char {
 ///
 /// Strings can only be serialized as UTF-8 null-terminated ByteArrays with (de)serialize_utf8().
 impl Serialize for String {
-    fn serialize(&self) -> Result<Vec<u8>, Error> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut res: Vec<u8> = Vec::new();
 
         self.encode_utf16()
@@ -45,7 +43,7 @@ impl Serialize for String {
 }
 
 impl SerializeUTF8 for String {
-    fn serialize_utf8(&self) -> Result<Vec<u8>, Error> {
+    fn serialize_utf8(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut res: Vec<u8> = Vec::new();
         res.extend(self.clone().into_bytes());
         util::prepend_byte_len(&mut res);
@@ -54,7 +52,7 @@ impl SerializeUTF8 for String {
 }
 
 impl Deserialize for String {
-    fn parse(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         // Parse Length
         let (_, len) = i32::parse(&b[0..4])?;
         trace!(target: "primitive::String", "Parsing with length: {:?}, from bytes: {:x?}", len, &b[0..4]);
@@ -85,7 +83,7 @@ impl Deserialize for String {
 }
 
 impl DeserializeUTF8 for String {
-    fn parse_utf8(b: &[u8]) -> Result<(usize, Self), Error> {
+    fn parse_utf8(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (_, len) = i32::parse(&b[0..4])?;
 
         trace!(target: "primitive::String", "Parsing with length: {:?}, from bytes: {:x?}", len, &b[0..4]);
@@ -119,10 +117,7 @@ pub fn string_serialize() {
 
     assert_eq!(
         test_string.serialize().unwrap(),
-        [
-            0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114, 0, 101, 0,
-            100
-        ]
+        [0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114, 0, 101, 0, 100]
     );
 }
 
@@ -139,8 +134,8 @@ pub fn string_serialize_utf8() {
 #[test]
 pub fn string_deserialize() {
     let test_bytes: &[u8] = &[
-        0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114, 0, 101, 0, 100,
-        0, 0, 0, 1,
+        0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114, 0, 101, 0, 100, 0, 0, 0,
+        1,
     ];
     let (len, res) = String::parse(test_bytes).unwrap();
     assert_eq!(res, "Configured");
