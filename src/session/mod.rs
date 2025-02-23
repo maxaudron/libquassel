@@ -57,7 +57,14 @@ pub trait SessionManager {
             Class::CoreInfo => self.core_info().sync(msg),
             Class::CoreData => (),
             Class::HighlightRuleManager => self.highlight_rule_manager().sync(msg),
-            Class::Identity => (),
+            Class::Identity => {
+                let identity_id: i32 = msg.object_name.parse().unwrap();
+                if let Some(identity) = self.identity(identity_id as usize) {
+                    identity.sync(msg);
+                } else {
+                    warn!("could not find identity with id: {:?}", identity_id);
+                }
+            }
             Class::IgnoreListManager => self.ignore_list_manager().sync(msg),
             Class::CertManager => self.cert_manager().sync(msg),
             Class::Network => {
