@@ -12,6 +12,7 @@ mod ignorelistmanager;
 mod ircchannel;
 mod ircuser;
 mod network;
+mod networkconfig;
 mod networkinfo;
 
 pub use aliasmanager::*;
@@ -28,6 +29,7 @@ pub use ignorelistmanager::*;
 pub use ircchannel::*;
 pub use ircuser::*;
 pub use network::*;
+pub use networkconfig::*;
 pub use networkinfo::*;
 
 use libquassel_derive::From;

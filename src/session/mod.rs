@@ -5,7 +5,7 @@ use crate::message::StatefulSyncableClient;
 #[cfg(feature = "server")]
 use crate::message::StatefulSyncableServer;
 
-use log::{debug, warn};
+use log::{debug, error, warn};
 
 use crate::message::{
     objects::{Types, *},
@@ -26,6 +26,7 @@ pub struct Session {
     pub identities: Vec<Identity>,
     pub ignore_list_manager: IgnoreListManager,
     pub networks: HashMap<i32, Network>,
+    pub network_config: NetworkConfig,
 }
 
 /// The Session Trait is the main point of entry and implements the basic logic
@@ -42,6 +43,7 @@ pub trait SessionManager {
     fn ignore_list_manager(&mut self) -> &mut IgnoreListManager;
     fn networks(&mut self) -> &mut HashMap<i32, Network>;
     fn network(&mut self, id: i32) -> Option<&mut Network>;
+    fn network_config(&mut self) -> &mut NetworkConfig;
 
     fn sync(&mut self, msg: SyncMessage)
     where
@@ -65,7 +67,13 @@ pub trait SessionManager {
                 }
             }
             Class::NetworkInfo => (),
-            Class::NetworkConfig => (),
+            Class::NetworkConfig => match msg.object_name.as_ref() {
+                "GlobalNetworkConfig" => self.network_config().sync(msg),
+                _ => error!(
+                    "received network config sync with unknown object name: {}",
+                    msg.object_name
+                ),
+            },
             Class::IrcChannel => {
                 let mut object_name = msg.object_name.split('/');
                 let network_id: i32 = object_name.next().unwrap().parse().unwrap();
@@ -195,5 +203,9 @@ impl SessionManager for Session {
 
     fn network(&mut self, id: i32) -> Option<&mut Network> {
         self.networks.get_mut(&id)
+    }
+
+    fn network_config(&mut self) -> &mut NetworkConfig {
+        &mut self.network_config
     }
 }

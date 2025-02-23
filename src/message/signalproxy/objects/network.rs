@@ -5,7 +5,7 @@ use log::{error, warn};
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 
-use libquassel_derive::{sync, NetworkList, NetworkMap, Setters};
+use libquassel_derive::{sync, NetworkMap, Setters};
 
 use crate::error::ProtocolError;
 use crate::message::signalproxy::translation::NetworkMap;
@@ -614,26 +614,6 @@ pub struct NetworkServer {
     pub proxy_user: String,
     #[network(rename = "ProxyPass")]
     pub proxy_pass: String,
-}
-
-#[derive(Debug, Clone, PartialEq, NetworkList)]
-pub struct NetworkConfig {
-    #[network(rename = "pingTimeoutEnabled")]
-    ping_timeout_enabled: bool,
-    #[network(rename = "pingInterval")]
-    ping_interval: i32,
-    #[network(rename = "maxPingCount")]
-    max_ping_count: i32,
-    #[network(rename = "autoWhoEnabled")]
-    auto_who_enabled: bool,
-    #[network(rename = "autoWhoInterval")]
-    auto_who_interval: i32,
-    #[network(rename = "autoWhoNickLimit")]
-    auto_who_nick_limit: i32,
-    #[network(rename = "autoWhoDelay")]
-    auto_who_delay: i32,
-    #[network(rename = "standardCtcp")]
-    standard_ctcp: bool,
 }
 
 #[cfg(test)]
