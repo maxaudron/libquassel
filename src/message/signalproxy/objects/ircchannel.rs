@@ -14,6 +14,7 @@ use super::{ChanModes, ChannelModeType};
 #[derive(Debug, Clone, PartialEq, Setters, NetworkList, NetworkMap)]
 #[network(repr = "maplist")]
 pub struct IrcChannel {
+    #[setter(skip)]
     #[network(rename = "ChanModes", variant = "VariantMap", network = "map")]
     pub chan_modes: ChanModes,
 
@@ -187,7 +188,7 @@ impl crate::message::StatefulSyncableClient for IrcChannel {
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for IrcChannel {
     /// Not Implemented for this type
-    fn request_update(&mut self, _param: <IrcChannel as NetworkMap>::Item)
+    fn request_update(&mut self, _param: <IrcChannel as crate::message::NetworkMap>::Item)
     where
         Self: Sized,
     {

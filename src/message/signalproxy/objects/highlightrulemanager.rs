@@ -10,6 +10,8 @@ use crate::message::StatefulSyncableServer;
 use crate::message::Syncable;
 use crate::primitive::Variant;
 
+use crate::message::signalproxy::translation::NetworkMap;
+
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct HighlightRuleManager {
     #[network(rename = "HighlightRuleList", variant = "VariantMap", network = "map")]
@@ -120,7 +122,7 @@ impl HighlightRuleManager {
 
     pub fn set_highlight_nick(&mut self, nick: HighlightNickType) {
         #[cfg(feature = "server")]
-        sync!("setHighlightNick", [nick.to_network()]);
+        sync!("setHighlightNick", [Variant::from(nick)]);
 
         self.highlight_nick = nick;
     }
@@ -209,7 +211,7 @@ pub struct HighlightRule {
     pub channel: String,
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub enum HighlightNickType {
     #[default]
     NoNick = 0x00,

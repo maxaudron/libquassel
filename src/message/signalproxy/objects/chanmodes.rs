@@ -1,31 +1,25 @@
 use std::collections::HashMap;
 
-use libquassel_derive::Setters;
-
 use crate::{
     message::NetworkMap,
     primitive::{StringList, Variant, VariantMap},
 };
 
-#[derive(Debug, Clone, PartialEq, Setters)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ChanModes {
     /// Modes that add or remove items from a list, like commonly +b for the banlist.
     ///
     /// Always require a parameter from server to client.
     /// Clients can request the whole list by leaving the parameter empty
-    #[setter(skip)]
     pub channel_modes_a: HashMap<char, StringList>,
 
     /// Modes that take a parameter as setting and require it when setting or removing the mode.
-    #[setter(skip)]
     pub channel_modes_b: HashMap<char, String>,
 
     /// Modes that take a parameter as setting, but only require it when setting the mode.
-    #[setter(skip)]
     pub channel_modes_c: HashMap<char, String>,
 
     /// Modes without a parameter.
-    #[setter(skip)]
     pub channel_modes_d: String,
 }
 
@@ -136,9 +130,6 @@ mod tests {
 
     #[test]
     fn chanmodes_from_network() {
-        assert_eq!(
-            ChanModes::from_network_map(&mut get_network()),
-            get_runtime()
-        )
+        assert_eq!(ChanModes::from_network_map(&mut get_network()), get_runtime())
     }
 }

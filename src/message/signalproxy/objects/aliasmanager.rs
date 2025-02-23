@@ -2,6 +2,8 @@
 use libquassel_derive::sync;
 use libquassel_derive::{NetworkList, NetworkMap};
 
+#[allow(unused_imports)]
+use crate::message::signalproxy::translation::NetworkMap;
 use crate::message::Class;
 #[allow(unused_imports)]
 use crate::message::StatefulSyncableClient;

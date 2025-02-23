@@ -197,7 +197,7 @@ impl Deserialize for Message {
 use bitflags::bitflags;
 
 bitflags! {
-    #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
     pub struct MessageType: i32 {
         const NONE = 0x00000000;
         const PLAIN = 0x00000001;

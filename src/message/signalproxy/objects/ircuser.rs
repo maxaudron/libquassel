@@ -6,10 +6,10 @@ use crate::{
 use itertools::Itertools;
 #[cfg(feature = "server")]
 use libquassel_derive::sync;
-use libquassel_derive::{NetworkMap, Setters};
+use libquassel_derive::{NetworkList, NetworkMap, Setters};
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, PartialEq, NetworkMap, Setters)]
+#[derive(Debug, Clone, PartialEq, NetworkList, NetworkMap, Setters)]
 #[network(repr = "maplist")]
 pub struct IrcUser {
     pub user: String,
@@ -98,12 +98,10 @@ impl Syncable for IrcUser {
     const CLASS: Class = Class::IrcUser;
 
     fn send_sync(&self, function: &str, params: crate::primitive::VariantList) {
-        crate::message::signalproxy::SYNC_PROXY.get().unwrap().sync(
-            Self::CLASS,
-            None,
-            function,
-            params,
-        );
+        crate::message::signalproxy::SYNC_PROXY
+            .get()
+            .unwrap()
+            .sync(Self::CLASS, None, function, params);
     }
 }
 

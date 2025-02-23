@@ -54,7 +54,7 @@ impl BufferViewManager {
 
     #[cfg(feature = "server")]
     pub fn add_buffer_view_config(&mut self, config: BufferViewConfig) {
-        self.buffer_view_configs.insert(0, config);
+        self.buffer_view_configs.insert(0, Some(config));
 
         sync!("addBufferViewConfig", [0]);
     }
@@ -72,7 +72,8 @@ impl BufferViewManager {
         if let Some(stored) = self.buffer_view_configs.get_mut(&config.buffer_view_id) {
             *stored = Some(config);
         } else {
-            self.buffer_view_configs.insert(config.buffer_view_id, Some(config));
+            self.buffer_view_configs
+                .insert(config.buffer_view_id, Some(config));
         }
     }
 }
@@ -102,9 +103,9 @@ impl StatefulSyncableServer for BufferViewManager {
         Self: Sized,
     {
         match msg.slot_name.as_str() {
-            "requestCreateBufferView" => self.add_buffer_view_config(
-                BufferViewConfig::from_network_map(&mut msg.params.remove(0).try_into().unwrap()),
-            ),
+            "requestCreateBufferView" => self.add_buffer_view_config(BufferViewConfig::from_network_map(
+                &mut msg.params.remove(0).try_into().unwrap(),
+            )),
             "requestCreateBufferViews" => {
                 let views: VariantList = msg.params.remove(0).try_into().unwrap();
                 views.into_iter().for_each(|view| {
