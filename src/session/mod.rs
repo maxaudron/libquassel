@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+#[cfg(feature = "client")]
+use crate::message::StatefulSyncableClient;
 #[cfg(feature = "server")]
 use crate::message::StatefulSyncableServer;
 
@@ -7,7 +9,7 @@ use log::{debug, warn};
 
 use crate::message::{
     objects::{Types, *},
-    Class, InitData, SessionInit, StatefulSyncableClient, SyncMessage, Syncable,
+    Class, InitData, SessionInit, SyncMessage, Syncable,
 };
 
 // TODO implement nested types init and sync like BufferViewConfig in BufferViewManager
@@ -59,7 +61,7 @@ pub trait SessionManager {
             Class::Network => {
                 let id: i32 = msg.object_name.parse().unwrap();
                 if let Some(network) = self.network(id) {
-                    // network.sync()
+                    network.sync(msg)
                 }
             }
             Class::NetworkInfo => (),

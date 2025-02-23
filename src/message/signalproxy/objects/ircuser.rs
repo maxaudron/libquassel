@@ -65,7 +65,7 @@ impl IrcUser {
         sync!("removeUserModes", [modes]);
     }
 
-    pub fn update_hostmask(&mut self, mask: String) {}
+    pub fn update_hostmask(&mut self, _mask: String) {}
 
     pub fn join_channel(&mut self, channel: String) {
         if !self.channels.contains(&channel) {

@@ -1,14 +1,18 @@
-use crate::primitive::StringList;
+use crate::{
+    message::{Class, Syncable},
+    primitive::StringList,
+};
 
-use libquassel_derive::NetworkList;
+use libquassel_derive::{NetworkList, NetworkMap, Setters};
 
 use crate::message::objects::network::NetworkServer;
 
-#[derive(Default, Debug, Clone, PartialEq, NetworkList)]
+#[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap, Setters)]
 pub struct NetworkInfo {
     #[network(rename = "networkName")]
     pub network_name: String,
 
+    #[setter(skip)]
     #[network(rename = "ServerList", variant = "VariantList", network = "map")]
     pub server_list: Vec<NetworkServer>,
     #[network(rename = "perform")]
@@ -34,7 +38,8 @@ pub struct NetworkInfo {
 
     // TODO add these type aliases or usertypes in variants
     // pub network_id: NetworkId,
-    // pub identity_id: IdentityId,
+    #[network(rename = "identityId")]
+    pub identity_id: i32,
     #[network(rename = "msgRateBurstSize")]
     pub msg_rate_burst_size: u32,
     #[network(rename = "msgRateMessageDelay")]
@@ -63,6 +68,24 @@ pub struct NetworkInfo {
     pub unlimited_message_rate: bool,
     // #[network(rename = "autoAwayActive")]
     // pub auto_away_active: bool,
+}
+
+impl NetworkInfo {
+    pub fn set_server_list(&mut self, servers: Vec<NetworkServer>) {
+        #[cfg(feature = "server")]
+        {
+            use crate::message::NetworkMap;
+            use libquassel_derive::sync;
+
+            sync!("setServerList", [Vec::<NetworkServer>::to_network_map(&servers)]);
+        }
+
+        self.server_list = servers;
+    }
+}
+
+impl Syncable for NetworkInfo {
+    const CLASS: Class = Class::Network;
 }
 
 #[cfg(test)]
@@ -96,6 +119,8 @@ mod tests {
             Variant::ByteArray(s!("")),
             Variant::ByteArray(s!("codecForDecoding")),
             Variant::ByteArray(s!("")),
+            Variant::ByteArray(s!("identityId")),
+            Variant::i32(0),
             Variant::ByteArray(s!("msgRateBurstSize")),
             Variant::u32(5),
             Variant::ByteArray(s!("msgRateMessageDelay")),
@@ -125,6 +150,7 @@ mod tests {
 
     fn get_runtime() -> NetworkInfo {
         NetworkInfo {
+            identity_id: 0,
             network_name: s!("snoonet"),
             server_list: vec![],
             perform: vec![s!("")],
@@ -158,9 +184,6 @@ mod tests {
 
     #[test]
     fn networkinfo_from_network() {
-        assert_eq!(
-            NetworkInfo::from_network_list(&mut get_network()),
-            get_runtime()
-        )
+        assert_eq!(NetworkInfo::from_network_list(&mut get_network()), get_runtime())
     }
 }

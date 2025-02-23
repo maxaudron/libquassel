@@ -10,9 +10,6 @@ use crate::message::StatefulSyncableServer;
 use crate::message::Syncable;
 use crate::primitive::Variant;
 
-#[cfg(feature = "server")]
-use crate::message::signalproxy::translation::NetworkMap;
-
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct HighlightRuleManager {
     #[network(rename = "HighlightRuleList", variant = "VariantMap", network = "map")]

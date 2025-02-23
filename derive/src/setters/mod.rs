@@ -16,6 +16,10 @@ pub struct SetterField {
     /// mainly to show up in the docs
     /// by default using the last word of the name
     var_name: Option<syn::Ident>,
+
+    #[darling(default)]
+    /// Override the name of the function if the desired name does not match the variable name.
+    name: Option<syn::Ident>,
 }
 
 impl SetterField {
@@ -25,9 +29,7 @@ impl SetterField {
                 syn::Fields::Named(fields) => fields
                     .named
                     .iter()
-                    .map(|field| {
-                        SetterField::from_field(field).expect("Could not parse setter field")
-                    })
+                    .map(|field| SetterField::from_field(field).expect("Could not parse setter field"))
                     .collect(),
                 _ => panic!("setter: not a named field"),
             },
@@ -64,24 +66,20 @@ pub fn setters(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             };
 
             let var_name = syn::Ident::new(
-                &setter_field
-                    .var_name
-                    .as_ref()
-                    .map(|v| v.to_string())
-                    .unwrap_or({
-                        let mut res = String::new();
+                &setter_field.var_name.as_ref().map(|v| v.to_string()).unwrap_or({
+                    let mut res = String::new();
 
-                        for c in raw_name.chars().rev() {
-                            if c <= 'Z' && c >= 'A' {
-                                res.push(c.to_ascii_lowercase());
-                                break;
-                            } else {
-                                res.push(c);
-                            }
+                    for c in raw_name.chars().rev() {
+                        if c <= 'Z' && c >= 'A' {
+                            res.push(c.to_ascii_lowercase());
+                            break;
+                        } else {
+                            res.push(c);
                         }
+                    }
 
-                        res.chars().rev().collect()
-                    }),
+                    res.chars().rev().collect()
+                }),
                 Span::call_site(),
             );
 
@@ -91,7 +89,17 @@ pub fn setters(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 .expect("failed to get quassel field ident");
             let ty = &quassel_field.ty;
 
-            let fn_name = syn::Ident::new(&format!("set_{}", ident), Span::call_site());
+            let fn_ident = if let Some(name) = setter_field.name.clone() {
+                name
+            } else {
+                quassel_field
+                    .ident
+                    .as_ref()
+                    .expect("failed to get quassel field ident")
+                    .clone()
+            };
+
+            let fn_name = syn::Ident::new(&format!("set_{}", fn_ident), Span::call_site());
 
             quote! {
                 pub fn #fn_name(&mut self, #var_name: #ty) {
