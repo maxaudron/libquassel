@@ -89,7 +89,40 @@ impl IrcUser {
 }
 
 #[cfg(feature = "client")]
-impl crate::message::StatefulSyncableClient for IrcUser {}
+impl crate::message::StatefulSyncableClient for IrcUser {
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    where
+        Self: Sized,
+    {
+        match msg.slot_name.as_str() {
+            "addUserModes" => self.add_user_modes(get_param!(msg)),
+            "joinChannel" => self.join_channel(get_param!(msg)),
+            "partChannel" => self.part_channel(get_param!(msg)),
+            "quit" => self.quit(),
+            "removeUserModes" => self.remove_user_modes(get_param!(msg)),
+            "setAccount" => self.set_account(get_param!(msg)),
+            "setAway" => self.set_away(get_param!(msg)),
+            "setAwayMessage" => self.set_away_message(get_param!(msg)),
+            "setEncrypted" => self.set_encrypted(get_param!(msg)),
+            "setHost" => self.set_host(get_param!(msg)),
+            "setIdleTime" => self.set_idle_time(get_param!(msg)),
+            "setIrcOperator" => self.set_irc_operator(get_param!(msg)),
+            // TODO
+            // "setLastAwayMessage" => self.,
+            "setLastAwayMessageTime" => self.set_last_away_message_time(get_param!(msg)),
+            "setLoginTime" => self.set_login_time(get_param!(msg)),
+            "setNick" => self.set_nick(get_param!(msg)),
+            "setRealName" => self.set_real_name(get_param!(msg)),
+            "setServer" => self.set_server(get_param!(msg)),
+            "setSuserHost" => self.set_suser_host(get_param!(msg)),
+            "setUser" => self.set_user(get_param!(msg)),
+            "setUserModes" => self.set_user_modes(get_param!(msg)),
+            "setWhoisServiceReply" => self.set_whois_service_reply(get_param!(msg)),
+            "updateHostmask" => self.update_hostmask(get_param!(msg)),
+            _ => unimplemented!(),
+        }
+    }
+}
 
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for IrcUser {}

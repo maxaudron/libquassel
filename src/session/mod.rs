@@ -118,7 +118,25 @@ pub trait SessionManager {
                     warn!("Could not find Network {:?}", network_id)
                 }
             }
-            Class::IrcUser => (),
+            Class::IrcUser => {
+                let mut object_name = msg.object_name.split('/');
+                let network_id: i32 = object_name.next().unwrap().parse().unwrap();
+                let user = object_name.next().unwrap();
+
+                debug!("Syncing IrcUser {} in Network {:?}", user, network_id);
+
+                if let Some(network) = self.network(network_id) {
+                    if let Some(user) = network.irc_users.get_mut(user) {
+                        user.sync(msg);
+                        // TODO we probably need to deal with the quit here?
+                        // and remove the user from the network
+                    } else {
+                        warn!("Could not find IrcUser {} in Network {:?}", user, network_id)
+                    }
+                } else {
+                    warn!("Could not find Network {:?}", network_id)
+                }
+            }
             Class::Unknown => (),
         }
     }
