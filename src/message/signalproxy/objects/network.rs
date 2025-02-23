@@ -42,10 +42,14 @@ impl Network {
     fn determine_channel_mode_types(&mut self) {
         let mut modes: Vec<&str> = self.supports.get("CHANMODES").unwrap().split(',').collect();
 
-        self.channel_modes.insert(ChannelModeType::DChanmode, modes.pop().unwrap().to_owned());
-        self.channel_modes.insert(ChannelModeType::CChanmode, modes.pop().unwrap().to_owned());
-        self.channel_modes.insert(ChannelModeType::BChanmode, modes.pop().unwrap().to_owned());
-        self.channel_modes.insert(ChannelModeType::AChanmode, modes.pop().unwrap().to_owned());
+        self.channel_modes
+            .insert(ChannelModeType::DChanmode, modes.pop().unwrap().to_owned());
+        self.channel_modes
+            .insert(ChannelModeType::CChanmode, modes.pop().unwrap().to_owned());
+        self.channel_modes
+            .insert(ChannelModeType::BChanmode, modes.pop().unwrap().to_owned());
+        self.channel_modes
+            .insert(ChannelModeType::AChanmode, modes.pop().unwrap().to_owned());
     }
 
     fn determine_prefixes(&mut self) {
@@ -63,12 +67,16 @@ impl Network {
                     self.prefixes = default_prefixes;
                     self.prefix_modes = default_prefix_modes;
                 }
-            },
+            }
             None => {
                 self.prefixes = default_prefixes;
                 self.prefix_modes = default_prefix_modes;
-            },
+            }
         }
+    }
+
+    pub fn add_channel(&mut self, name: &str, channel: IrcChannel) {
+        self.irc_channels.insert(name.to_owned(), channel);
     }
 }
 
@@ -116,24 +124,18 @@ impl crate::message::signalproxy::NetworkList for Network {
 
             map.insert(
                 s!("Users"),
-                Variant::VariantMap(self.irc_users.iter().fold(
-                    HashMap::new(),
-                    |mut res, (_, v)| {
-                        res.extend(v.to_network_map());
-
-                        res
-                    },
-                )),
-            );
-
-            let channels = self
-                .irc_channels
-                .iter()
-                .fold(HashMap::new(), |mut res, (_, v)| {
+                Variant::VariantMap(self.irc_users.iter().fold(HashMap::new(), |mut res, (_, v)| {
                     res.extend(v.to_network_map());
 
                     res
-                });
+                })),
+            );
+
+            let channels = self.irc_channels.iter().fold(HashMap::new(), |mut res, (_, v)| {
+                res.extend(v.to_network_map());
+
+                res
+            });
 
             map.insert(s!("Channels"), Variant::VariantMap(channels));
 
@@ -200,10 +202,7 @@ impl crate::message::signalproxy::NetworkList for Network {
                             &mut users.try_into().expect("failed to convert Users"),
                         );
 
-                        users
-                            .into_iter()
-                            .map(|user| (user.nick.clone(), user))
-                            .collect()
+                        users.into_iter().map(|user| (user.nick.clone(), user)).collect()
                     }
                     None => HashMap::new(),
                 }
@@ -227,9 +226,7 @@ impl crate::message::signalproxy::NetworkList for Network {
 
                 let var: VariantMap = i.next().unwrap().try_into().unwrap();
 
-                var.into_iter()
-                    .map(|(k, v)| (k, v.try_into().unwrap()))
-                    .collect()
+                var.into_iter().map(|(k, v)| (k, v.try_into().unwrap())).collect()
             },
             caps: {
                 i.position(|x| *x == Variant::ByteArray(String::from("Caps")))
@@ -237,9 +234,7 @@ impl crate::message::signalproxy::NetworkList for Network {
 
                 let var: VariantMap = i.next().unwrap().try_into().unwrap();
 
-                var.into_iter()
-                    .map(|(k, v)| (k, v.try_into().unwrap()))
-                    .collect()
+                var.into_iter().map(|(k, v)| (k, v.try_into().unwrap())).collect()
             },
             caps_enabled: {
                 i.position(|x| *x == Variant::ByteArray(String::from("CapsEnabled")))
@@ -380,21 +375,39 @@ mod tests {
     fn network_determine_channel_modes() {
         let mut network = Network::default();
 
-        network.supports.insert(s!("CHANMODES"), s!("IXZbegw,k,FHJLWdfjlx,ABCDKMNOPQRSTcimnprstuz"));
+        network.supports.insert(
+            s!("CHANMODES"),
+            s!("IXZbegw,k,FHJLWdfjlx,ABCDKMNOPQRSTcimnprstuz"),
+        );
 
         network.determine_channel_mode_types();
 
-        assert_eq!(network.channel_modes.get(&ChannelModeType::AChanmode).unwrap(), "IXZbegw");
-        assert_eq!(network.channel_modes.get(&ChannelModeType::BChanmode).unwrap(), "k");
-        assert_eq!(network.channel_modes.get(&ChannelModeType::CChanmode).unwrap(), "FHJLWdfjlx");
-        assert_eq!(network.channel_modes.get(&ChannelModeType::DChanmode).unwrap(), "ABCDKMNOPQRSTcimnprstuz");
+        assert_eq!(
+            network.channel_modes.get(&ChannelModeType::AChanmode).unwrap(),
+            "IXZbegw"
+        );
+        assert_eq!(
+            network.channel_modes.get(&ChannelModeType::BChanmode).unwrap(),
+            "k"
+        );
+        assert_eq!(
+            network.channel_modes.get(&ChannelModeType::CChanmode).unwrap(),
+            "FHJLWdfjlx"
+        );
+        assert_eq!(
+            network.channel_modes.get(&ChannelModeType::DChanmode).unwrap(),
+            "ABCDKMNOPQRSTcimnprstuz"
+        );
     }
 
     #[test]
     fn network_get_channel_mode_type() {
         let mut network = Network::default();
 
-        network.supports.insert(s!("CHANMODES"), s!("IXZbegw,k,FHJLWdfjlx,ABCDKMNOPQRSTcimnprstuz"));
+        network.supports.insert(
+            s!("CHANMODES"),
+            s!("IXZbegw,k,FHJLWdfjlx,ABCDKMNOPQRSTcimnprstuz"),
+        );
         network.determine_channel_mode_types();
 
         assert_eq!(network.get_channel_mode_type('b'), ChannelModeType::AChanmode);

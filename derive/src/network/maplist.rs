@@ -1,7 +1,7 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 
-use crate::network::{get_field_variant_type, gen_type};
+use crate::network::{gen_type, get_field_type};
 
 use super::NetworkField;
 
@@ -16,7 +16,6 @@ pub(crate) fn to(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
                 };
 
                 let field_name = field.ident.as_ref().unwrap();
-                let field_type = get_field_variant_type(&field);
 
                 let field_inner = match field.network {
                     crate::network::NetworkRepr::List => quote! {
@@ -30,10 +29,10 @@ pub(crate) fn to(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
                     },
                 };
 
-                if let Some(_) = field.variant {
+                if field.stringlist {
                     quote! {
                         res.insert(#field_rename.to_string(),
-                            libquassel::primitive::Variant::#field_type(
+                            libquassel::primitive::Variant::StringList(
                                 std::vec::from_elem(#field_inner, 1)));
                     }
                 } else {
@@ -69,7 +68,7 @@ pub(crate) fn to_vec(_type_name: &Ident, fields: &Vec<NetworkField>) -> TokenStr
                 let field_type = match field.network {
                     crate::network::NetworkRepr::List => gen_type("VariantList"),
                     crate::network::NetworkRepr::Map => gen_type("VariantMap"),
-                    crate::network::NetworkRepr::None => get_field_variant_type(&field),
+                    crate::network::NetworkRepr::None => get_field_type(&field),
                 };
 
                 let field_inner = match field.network {
@@ -86,7 +85,7 @@ pub(crate) fn to_vec(_type_name: &Ident, fields: &Vec<NetworkField>) -> TokenStr
 
                 // FIXME this section doesn't make any sense to me anymore
                 // why do we select a StringList if we have configured a variant???
-                if let Some(_) = field.variant {
+                if field.stringlist {
                     lists.push(quote! {
                         let mut #field_name: libquassel::primitive::StringList = Vec::with_capacity(self.len());
                     });
@@ -148,8 +147,6 @@ pub(crate) fn from(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
                     None => format!("{}", field.ident.as_ref().unwrap()).into(),
                 };
 
-                let field_type = get_field_variant_type(&field);
-
                 let field_inner = match field.network {
                     super::NetworkRepr::List => quote! {
                         libquassel::message::NetworkList::from_network_list(&mut std::convert::TryInto::try_into(input.remove(0)).unwrap())
@@ -162,10 +159,10 @@ pub(crate) fn from(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
                     },
                 };
 
-                if let Some(_) = field.variant {
+                if field.stringlist {
                     quote! {
                         #field_name: match input.get_mut(#field_rename).unwrap() {
-                            libquassel::primitive::Variant::#field_type(input) => #field_inner,
+                            libquassel::primitive::Variant::StringList(input) => #field_inner,
                             _ => panic!("#field_name: wrong variant")
                         },
                     }
@@ -190,17 +187,10 @@ pub(crate) fn from_vec(type_name: &Ident, fields: &Vec<NetworkField>) -> TokenSt
         None => format!("{}", field.ident.as_ref().unwrap()).into(),
     };
 
-    let _field_name = field.ident.as_ref().unwrap();
-
-    let _field_type = get_field_variant_type(field);
-
-    let field_variant = match &field.variant {
-        None => quote! {libquassel::primitive::VariantList},
-        Some(variant_type) => match variant_type.as_str() {
-            "StringList" => quote! {libquassel::primitive::StringList},
-            "VariantMap" => quote! {libquassel::primitive::VariantMap},
-            _ => quote! {libquassel::primitive::VariantMap},
-        },
+    let field_variant = if field.stringlist {
+        quote! {libquassel::primitive::StringList}
+    } else {
+        quote! {libquassel::primitive::VariantList}
     };
 
     let inner = quote! {

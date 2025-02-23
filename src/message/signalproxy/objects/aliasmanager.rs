@@ -60,9 +60,9 @@ impl Syncable for AliasManager {
 #[derive(Clone, Debug, std::cmp::PartialEq, NetworkMap)]
 #[network(repr = "maplist")]
 pub struct Alias {
-    #[network(rename = "names", variant = "StringList")]
+    #[network(rename = "names", stringlist)]
     pub name: String,
-    #[network(rename = "expansions", variant = "StringList")]
+    #[network(rename = "expansions", stringlist)]
     pub expansion: String,
 }
 

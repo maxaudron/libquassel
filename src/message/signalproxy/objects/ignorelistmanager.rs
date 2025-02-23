@@ -184,7 +184,7 @@ impl Syncable for IgnoreListManager {
 pub struct IgnoreListItem {
     #[network(rename = "ignoreType", type = "i32")]
     pub ignore_type: IgnoreType,
-    #[network(rename = "ignoreRule", variant = "StringList")]
+    #[network(rename = "ignoreRule", stringlist)]
     pub ignore_rule: String,
     #[network(rename = "isRegEx")]
     pub is_regex: bool,
@@ -192,7 +192,7 @@ pub struct IgnoreListItem {
     pub strictness: StrictnessType,
     #[network(rename = "scope", type = "i32")]
     pub scope: ScopeType,
-    #[network(rename = "scopeRule", variant = "StringList")]
+    #[network(rename = "scopeRule", stringlist)]
     pub scope_rule: String,
     #[network(rename = "isActive")]
     pub is_active: bool,

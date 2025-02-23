@@ -23,11 +23,7 @@ pub struct HighlightRuleManager {
 impl HighlightRuleManager {
     /// Get a reference to a specific highlight rule by ID.
     pub fn highlight_rule(&self, id: i32) -> Option<&HighlightRule> {
-        if let Some(position) = self
-            .highlight_rule_list
-            .iter()
-            .position(|rule| rule.id == id)
-        {
+        if let Some(position) = self.highlight_rule_list.iter().position(|rule| rule.id == id) {
             self.highlight_rule_list.get(position)
         } else {
             None
@@ -36,11 +32,7 @@ impl HighlightRuleManager {
 
     /// Get a mutable reference to a specific highlight rule by ID.
     pub fn highlight_rule_mut(&mut self, id: i32) -> Option<&mut HighlightRule> {
-        if let Some(position) = self
-            .highlight_rule_list
-            .iter()
-            .position(|rule| rule.id == id)
-        {
+        if let Some(position) = self.highlight_rule_list.iter().position(|rule| rule.id == id) {
             self.highlight_rule_list.get_mut(position)
         } else {
             None
@@ -90,11 +82,7 @@ impl HighlightRuleManager {
     }
 
     pub fn remove_highlight_rule(&mut self, id: i32) {
-        if let Some(position) = self
-            .highlight_rule_list
-            .iter()
-            .position(|rule| rule.id == id)
-        {
+        if let Some(position) = self.highlight_rule_list.iter().position(|rule| rule.id == id) {
             self.highlight_rule_list.remove(position);
         }
 
@@ -205,7 +193,7 @@ impl Syncable for HighlightRuleManager {
 #[network(repr = "maplist")]
 pub struct HighlightRule {
     pub id: i32,
-    #[network(variant = "StringList")]
+    #[network(stringlist)]
     pub name: String,
     #[quassel(name = "isRegEx")]
     pub is_regex: bool,
@@ -215,9 +203,9 @@ pub struct HighlightRule {
     pub is_enabled: bool,
     #[quassel(name = "isInverse")]
     pub is_inverse: bool,
-    #[network(variant = "StringList")]
+    #[network(stringlist)]
     pub sender: String,
-    #[network(variant = "StringList")]
+    #[network(stringlist)]
     pub channel: String,
 }
 

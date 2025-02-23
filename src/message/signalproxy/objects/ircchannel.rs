@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 #[cfg(feature = "server")]
 use libquassel_derive::sync;
-use libquassel_derive::{NetworkMap, Setters};
+use libquassel_derive::{NetworkList, NetworkMap, Setters};
 use log::{error, warn};
 
 use crate::message::{Class, Syncable};
@@ -11,15 +11,15 @@ use crate::primitive::StringList;
 use super::{ChanModes, ChannelModeType};
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, PartialEq, Setters, NetworkMap)]
+#[derive(Debug, Clone, PartialEq, Setters, NetworkList, NetworkMap)]
 #[network(repr = "maplist")]
 pub struct IrcChannel {
-    #[network(rename = "ChanModes", network = "map")]
+    #[network(rename = "ChanModes", variant = "VariantMap", network = "map")]
     pub chan_modes: ChanModes,
 
     // pub channel_modes: HashMap<char, ChannelMode>,
     #[setter(skip)]
-    #[network(rename = "UserModes", network = "map")]
+    #[network(rename = "UserModes", variant = "VariantMap", network = "map")]
     pub user_modes: HashMap<String, String>,
     #[setter(skip)]
     pub name: String,
@@ -180,6 +180,7 @@ impl crate::message::StatefulSyncableClient for IrcChannel {
     where
         Self: Sized,
     {
+        unimplemented!()
     }
 }
 
@@ -190,6 +191,7 @@ impl crate::message::StatefulSyncableServer for IrcChannel {
     where
         Self: Sized,
     {
+        unimplemented!()
     }
 }
 
@@ -201,24 +203,24 @@ impl Syncable for IrcChannel {
 mod tests {
     use super::*;
 
-    use crate::primitive::{Variant, VariantMap};
     use crate::message::NetworkMap;
+    use crate::primitive::{Variant, VariantMap};
 
     fn get_network() -> VariantMap {
         map! {
             s!("encrypted") =>
-                    Variant::bool(
+                    Variant::VariantList(vec![Variant::bool(
                         false,
-                    ),
+                    )]),
             s!("topic") =>
-                    Variant::String(
+                    Variant::VariantList(vec![Variant::String(
                         s!(""),
-                    ),
+                    )]),
             s!("password") =>
-                    Variant::String(
+                    Variant::VariantList(vec![Variant::String(
                         s!(""),
-                    ),
-            s!("ChanModes") => Variant::VariantMap(map!
+                    )]),
+            s!("ChanModes") => Variant::VariantList(vec![Variant::VariantMap(map!
                         {
                             s!("B") => Variant::VariantMap(map!
                                 {},
@@ -246,9 +248,9 @@ mod tests {
                                 s!("b") => Variant::StringList(vec![s!("*!*@test"), s!("*!*@test2")]),
                             }),
                         },
-                    ),
+                    )]),
             s!("UserModes") =>
-                    Variant::VariantMap(map!
+                    Variant::VariantList(vec![Variant::VariantMap(map!
                         {
                             s!("audron") => Variant::String(
                                 s!("o"),
@@ -257,11 +259,11 @@ mod tests {
                                 s!(""),
                             ),
                         },
-                    ),
+                    )]),
             s!("name") =>
-                    Variant::String(
+                    Variant::VariantList(vec![Variant::String(
                         s!("#audron-test"),
-                    ),
+                    )]),
         }
     }
     fn get_runtime() -> IrcChannel {
@@ -287,10 +289,7 @@ mod tests {
 
     #[test]
     fn ircchannel_from_network() {
-        assert_eq!(
-            IrcChannel::from_network_map(&mut get_network()),
-            get_runtime()
-        )
+        assert_eq!(IrcChannel::from_network_map(&mut get_network()), get_runtime())
     }
 
     #[test]
@@ -304,8 +303,7 @@ mod tests {
         base.add_user_mode(s!("audron"), s!("o"));
         assert_eq!(res, base);
 
-        res.user_modes =
-            map! { s!("audron") => s!("oh"), s!("audron_") => s!(""), s!("test") => s!("h") };
+        res.user_modes = map! { s!("audron") => s!("oh"), s!("audron_") => s!(""), s!("test") => s!("h") };
         base.add_user_mode(s!("test"), s!("h"));
         assert_eq!(res, base);
     }

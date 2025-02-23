@@ -81,20 +81,18 @@ pub trait SessionManager {
                             "addChannelMode" => {
                                 let mut msg = msg.clone();
                                 let mode: char = get_param!(msg);
-                                let mode_type: ChannelModeType =
-                                    network.get_channel_mode_type(mode);
+                                let mode_type: ChannelModeType = network.get_channel_mode_type(mode);
 
-                                network
-                                    .irc_channels
-                                    .get_mut(channel)
-                                    .unwrap()
-                                    .add_channel_mode(mode_type, mode, get_param!(msg));
+                                network.irc_channels.get_mut(channel).unwrap().add_channel_mode(
+                                    mode_type,
+                                    mode,
+                                    get_param!(msg),
+                                );
                             }
                             "removeChannelMode" => {
                                 let mut msg = msg.clone();
                                 let mode: char = get_param!(msg);
-                                let mode_type: ChannelModeType =
-                                    network.get_channel_mode_type(mode);
+                                let mode_type: ChannelModeType = network.get_channel_mode_type(mode);
 
                                 network
                                     .irc_channels
@@ -102,11 +100,7 @@ pub trait SessionManager {
                                     .unwrap()
                                     .remove_channel_mode(mode_type, mode, get_param!(msg));
                             }
-                            _ => network
-                                .irc_channels
-                                .get_mut(channel)
-                                .unwrap()
-                                .sync(msg.clone()),
+                            _ => network.irc_channels.get_mut(channel).unwrap().sync(msg.clone()),
                         }
                     }
                 } else {
@@ -138,6 +132,14 @@ pub trait SessionManager {
             }
             Types::NetworkInfo(_) => (),
             Types::NetworkConfig(_) => (),
+            Types::IrcChannel(channel) => {
+                let mut name = data.object_name.split("/");
+                let id: i32 = name.next().unwrap().parse().unwrap();
+                let name = name.next().unwrap();
+                if let Some(network) = self.network(id) {
+                    network.add_channel(name, channel)
+                }
+            }
             Types::Unknown(_) => (),
         }
     }

@@ -61,6 +61,12 @@ pub struct NetworkField {
     /// Skips this field when serializing to network representation
     #[darling(default)]
     skip: bool,
+
+    /// Special reprensentation case for NetworkMap maplist repr
+    /// in which case if the field is a String a StringList will be used instead of a VariantList
+    /// this cannot be switched with variant as that leads to collisions with the other network representations
+    #[darling(default)]
+    stringlist: bool,
 }
 
 fn parse_fields(input: &syn::DeriveInput) -> Vec<NetworkField> {
@@ -85,14 +91,11 @@ pub fn network_map(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut fields = parse_fields(&input);
     let quassel_fields = super::QuasselField::parse(&input);
 
-    fields
-        .iter_mut()
-        .zip(quassel_fields)
-        .for_each(|(field, qfield)| {
-            if field.rename.is_none() {
-                field.rename = qfield.name
-            }
-        });
+    fields.iter_mut().zip(quassel_fields).for_each(|(field, qfield)| {
+        if field.rename.is_none() {
+            field.rename = qfield.name
+        }
+    });
 
     let name = &input.ident;
 
@@ -171,14 +174,11 @@ pub fn network_list(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut fields = parse_fields(&input);
     let quassel_fields = super::QuasselField::parse(&input);
 
-    fields
-        .iter_mut()
-        .zip(quassel_fields)
-        .for_each(|(field, qfield)| {
-            if field.rename.is_none() {
-                field.rename = qfield.name
-            }
-        });
+    fields.iter_mut().zip(quassel_fields).for_each(|(field, qfield)| {
+        if field.rename.is_none() {
+            field.rename = qfield.name
+        }
+    });
 
     let name = &input.ident;
 
@@ -227,8 +227,7 @@ fn gen_type(typ: &str) -> syn::Type {
         path: syn::Path {
             leading_colon: None,
             segments: {
-                let mut res =
-                    syn::punctuated::Punctuated::<syn::PathSegment, syn::token::Colon2>::new();
+                let mut res = syn::punctuated::Punctuated::<syn::PathSegment, syn::token::Colon2>::new();
 
                 res.push(syn::PathSegment {
                     ident: syn::Ident::new(typ, proc_macro2::Span::call_site()),
