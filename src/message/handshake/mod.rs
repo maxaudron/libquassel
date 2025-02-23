@@ -22,6 +22,7 @@ pub use features::*;
 pub use init::*;
 pub use protocol::*;
 pub use sessioninit::*;
+#[allow(unused_imports)]
 pub use types::*;
 
 use crate::error::ProtocolError;

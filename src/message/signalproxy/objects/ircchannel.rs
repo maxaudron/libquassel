@@ -51,7 +51,7 @@ impl IrcChannel {
             }
         };
     }
-    pub fn remove_channel_mode(&mut self, mode_type: ChannelModeType, mode: char, value: String) {
+    pub fn remove_channel_mode(&mut self, mode_type: ChannelModeType, mode: char, _value: String) {
         match mode_type {
             ChannelModeType::NotAChanmode => (),
             ChannelModeType::AChanmode => {

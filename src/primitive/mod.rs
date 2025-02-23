@@ -12,9 +12,12 @@ mod variantmap;
 pub use bufferinfo::*;
 pub use datetime::*;
 pub use message::*;
+#[allow(unused_imports)]
 pub use signedint::*;
+#[allow(unused_imports)]
 pub use string::*;
 pub use stringlist::*;
+#[allow(unused_imports)]
 pub use unsignedint::*;
 pub use variant::*;
 pub use variantlist::*;

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+#[cfg(feature = "server")]
 use crate::message::StatefulSyncableServer;
 
 use log::{debug, warn};

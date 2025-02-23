@@ -1,4 +1,3 @@
-#![allow(unused_variables, unused_imports)]
 #![cfg_attr(all(test, feature = "bench"), feature(test))]
 #[cfg(all(test, feature = "bench"))]
 extern crate test;

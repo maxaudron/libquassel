@@ -48,6 +48,7 @@
 //     receiveBacklogAllFiltered(first: MsgId, last: MsgId, limit: Int, additional: Int, type: Int, flags: Int, messages: QVariantList)
 // }
 
+#![allow(unused_variables, unused_imports)]
 #![allow(non_snake_case, dead_code)]
 
 use crate::primitive::VariantList;
