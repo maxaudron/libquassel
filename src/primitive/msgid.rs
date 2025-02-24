@@ -1,4 +1,5 @@
 #[derive(Copy, Clone, Debug, std::cmp::PartialEq)]
+#[repr(transparent)]
 pub struct MsgId(
     #[cfg(not(feature = "long-message-id"))] pub i32,
     #[cfg(feature = "long-message-id")] pub i64,
