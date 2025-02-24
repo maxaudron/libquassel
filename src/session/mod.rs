@@ -55,6 +55,7 @@ pub trait SessionManager {
             Class::BufferViewConfig => (),
             Class::BufferViewManager => self.buffer_view_manager().sync(msg),
             Class::CoreInfo => self.core_info().sync(msg),
+            // Synced via CoreInfo
             Class::CoreData => (),
             Class::HighlightRuleManager => self.highlight_rule_manager().sync(msg),
             Class::Identity => {
@@ -73,6 +74,7 @@ pub trait SessionManager {
                     network.sync(msg)
                 }
             }
+            // NetworkInfo does not receive SyncMessages directly but via Network
             Class::NetworkInfo => (),
             Class::NetworkConfig => match msg.object_name.as_ref() {
                 "GlobalNetworkConfig" => self.network_config().sync(msg),
@@ -144,7 +146,7 @@ pub trait SessionManager {
                     warn!("Could not find Network {:?}", network_id)
                 }
             }
-            Class::Unknown => (),
+            Class::Unknown => warn!("received unknown object syncmessage: {:?}", msg),
         }
     }
 
