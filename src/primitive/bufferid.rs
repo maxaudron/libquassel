@@ -1,4 +1,4 @@
-#[derive(Copy, Clone, Debug, std::cmp::PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct BufferId(pub i32);
 
@@ -14,6 +14,20 @@ impl Deserialize for BufferId {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (size, value) = i32::parse(b)?;
         return Ok((size, BufferId(value)));
+    }
+}
+
+impl From<i32> for BufferId {
+    fn from(value: i32) -> Self {
+        BufferId(value)
+    }
+}
+
+impl std::ops::Deref for BufferId {
+    type Target = i32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

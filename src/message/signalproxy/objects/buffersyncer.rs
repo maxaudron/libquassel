@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use crate::{
-    message::{Syncable, Class},
-    primitive::MessageType,
+    message::{Class, Syncable},
+    primitive::{BufferId, MessageType, MsgId},
 };
 
 use libquassel_derive::{sync, NetworkList, NetworkMap};
@@ -10,13 +10,13 @@ use libquassel_derive::{sync, NetworkList, NetworkMap};
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct BufferSyncer {
     #[network(rename = "Activities", network = "list", variant = "VariantList")]
-    pub activities: HashMap<i32, MessageType>,
+    pub activities: HashMap<BufferId, MessageType>,
     #[network(rename = "HighlightCounts", network = "list", variant = "VariantList")]
-    pub highlight_counts: HashMap<i32, i32>,
+    pub highlight_counts: HashMap<BufferId, i32>,
     #[network(rename = "LastSeenMsg", network = "list", variant = "VariantList")]
-    pub last_seen_msg: HashMap<i32, i64>,
+    pub last_seen_msg: HashMap<BufferId, MsgId>,
     #[network(rename = "MarkerLines", network = "list", variant = "VariantList")]
-    pub marker_line: HashMap<i32, i64>,
+    pub marker_line: HashMap<BufferId, MsgId>,
 }
 
 impl BufferSyncer {
@@ -50,7 +50,7 @@ impl BufferSyncer {
 
     // // S->C calls
 
-    pub fn mark_buffer_as_read(&mut self, id: i32) {
+    pub fn mark_buffer_as_read(&mut self, id: BufferId) {
         self.set_buffer_activity(id, MessageType::NONE);
         self.set_highlight_count(id, 0);
 
@@ -58,7 +58,7 @@ impl BufferSyncer {
         sync!("markBufferAsRead", [id]);
     }
 
-    pub fn merge_buffers_permanently(&mut self, target: i32, source: i32) {
+    pub fn merge_buffers_permanently(&mut self, target: BufferId, source: BufferId) {
         if let Some(activities) = self.activities.remove(&source) {
             *self.activities.entry(target).or_insert(MessageType::NONE) |= activities;
         }
@@ -86,7 +86,7 @@ impl BufferSyncer {
     }
 
     // TODO remove buffer from bufferviews
-    pub fn remove_buffer(&mut self, id: i32) {
+    pub fn remove_buffer(&mut self, id: BufferId) {
         self.activities.remove(&id);
         self.highlight_counts.remove(&id);
         self.last_seen_msg.remove(&id);
@@ -104,28 +104,28 @@ impl BufferSyncer {
         sync!("renameBuffer", [id, name]);
     }
 
-    pub fn set_buffer_activity(&mut self, id: i32, activity: MessageType) {
+    pub fn set_buffer_activity(&mut self, id: BufferId, activity: MessageType) {
         *self.activities.entry(id).or_insert(MessageType::NONE) = activity;
 
         #[cfg(feature = "server")]
         sync!("setBufferActivity", [id, activity.bits()]);
     }
 
-    pub fn set_highlight_count(&mut self, id: i32, count: i32) {
+    pub fn set_highlight_count(&mut self, id: BufferId, count: i32) {
         *self.highlight_counts.entry(id).or_default() = count;
 
         #[cfg(feature = "server")]
         sync!("setHighlightCount", [id, count]);
     }
 
-    pub fn set_last_seen_msg(&mut self, id: i32, msg_id: i64) {
+    pub fn set_last_seen_msg(&mut self, id: BufferId, msg_id: MsgId) {
         *self.last_seen_msg.entry(id).or_default() = msg_id;
 
         #[cfg(feature = "server")]
         sync!("setHighlightCount", [id, msg_id]);
     }
 
-    pub fn set_marker_line(&mut self, id: i32, msg_id: i64) {
+    pub fn set_marker_line(&mut self, id: BufferId, msg_id: MsgId) {
         *self.marker_line.entry(id).or_default() = msg_id;
 
         #[cfg(feature = "server")]
@@ -141,9 +141,7 @@ impl crate::message::StatefulSyncableClient for BufferSyncer {
     {
         match msg.slot_name.as_str() {
             "markBufferAsRead" => self.mark_buffer_as_read(get_param!(msg)),
-            "mergeBuffersPermanently" => {
-                self.merge_buffers_permanently(get_param!(msg), get_param!(msg))
-            }
+            "mergeBuffersPermanently" => self.merge_buffers_permanently(get_param!(msg), get_param!(msg)),
             "removeBuffer" => self.remove_buffer(get_param!(msg)),
             "renameBuffer" => self.rename_buffer(get_param!(msg), get_param!(msg)),
             "setBufferActivity" => self.set_buffer_activity(
@@ -194,55 +192,55 @@ mod tests {
         vec![
             Variant::ByteArray(s!("Activities")),
             Variant::VariantList(vec![
-                Variant::i32(1),
+                Variant::BufferId(BufferId(1)),
                 Variant::i32(0),
-                Variant::i32(2),
+                Variant::BufferId(BufferId(2)),
                 Variant::i32(0),
-                Variant::i32(3),
+                Variant::BufferId(BufferId(3)),
                 Variant::i32(0),
-                Variant::i32(4),
+                Variant::BufferId(BufferId(4)),
                 Variant::i32(0),
-                Variant::i32(5),
+                Variant::BufferId(BufferId(5)),
                 Variant::i32(0),
             ]),
             Variant::ByteArray(s!("HighlightCounts")),
             Variant::VariantList(vec![
-                Variant::i32(1),
+                Variant::BufferId(BufferId(1)),
                 Variant::i32(0),
-                Variant::i32(2),
+                Variant::BufferId(BufferId(2)),
                 Variant::i32(0),
-                Variant::i32(3),
+                Variant::BufferId(BufferId(3)),
                 Variant::i32(0),
-                Variant::i32(4),
+                Variant::BufferId(BufferId(4)),
                 Variant::i32(0),
-                Variant::i32(5),
+                Variant::BufferId(BufferId(5)),
                 Variant::i32(0),
             ]),
             Variant::ByteArray(s!("LastSeenMsg")),
             Variant::VariantList(vec![
-                Variant::i32(1),
-                Variant::i64(2185),
-                Variant::i32(2),
-                Variant::i64(2188),
-                Variant::i32(3),
-                Variant::i64(860),
-                Variant::i32(4),
-                Variant::i64(2183),
-                Variant::i32(5),
-                Variant::i64(2180),
+                Variant::BufferId(BufferId(1)),
+                Variant::MsgId(MsgId(2185)),
+                Variant::BufferId(BufferId(2)),
+                Variant::MsgId(MsgId(2188)),
+                Variant::BufferId(BufferId(3)),
+                Variant::MsgId(MsgId(860)),
+                Variant::BufferId(BufferId(4)),
+                Variant::MsgId(MsgId(2183)),
+                Variant::BufferId(BufferId(5)),
+                Variant::MsgId(MsgId(2180)),
             ]),
             Variant::ByteArray(s!("MarkerLines")),
             Variant::VariantList(vec![
-                Variant::i32(1),
-                Variant::i64(2185),
-                Variant::i32(2),
-                Variant::i64(2188),
-                Variant::i32(3),
-                Variant::i64(860),
-                Variant::i32(4),
-                Variant::i64(1527),
-                Variant::i32(5),
-                Variant::i64(2180),
+                Variant::BufferId(BufferId(1)),
+                Variant::MsgId(MsgId(2185)),
+                Variant::BufferId(BufferId(2)),
+                Variant::MsgId(MsgId(2188)),
+                Variant::BufferId(BufferId(3)),
+                Variant::MsgId(MsgId(860)),
+                Variant::BufferId(BufferId(4)),
+                Variant::MsgId(MsgId(1527)),
+                Variant::BufferId(BufferId(5)),
+                Variant::MsgId(MsgId(2180)),
             ]),
         ]
     }
@@ -250,32 +248,32 @@ mod tests {
     fn get_runtime() -> BufferSyncer {
         BufferSyncer {
             activities: map! {
-                1 => MessageType::NONE,
-                2 => MessageType::NONE,
-                3 => MessageType::NONE,
-                4 => MessageType::NONE,
-                5 => MessageType::NONE,
+                BufferId(1) => MessageType::NONE,
+                BufferId(2) => MessageType::NONE,
+                BufferId(3) => MessageType::NONE,
+                BufferId(4) => MessageType::NONE,
+                BufferId(5) => MessageType::NONE,
             },
             highlight_counts: map! {
-                1 => 0,
-                2 => 0,
-                3 => 0,
-                4 => 0,
-                5 => 0,
+                BufferId(1) => 0,
+                BufferId(2) => 0,
+                BufferId(3) => 0,
+                BufferId(4) => 0,
+                BufferId(5) => 0,
             },
             last_seen_msg: map! {
-                1 => 2185,
-                2 => 2188,
-                3 => 860,
-                4 => 2183,
-                5 => 2180,
+                BufferId(1) => MsgId(2185),
+                BufferId(2) => MsgId(2188),
+                BufferId(3) => MsgId(860),
+                BufferId(4) => MsgId(2183),
+                BufferId(5) => MsgId(2180),
             },
             marker_line: map! {
-                1 => 2185,
-                2 => 2188,
-                3 => 860,
-                4 => 1527,
-                5 => 2180,
+                BufferId(1) => MsgId(2185),
+                BufferId(2) => MsgId(2188),
+                BufferId(3) => MsgId(860),
+                BufferId(4) => MsgId(1527),
+                BufferId(5) => MsgId(2180),
             },
         }
     }
@@ -288,9 +286,6 @@ mod tests {
 
     #[test]
     fn buffersyncer_from_network() {
-        assert_eq!(
-            BufferSyncer::from_network_list(&mut get_network()),
-            get_runtime()
-        )
+        assert_eq!(BufferSyncer::from_network_list(&mut get_network()), get_runtime())
     }
 }

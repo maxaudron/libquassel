@@ -7,20 +7,20 @@ use crate::message::StatefulSyncableClient;
 use crate::message::StatefulSyncableServer;
 use crate::message::{Class, Syncable};
 
-use crate::primitive::VariantList;
+use crate::primitive::{BufferId, VariantList};
 
 #[derive(Debug, Default, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct BufferViewConfig {
     #[network(rename = "BufferList", network = "map", variant = "VariantList")]
-    pub buffers: Vec<i32>,
+    pub buffers: Vec<BufferId>,
     #[network(rename = "RemovedBuffers", network = "map", variant = "VariantList")]
-    pub removed_buffers: Vec<i32>,
+    pub removed_buffers: Vec<BufferId>,
     #[network(
         rename = "TemporarilyRemovedBuffers",
         network = "map",
         variant = "VariantList"
     )]
-    pub temporarily_removed_buffers: Vec<i32>,
+    pub temporarily_removed_buffers: Vec<BufferId>,
 
     #[network(rename = "bufferViewId", default, skip)]
     pub buffer_view_id: i32,
@@ -49,11 +49,11 @@ pub struct BufferViewConfig {
 
 #[allow(dead_code)]
 impl BufferViewConfig {
-    pub fn request_add_buffer(&self, id: i32, pos: usize) {
+    pub fn request_add_buffer(&self, id: BufferId, pos: usize) {
         sync!("requestAddBuffer", [id, (pos as i32)]);
     }
 
-    pub fn add_buffer(&mut self, id: i32, pos: usize) {
+    pub fn add_buffer(&mut self, id: BufferId, pos: usize) {
         if !self.buffers.contains(&id) {
             self.buffers.insert(pos, id)
         }
@@ -62,11 +62,7 @@ impl BufferViewConfig {
             self.removed_buffers.remove(old_pos);
         }
 
-        if let Some(old_pos) = self
-            .temporarily_removed_buffers
-            .iter()
-            .position(|&x| x == id)
-        {
+        if let Some(old_pos) = self.temporarily_removed_buffers.iter().position(|&x| x == id) {
             self.temporarily_removed_buffers.remove(old_pos);
         }
 
@@ -74,11 +70,11 @@ impl BufferViewConfig {
         sync!("addBuffer", [id, (pos as i32)]);
     }
 
-    pub fn request_move_buffer(&self, id: i32, pos: usize) {
+    pub fn request_move_buffer(&self, id: BufferId, pos: usize) {
         sync!("requestMoveBuffer", [id, (pos as i32)]);
     }
 
-    pub fn move_buffer(&mut self, id: i32, pos: usize) {
+    pub fn move_buffer(&mut self, id: BufferId, pos: usize) {
         let old_pos = self.buffers.iter().position(|&x| x == id).unwrap();
         self.buffers.remove(old_pos);
         self.buffers.insert(pos, id);
@@ -87,11 +83,11 @@ impl BufferViewConfig {
         sync!("moveBuffer", [id, (pos as i32)]);
     }
 
-    pub fn request_remove_buffer(&mut self, id: i32) {
+    pub fn request_remove_buffer(&mut self, id: BufferId) {
         sync!("requestRemoveBuffer", [id]);
     }
 
-    pub fn remove_buffer(&mut self, id: i32) {
+    pub fn remove_buffer(&mut self, id: BufferId) {
         if let Some(old_pos) = self.buffers.iter().position(|&x| x == id) {
             self.buffers.remove(old_pos);
         }
@@ -108,20 +104,16 @@ impl BufferViewConfig {
         sync!("removeBuffer", [id]);
     }
 
-    pub fn request_remove_buffer_permanently(&mut self, id: i32) {
+    pub fn request_remove_buffer_permanently(&mut self, id: BufferId) {
         sync!("requestRemoveBufferPermanently", [id]);
     }
 
-    pub fn remove_buffer_permanently(&mut self, id: i32) {
+    pub fn remove_buffer_permanently(&mut self, id: BufferId) {
         if let Some(old_pos) = self.buffers.iter().position(|&x| x == id) {
             self.buffers.remove(old_pos);
         }
 
-        if let Some(old_pos) = self
-            .temporarily_removed_buffers
-            .iter()
-            .position(|&x| x == id)
-        {
+        if let Some(old_pos) = self.temporarily_removed_buffers.iter().position(|&x| x == id) {
             self.temporarily_removed_buffers.remove(old_pos);
         }
 
@@ -181,27 +173,17 @@ impl StatefulSyncableServer for BufferViewConfig {
             "setAddNewBuffersAutomatically" => {
                 self.add_new_buffers_automatically = msg.params.remove(0).try_into().unwrap()
             }
-            "setAllowedBufferTypes" => {
-                self.allowed_buffer_types = msg.params.remove(0).try_into().unwrap()
-            }
+            "setAllowedBufferTypes" => self.allowed_buffer_types = msg.params.remove(0).try_into().unwrap(),
             "setBufferViewName" => self.buffer_view_name = msg.params.remove(0).try_into().unwrap(),
-            "setDisableDecoration" => {
-                self.disable_decoration = msg.params.remove(0).try_into().unwrap()
-            }
-            "setHideInactiveBuffers" => {
-                self.hide_inactive_buffers = msg.params.remove(0).try_into().unwrap()
-            }
+            "setDisableDecoration" => self.disable_decoration = msg.params.remove(0).try_into().unwrap(),
+            "setHideInactiveBuffers" => self.hide_inactive_buffers = msg.params.remove(0).try_into().unwrap(),
             "setHideInactiveNetworks" => {
                 self.hide_inactive_networks = msg.params.remove(0).try_into().unwrap()
             }
-            "setMinimumActivity" => {
-                self.minimum_activity = msg.params.remove(0).try_into().unwrap()
-            }
+            "setMinimumActivity" => self.minimum_activity = msg.params.remove(0).try_into().unwrap(),
             "setNetworkId" => self.network_id = msg.params.remove(0).try_into().unwrap(),
             "setShowSearch" => self.show_search = msg.params.remove(0).try_into().unwrap(),
-            "setSortAlphabetically" => {
-                self.sort_alphabetically = msg.params.remove(0).try_into().unwrap()
-            }
+            "setSortAlphabetically" => self.sort_alphabetically = msg.params.remove(0).try_into().unwrap(),
             _ => (),
         }
     }
@@ -226,9 +208,9 @@ mod tests {
 
     fn bufferviewconfig_sample() -> BufferViewConfig {
         BufferViewConfig {
-            buffers: vec![1, 2, 3],
-            removed_buffers: vec![4, 5],
-            temporarily_removed_buffers: vec![6, 7],
+            buffers: vec![1.into(), 2.into(), 3.into()],
+            removed_buffers: vec![4.into(), 5.into()],
+            temporarily_removed_buffers: vec![6.into(), 7.into()],
             ..Default::default()
         }
     }
@@ -237,17 +219,17 @@ mod tests {
     fn bufferviewconfig_add_buffer() {
         // Add existing buffer, no change
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.add_buffer(1, 2);
+        buffer_view_config.add_buffer(1.into(), 2);
         assert_eq!(bufferviewconfig_sample(), buffer_view_config);
 
         // Add new buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.add_buffer(10, 1);
+        buffer_view_config.add_buffer(10.into(), 1);
         assert_eq!(
             BufferViewConfig {
-                buffers: vec![1, 10, 2, 3],
-                removed_buffers: vec![4, 5],
-                temporarily_removed_buffers: vec![6, 7],
+                buffers: vec![1.into(), 10.into(), 2.into(), 3.into()],
+                removed_buffers: vec![4.into(), 5.into()],
+                temporarily_removed_buffers: vec![6.into(), 7.into()],
                 ..Default::default()
             },
             buffer_view_config
@@ -255,17 +237,17 @@ mod tests {
 
         // Add new buffer, remove from removed buffers
         let mut buffer_view_config = BufferViewConfig {
-            buffers: vec![1, 2, 3],
-            removed_buffers: vec![4, 5, 10],
-            temporarily_removed_buffers: vec![6, 7, 10],
+            buffers: vec![1.into(), 2.into(), 3.into()],
+            removed_buffers: vec![4.into(), 5.into(), 10.into()],
+            temporarily_removed_buffers: vec![6.into(), 7.into(), 10.into()],
             ..Default::default()
         };
-        buffer_view_config.add_buffer(10, 1);
+        buffer_view_config.add_buffer(10.into(), 1);
         assert_eq!(
             BufferViewConfig {
-                buffers: vec![1, 10, 2, 3],
-                removed_buffers: vec![4, 5],
-                temporarily_removed_buffers: vec![6, 7],
+                buffers: vec![1.into(), 10.into(), 2.into(), 3.into()],
+                removed_buffers: vec![4.into(), 5.into()],
+                temporarily_removed_buffers: vec![6.into(), 7.into()],
                 ..Default::default()
             },
             buffer_view_config
@@ -276,17 +258,17 @@ mod tests {
     fn bufferviewconfig_remove_buffer() {
         // Remove already removed buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.remove_buffer(6);
+        buffer_view_config.remove_buffer(6.into());
         assert_eq!(bufferviewconfig_sample(), buffer_view_config);
 
         // Remove buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.remove_buffer(1);
+        buffer_view_config.remove_buffer(1.into());
         assert_eq!(
             BufferViewConfig {
-                buffers: vec![2, 3],
-                removed_buffers: vec![4, 5],
-                temporarily_removed_buffers: vec![6, 7, 1],
+                buffers: vec![2.into(), 3.into()],
+                removed_buffers: vec![4.into(), 5.into()],
+                temporarily_removed_buffers: vec![6.into(), 7.into(), 1.into()],
                 ..Default::default()
             },
             buffer_view_config
@@ -297,17 +279,17 @@ mod tests {
     fn bufferviewconfig_remove_buffer_permanently() {
         // Remove already removed buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.remove_buffer_permanently(4);
+        buffer_view_config.remove_buffer_permanently(4.into());
         assert_eq!(bufferviewconfig_sample(), buffer_view_config);
 
         // Remove buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.remove_buffer_permanently(1);
+        buffer_view_config.remove_buffer_permanently(1.into());
         assert_eq!(
             BufferViewConfig {
-                buffers: vec![2, 3],
-                removed_buffers: vec![4, 5, 1],
-                temporarily_removed_buffers: vec![6, 7],
+                buffers: vec![2.into(), 3.into()],
+                removed_buffers: vec![4.into(), 5.into(), 1.into()],
+                temporarily_removed_buffers: vec![6.into(), 7.into()],
                 ..Default::default()
             },
             buffer_view_config
@@ -318,17 +300,17 @@ mod tests {
     fn bufferviewconfig_move_buffer() {
         // Do nothing
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.move_buffer(1, 0);
+        buffer_view_config.move_buffer(1.into(), 0);
         assert_eq!(bufferviewconfig_sample(), buffer_view_config);
 
         // Move buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.move_buffer(1, 1);
+        buffer_view_config.move_buffer(1.into(), 1);
         assert_eq!(
             BufferViewConfig {
-                buffers: vec![2, 1, 3],
-                removed_buffers: vec![4, 5],
-                temporarily_removed_buffers: vec![6, 7],
+                buffers: vec![2.into(), 1.into(), 3.into()],
+                removed_buffers: vec![4.into(), 5.into()],
+                temporarily_removed_buffers: vec![6.into(), 7.into()],
                 ..Default::default()
             },
             buffer_view_config

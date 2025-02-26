@@ -288,7 +288,7 @@ impl Serialize for Variant {
 
 impl Deserialize for Variant {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
-        trace!("trying to parse variant with bytes: {:?}", b);
+        trace!("trying to parse variant with bytes: {:x?}", b);
         let (_, qtype) = i32::parse(&b[0..4])?;
         let qtype = qtype as u32;
 
@@ -805,7 +805,7 @@ mod tests {
     #[test]
     fn bufferid_deserialize() {
         let test_bytes = vec![
-            0, 0, 0, 127, 0, 0, 0, 0, 8, 66, 117, 102, 102, 101, 114, 73, 100, 0, 0, 0, 1
+            0, 0, 0, 127, 0, 0, 0, 0, 8, 66, 117, 102, 102, 101, 114, 73, 100, 0, 0, 0, 1,
         ];
         assert_eq!(
             (test_bytes.len(), Variant::BufferId(BufferId(1))),

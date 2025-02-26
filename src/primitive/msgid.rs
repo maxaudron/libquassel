@@ -1,4 +1,4 @@
-#[derive(Copy, Clone, Debug, std::cmp::PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[repr(transparent)]
 pub struct MsgId(
     #[cfg(not(feature = "long-message-id"))] pub i32,
@@ -21,6 +21,31 @@ impl Deserialize for MsgId {
         #[cfg(feature = "long-message-id")]
         let (size, value) = i64::parse(b)?;
         return Ok((size, MsgId(value)));
+    }
+}
+
+#[cfg(not(feature = "long-message-id"))]
+impl From<i32> for MsgId {
+    fn from(value: i32) -> Self {
+        Self(value)
+    }
+}
+
+#[cfg(feature = "long-message-id")]
+impl From<i64> for MsgId {
+    fn from(value: i64) -> Self {
+        Self(value)
+    }
+}
+
+impl std::ops::Deref for MsgId {
+    #[cfg(not(feature = "long-message-id"))]
+    type Target = i32;
+    #[cfg(feature = "long-message-id")]
+    type Target = i64;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
