@@ -4,8 +4,8 @@ use itertools::Itertools;
 use log::{error, trace};
 
 use crate::error::ProtocolError;
-use crate::primitive::StringList;
 use crate::primitive::{self, PeerPtr};
+use crate::primitive::{IdentityId, StringList};
 use crate::serialize::*;
 
 use crate::primitive::{BufferId, BufferInfo, Date, DateTime, Message, MsgId, Time, VariantList, VariantMap};
@@ -28,6 +28,7 @@ pub enum Variant {
     UserType(String, Vec<u8>),
     BufferId(BufferId),
     BufferInfo(BufferInfo),
+    IdentityId(IdentityId),
     Message(Message),
     MsgId(MsgId),
     Time(Time),
@@ -190,6 +191,7 @@ impl Serialize for Variant {
             }
             Variant::BufferId(v) => v.serialize_variant(),
             Variant::BufferInfo(v) => v.serialize_variant(),
+            Variant::IdentityId(v) => v.serialize_variant(),
             Variant::Message(v) => v.serialize_variant(),
             Variant::MsgId(v) => v.serialize_variant(),
             Variant::PeerPtr(v) => v.serialize_variant(),
@@ -250,12 +252,13 @@ impl Deserialize for Variant {
                         return Ok((len + user_type_len + vlen, Variant::VariantMap(value)));
                     }
                     // As i32
-                    "IdentityId" | "NetworkId" => {
+                    "NetworkId" => {
                         trace!(target: "primitive::Variant", "UserType is i32");
 
                         let (vlen, value) = i32::parse(&b[(len + user_type_len)..])?;
                         return Ok((len + user_type_len + vlen, Variant::i32(value)));
                     }
+                    IdentityId::NAME => IdentityId::parse_variant(b, len + user_type_len),
                     PeerPtr::NAME => PeerPtr::parse_variant(b, len + user_type_len),
                     BufferInfo::NAME => BufferInfo::parse_variant(b, len + user_type_len),
                     Message::NAME => Message::parse_variant(b, len + user_type_len),

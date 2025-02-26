@@ -1,6 +1,7 @@
 mod bufferid;
 mod bufferinfo;
 mod datetime;
+mod identityid;
 mod message;
 mod msgid;
 mod peerptr;
@@ -15,6 +16,7 @@ mod variantmap;
 pub use bufferid::*;
 pub use bufferinfo::*;
 pub use datetime::*;
+pub use identityid::*;
 pub use message::*;
 pub use msgid::*;
 pub use peerptr::*;

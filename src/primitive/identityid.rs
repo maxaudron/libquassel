@@ -1,12 +1,12 @@
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
-pub struct BufferId(pub i32);
+pub struct IdentityId(pub i32);
 
 use crate::{error::ProtocolError, serialize::*};
 
 use crate::serialize::UserType;
 
-impl Serialize for BufferId {
+impl Serialize for IdentityId {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut res = Vec::new();
 
@@ -17,20 +17,20 @@ impl Serialize for BufferId {
     }
 }
 
-impl Deserialize for BufferId {
+impl Deserialize for IdentityId {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (size, value) = i32::parse(b)?;
-        return Ok((size, BufferId(value)));
+        return Ok((size, IdentityId(value)));
     }
 }
 
-impl From<i32> for BufferId {
+impl From<i32> for IdentityId {
     fn from(value: i32) -> Self {
-        BufferId(value)
+        IdentityId(value)
     }
 }
 
-impl std::ops::Deref for BufferId {
+impl std::ops::Deref for IdentityId {
     type Target = i32;
 
     fn deref(&self) -> &Self::Target {
@@ -38,8 +38,8 @@ impl std::ops::Deref for BufferId {
     }
 }
 
-impl UserType for BufferId {
-    const NAME: &str = "BufferId";
+impl UserType for IdentityId {
+    const NAME: &str = "IdentityId";
 }
 
 #[cfg(test)]
@@ -47,17 +47,19 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn bufferid_parse_test() {
+    pub fn identityid_parse_test() {
         let test_bytes: &[u8] = &[0, 0, 0, 1];
-        let (len, res) = BufferId::parse(test_bytes).unwrap();
+        let (len, res) = IdentityId::parse(test_bytes).unwrap();
         assert_eq!(len, test_bytes.len());
-        assert_eq!(res, BufferId(1));
+        assert_eq!(res, IdentityId(1));
     }
 
     #[test]
-    pub fn bufferid_serialize_test() {
-        let res = BufferId(1).serialize().unwrap();
-        let expected_bytes: &[u8] = &[0, 0, 0, 8, 66, 117, 102, 102, 101, 114, 73, 100, 0, 0, 0, 1];
+    pub fn identityid_serialize_test() {
+        let res = IdentityId(1).serialize().unwrap();
+        let expected_bytes: &[u8] = &[
+            0, 0, 0, 10, 73, 100, 101, 110, 116, 105, 116, 121, 73, 100, 0, 0, 0, 1,
+        ];
         assert_eq!(res, expected_bytes);
     }
 }

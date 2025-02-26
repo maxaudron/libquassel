@@ -1,6 +1,6 @@
 use crate::{
     message::{Class, Syncable},
-    primitive::StringList,
+    primitive::{IdentityId, StringList},
 };
 
 use libquassel_derive::{NetworkList, NetworkMap, Setters};
@@ -39,7 +39,7 @@ pub struct NetworkInfo {
     // TODO add these type aliases or usertypes in variants
     // pub network_id: NetworkId,
     #[network(rename = "identityId")]
-    pub identity_id: i32,
+    pub identity_id: IdentityId,
     #[network(rename = "msgRateBurstSize")]
     pub msg_rate_burst_size: u32,
     #[network(rename = "msgRateMessageDelay")]
@@ -120,7 +120,7 @@ mod tests {
             Variant::ByteArray(s!("codecForDecoding")),
             Variant::ByteArray(s!("")),
             Variant::ByteArray(s!("identityId")),
-            Variant::i32(0),
+            Variant::IdentityId(IdentityId(0)),
             Variant::ByteArray(s!("msgRateBurstSize")),
             Variant::u32(5),
             Variant::ByteArray(s!("msgRateMessageDelay")),
@@ -150,7 +150,7 @@ mod tests {
 
     fn get_runtime() -> NetworkInfo {
         NetworkInfo {
-            identity_id: 0,
+            identity_id: IdentityId(0),
             network_name: s!("snoonet"),
             server_list: vec![],
             perform: vec![s!("")],

@@ -12,11 +12,12 @@ use crate::message::Syncable;
 
 #[allow(unused_imports)]
 use crate::message::signalproxy::translation::NetworkMap;
+use crate::primitive::IdentityId;
 
 #[derive(Default, Debug, Clone, PartialEq, NetworkMap, NetworkList, Setters)]
 pub struct Identity {
     #[quassel(name = "identityId")]
-    pub identity_id: i32,
+    pub identity_id: IdentityId,
     #[quassel(name = "identityName")]
     pub identity_name: String,
     #[quassel(name = "realName")]
