@@ -4,6 +4,7 @@ mod datetime;
 mod identityid;
 mod message;
 mod msgid;
+mod networkid;
 mod peerptr;
 mod signedint;
 mod string;
@@ -19,6 +20,7 @@ pub use datetime::*;
 pub use identityid::*;
 pub use message::*;
 pub use msgid::*;
+pub use networkid::*;
 pub use peerptr::*;
 #[allow(unused_imports)]
 pub use signedint::*;

@@ -1,10 +1,10 @@
 use std::{collections::HashMap, vec::Vec};
 
 use itertools::Itertools;
-use log::{error, trace};
+use log::{debug, error, trace};
 
 use crate::error::ProtocolError;
-use crate::primitive::{self, PeerPtr};
+use crate::primitive::{self, NetworkId, PeerPtr};
 use crate::primitive::{IdentityId, StringList};
 use crate::serialize::*;
 
@@ -31,6 +31,7 @@ pub enum Variant {
     IdentityId(IdentityId),
     Message(Message),
     MsgId(MsgId),
+    NetworkId(NetworkId),
     Time(Time),
     Date(Date),
     DateTime(DateTime),
@@ -194,6 +195,7 @@ impl Serialize for Variant {
             Variant::IdentityId(v) => v.serialize_variant(),
             Variant::Message(v) => v.serialize_variant(),
             Variant::MsgId(v) => v.serialize_variant(),
+            Variant::NetworkId(v) => v.serialize_variant(),
             Variant::PeerPtr(v) => v.serialize_variant(),
             Variant::DateTime(v) => v.serialize_variant(),
             Variant::Time(v) => v.serialize_variant(),
@@ -241,23 +243,16 @@ impl Deserialize for Variant {
 
                 trace!(target: "primitive::Variant", "Parsing UserType: {:?}", user_type);
 
-                // TODO implement all these types
                 // Match Possible User Types to basic structures
                 match user_type.as_str() {
                     BufferId::NAME => BufferId::parse_variant(b, len + user_type_len),
                     // As VariantMap
                     "IrcUser" | "IrcChannel" | "Identity" | "NetworkInfo" | "Network::Server" => {
-                        trace!(target: "primitive::Variant", "UserType is VariantMap");
                         let (vlen, value) = VariantMap::parse(&b[(len + user_type_len)..])?;
+                        debug!(target: "primitive::Variant", "UserType is VariantMap {:?}", value);
                         return Ok((len + user_type_len + vlen, Variant::VariantMap(value)));
                     }
-                    // As i32
-                    "NetworkId" => {
-                        trace!(target: "primitive::Variant", "UserType is i32");
-
-                        let (vlen, value) = i32::parse(&b[(len + user_type_len)..])?;
-                        return Ok((len + user_type_len + vlen, Variant::i32(value)));
-                    }
+                    NetworkId::NAME => NetworkId::parse_variant(b, len + user_type_len),
                     IdentityId::NAME => IdentityId::parse_variant(b, len + user_type_len),
                     PeerPtr::NAME => PeerPtr::parse_variant(b, len + user_type_len),
                     BufferInfo::NAME => BufferInfo::parse_variant(b, len + user_type_len),

@@ -1,6 +1,6 @@
 use crate::error::ProtocolError;
 use crate::message::objects::Identity;
-use crate::primitive::{BufferInfo, Variant, VariantMap};
+use crate::primitive::{BufferInfo, NetworkId, Variant, VariantMap};
 use crate::HandshakeSerialize;
 
 /// SessionInit is received along with ClientLoginAck to initialize that user Session
@@ -12,7 +12,7 @@ pub struct SessionInit {
     /// List of all existing buffers
     pub buffers: Vec<BufferInfo>,
     /// Ids of all networks
-    pub network_ids: Vec<i32>,
+    pub network_ids: Vec<NetworkId>,
 }
 
 impl From<VariantMap> for SessionInit {
@@ -36,7 +36,7 @@ impl From<VariantMap> for SessionInit {
             network_ids: match_variant!(state.get("NetworkIds").unwrap(), Variant::VariantList)
                 .iter()
                 .map(|network| match network {
-                    Variant::i32(network) => network.clone(),
+                    Variant::NetworkId(network) => network.clone(),
                     _ => unimplemented!(),
                 })
                 .collect(),
@@ -71,7 +71,7 @@ impl HandshakeSerialize for SessionInit {
             Variant::VariantList(
                 self.network_ids
                     .iter()
-                    .map(|id| Variant::i32(id.clone()))
+                    .map(|id| Variant::NetworkId(id.clone()))
                     .collect(),
             ),
         );

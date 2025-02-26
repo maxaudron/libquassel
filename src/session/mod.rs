@@ -7,9 +7,12 @@ use crate::message::StatefulSyncableServer;
 
 use log::{debug, error, warn};
 
-use crate::message::{
-    objects::{Types, *},
-    Class, InitData, SessionInit, SyncMessage, Syncable,
+use crate::{
+    message::{
+        objects::{Types, *},
+        Class, InitData, SessionInit, SyncMessage, Syncable,
+    },
+    primitive::NetworkId,
 };
 
 // TODO implement nested types init and sync like BufferViewConfig in BufferViewManager
@@ -25,7 +28,7 @@ pub struct Session {
     pub highlight_rule_manager: HighlightRuleManager,
     pub identities: Vec<Identity>,
     pub ignore_list_manager: IgnoreListManager,
-    pub networks: HashMap<i32, Network>,
+    pub networks: HashMap<NetworkId, Network>,
     pub network_config: NetworkConfig,
 }
 
@@ -41,7 +44,7 @@ pub trait SessionManager {
     fn identities(&mut self) -> &mut Vec<Identity>;
     fn identity(&mut self, id: usize) -> Option<&mut Identity>;
     fn ignore_list_manager(&mut self) -> &mut IgnoreListManager;
-    fn networks(&mut self) -> &mut HashMap<i32, Network>;
+    fn networks(&mut self) -> &mut HashMap<NetworkId, Network>;
     fn network(&mut self, id: i32) -> Option<&mut Network>;
     fn network_config(&mut self) -> &mut NetworkConfig;
 
@@ -166,7 +169,7 @@ pub trait SessionManager {
             Types::IgnoreListManager(data) => self.ignore_list_manager().init(data),
             Types::CertManager(data) => self.cert_manager().init(data),
             Types::Network(network) => {
-                let id: i32 = data.object_name.parse().unwrap();
+                let id: NetworkId = NetworkId(data.object_name.parse().unwrap());
                 self.networks().insert(id, network);
             }
             Types::NetworkInfo(_) => (),
@@ -225,12 +228,12 @@ impl SessionManager for Session {
         &mut self.ignore_list_manager
     }
 
-    fn networks(&mut self) -> &mut HashMap<i32, Network> {
+    fn networks(&mut self) -> &mut HashMap<NetworkId, Network> {
         &mut self.networks
     }
 
     fn network(&mut self, id: i32) -> Option<&mut Network> {
-        self.networks.get_mut(&id)
+        self.networks.get_mut(&NetworkId(id))
     }
 
     fn network_config(&mut self) -> &mut NetworkConfig {

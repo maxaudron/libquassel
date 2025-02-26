@@ -1,6 +1,6 @@
 use crate::{
     message::{Class, Syncable},
-    primitive::{IdentityId, StringList},
+    primitive::{IdentityId, NetworkId, StringList},
 };
 
 use libquassel_derive::{NetworkList, NetworkMap, Setters};
@@ -37,7 +37,8 @@ pub struct NetworkInfo {
     pub codec_for_decoding: String,
 
     // TODO add these type aliases or usertypes in variants
-    // pub network_id: NetworkId,
+    #[network(rename = "networkId", default)]
+    pub network_id: NetworkId,
     #[network(rename = "identityId")]
     pub identity_id: IdentityId,
     #[network(rename = "msgRateBurstSize")]
@@ -119,6 +120,8 @@ mod tests {
             Variant::ByteArray(s!("")),
             Variant::ByteArray(s!("codecForDecoding")),
             Variant::ByteArray(s!("")),
+            Variant::ByteArray(s!("networkId")),
+            Variant::NetworkId(NetworkId(5)),
             Variant::ByteArray(s!("identityId")),
             Variant::IdentityId(IdentityId(0)),
             Variant::ByteArray(s!("msgRateBurstSize")),
@@ -151,6 +154,7 @@ mod tests {
     fn get_runtime() -> NetworkInfo {
         NetworkInfo {
             identity_id: IdentityId(0),
+            network_id: NetworkId(5),
             network_name: s!("snoonet"),
             server_list: vec![],
             perform: vec![s!("")],
@@ -179,11 +183,20 @@ mod tests {
 
     #[test]
     fn networkinfo_to_network() {
-        assert_eq!(get_runtime().to_network_list(), get_network())
+        assert_eq!(get_runtime().to_network_list(), get_network());
+        assert_eq!(get_runtime().to_network_list(), get_network());
     }
 
     #[test]
     fn networkinfo_from_network() {
-        assert_eq!(NetworkInfo::from_network_list(&mut get_network()), get_runtime())
+        assert_eq!(NetworkInfo::from_network_list(&mut get_network()), get_runtime());
+
+        // Test serialization without given network id
+        let mut network = get_network();
+        network.remove(20);
+        network.remove(20);
+
+        let left = NetworkInfo::from_network_list(&mut network);
+        assert_eq!(left.network_id, NetworkId(0));
     }
 }

@@ -137,42 +137,42 @@ pub(crate) fn from(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
         .map(|field| {
             let field_name = field.ident.as_ref().unwrap();
 
-            if field.default {
+            let unwrap = if field.default {
+                quote! { unwrap_or_default() }
+            } else {
+                quote! { unwrap() }
+            };
+
+            let field_rename = match &field.rename {
+                Some(name) => name.clone(),
+                None => format!("{}", field.ident.as_ref().unwrap()).into(),
+            };
+
+            let field_inner = match field.network {
+                super::NetworkRepr::List => quote! {
+                    libquassel::message::NetworkList::from_network_list(&mut std::convert::TryInto::try_into(input.remove(0)).#unwrap)
+                },
+                super::NetworkRepr::Map => quote! {
+                    libquassel::message::NetworkMap::from_network_map(&mut std::convert::TryInto::try_into(input.remove(0)).#unwrap)
+                },
+                super::NetworkRepr::None => quote! {
+                    std::convert::TryInto::try_into(input.remove(0)).#unwrap
+                },
+            };
+
+            if field.stringlist {
                 quote! {
-                    #field_name: Default::default(),
+                    #field_name: match input.get_mut(#field_rename).unwrap() {
+                        libquassel::primitive::Variant::StringList(input) => #field_inner,
+                        _ => panic!("#field_name: wrong variant")
+                    },
                 }
             } else {
-                let field_rename = match &field.rename {
-                    Some(name) => name.clone(),
-                    None => format!("{}", field.ident.as_ref().unwrap()).into(),
-                };
-
-                let field_inner = match field.network {
-                    super::NetworkRepr::List => quote! {
-                        libquassel::message::NetworkList::from_network_list(&mut std::convert::TryInto::try_into(input.remove(0)).unwrap())
+                quote! {
+                    #field_name: match input.get_mut(#field_rename).unwrap() {
+                        libquassel::primitive::Variant::VariantList(input) => #field_inner,
+                        _ => panic!("#field_name: wrong variant")
                     },
-                    super::NetworkRepr::Map => quote! {
-                        libquassel::message::NetworkMap::from_network_map(&mut std::convert::TryInto::try_into(input.remove(0)).unwrap())
-                    },
-                    super::NetworkRepr::None => quote! {
-                        std::convert::TryInto::try_into(input.remove(0)).unwrap()
-                    },
-                };
-
-                if field.stringlist {
-                    quote! {
-                        #field_name: match input.get_mut(#field_rename).unwrap() {
-                            libquassel::primitive::Variant::StringList(input) => #field_inner,
-                            _ => panic!("#field_name: wrong variant")
-                        },
-                    }
-                } else {
-                    quote! {
-                        #field_name: match input.get_mut(#field_rename).unwrap() {
-                            libquassel::primitive::Variant::VariantList(input) => #field_inner,
-                            _ => panic!("#field_name: wrong variant")
-                        },
-                    }
                 }
             }
         })

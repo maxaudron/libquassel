@@ -7,7 +7,7 @@ use crate::message::StatefulSyncableClient;
 use crate::message::StatefulSyncableServer;
 use crate::message::{Class, Syncable};
 
-use crate::primitive::{BufferId, VariantList};
+use crate::primitive::{BufferId, NetworkId, VariantList};
 
 #[derive(Debug, Default, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct BufferViewConfig {
@@ -27,7 +27,7 @@ pub struct BufferViewConfig {
     #[network(rename = "bufferViewName")]
     pub buffer_view_name: String,
     #[network(rename = "networkId")]
-    pub network_id: i32,
+    pub network_id: NetworkId,
     #[network(rename = "addNewBuffersAutomatically")]
     pub add_new_buffers_automatically: bool,
     #[network(rename = "sortAlphabetically")]

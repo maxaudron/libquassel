@@ -45,29 +45,29 @@ pub(crate) fn from(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
         .map(|field| {
             let field_name = field.ident.as_ref().unwrap();
 
-            if field.default {
-                quote! {
-                    #field_name: Default::default(),
-                }
+            let unwrap = if field.default {
+                quote! { unwrap_or_default() }
             } else {
-                let field_rename = match &field.rename {
-                    Some(name) => name.clone(),
-                    None => format!("{}", field.ident.as_ref().unwrap()).into(),
-                };
+                quote! { unwrap() }
+            };
 
-                match field.network {
-                    super::NetworkRepr::List => quote! {
-                        #field_name: libquassel::message::NetworkList::from_network_list(
-                            &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).unwrap()),
-                    },
-                    super::NetworkRepr::Map => quote! {
-                        #field_name: libquassel::message::NetworkMap::from_network_map(
-                            &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).unwrap()),
-                    },
-                    super::NetworkRepr::None => quote! {
-                        #field_name: std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).unwrap(),
-                    },
-                }
+            let field_rename = match &field.rename {
+                Some(name) => name.clone(),
+                None => format!("{}", field.ident.as_ref().unwrap()).into(),
+            };
+
+            match field.network {
+                super::NetworkRepr::List => quote! {
+                    #field_name: libquassel::message::NetworkList::from_network_list(
+                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap),
+                },
+                super::NetworkRepr::Map => quote! {
+                    #field_name: libquassel::message::NetworkMap::from_network_map(
+                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap),
+                },
+                super::NetworkRepr::None => quote! {
+                    #field_name: std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap,
+                },
             }
         })
         .collect()
