@@ -5,7 +5,9 @@ use std::vec::Vec;
 
 use log::trace;
 
-use crate::{deserialize::*, error::ProtocolError, serialize::*, util};
+use crate::{deserialize::*, error::ProtocolError, primitive, serialize::*, util};
+
+use crate::serialize::SerializeVariant;
 
 impl Deserialize for char {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
@@ -25,12 +27,33 @@ impl Serialize for char {
     }
 }
 
-/// We Shadow the String type here as we can only use impl on types in our own scope.
-///
+impl SerializeVariant for char {
+    const TYPE: u32 = crate::primitive::QCHAR;
+}
+
 /// Strings are serialized as an i32 for the length in bytes, then the chars represented in UTF-16 in bytes.
 ///
 /// Strings can only be serialized as UTF-8 null-terminated ByteArrays with (de)serialize_utf8().
 impl Serialize for String {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
+        self.as_str().serialize()
+    }
+}
+
+impl SerializeUTF8 for String {
+    fn serialize_utf8(&self) -> Result<Vec<u8>, ProtocolError> {
+        self.as_str().serialize_utf8()
+    }
+}
+
+impl SerializeVariant for String {
+    const TYPE: u32 = primitive::QSTRING;
+}
+
+/// Strings are serialized as an i32 for the length in bytes, then the chars represented in UTF-16 in bytes.
+///
+/// Strings can only be serialized as UTF-8 null-terminated ByteArrays with (de)serialize_utf8().
+impl Serialize for &str {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut res: Vec<u8> = Vec::new();
 
@@ -42,10 +65,10 @@ impl Serialize for String {
     }
 }
 
-impl SerializeUTF8 for String {
+impl SerializeUTF8 for &str {
     fn serialize_utf8(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut res: Vec<u8> = Vec::new();
-        res.extend(self.clone().into_bytes());
+        res.extend(self.bytes());
         util::prepend_byte_len(&mut res);
         return Ok(res);
     }

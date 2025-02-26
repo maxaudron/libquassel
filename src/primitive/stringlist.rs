@@ -7,6 +7,8 @@ use log::trace;
 
 use crate::{deserialize::*, error::ProtocolError, serialize::*};
 
+use crate::serialize::SerializeVariant;
+
 /// StringList are represented as a Vec of Strings
 ///
 /// StringLists are serialized as an i32 of the amount of elements and then each element as a String
@@ -43,6 +45,10 @@ impl Deserialize for StringList {
 
         return Ok((pos, res));
     }
+}
+
+impl SerializeVariant for StringList {
+    const TYPE: u32 = crate::primitive::QSTRINGLIST;
 }
 
 #[test]

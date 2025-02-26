@@ -9,6 +9,8 @@ use crate::{deserialize::*, serialize::*};
 use crate::primitive::Variant;
 use crate::util;
 
+use crate::serialize::SerializeVariant;
+
 /// VariantMaps are represented as a HashMap with String as key and Variant as value
 ///
 /// They are serialized as the amount of keys as an i32 then for each entry a String and a Variant.
@@ -51,4 +53,8 @@ impl Deserialize for VariantMap {
 
         return Ok((pos, map));
     }
+}
+
+impl SerializeVariant for VariantMap {
+    const TYPE: u32 = crate::primitive::QVARIANTMAP;
 }

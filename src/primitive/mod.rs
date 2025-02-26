@@ -3,6 +3,7 @@ mod bufferinfo;
 mod datetime;
 mod message;
 mod msgid;
+mod peerptr;
 mod signedint;
 mod string;
 mod stringlist;
@@ -16,6 +17,7 @@ pub use bufferinfo::*;
 pub use datetime::*;
 pub use message::*;
 pub use msgid::*;
+pub use peerptr::*;
 #[allow(unused_imports)]
 pub use signedint::*;
 #[allow(unused_imports)]

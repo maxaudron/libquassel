@@ -53,7 +53,7 @@
 
 use libquassel_derive::{sync, NetworkMap};
 
-use crate::message::{Class, StatefulSyncableClient, Syncable};
+use crate::message::{Class, Syncable};
 use crate::primitive::{BufferId, MessageType, MsgId, VariantList};
 
 /// Receive and Request Backlog
@@ -74,10 +74,7 @@ impl BacklogManager {
         limit: i32,
         additional: i32,
     ) {
-        sync!(
-            "requestBacklog",
-            [buffer_id, first, last, limit, additional]
-        );
+        sync!("requestBacklog", [buffer_id, first, last, limit, additional]);
     }
 
     /// Same as `requestBacklog`, but only messages of a certain message `type`
@@ -94,15 +91,7 @@ impl BacklogManager {
     ) {
         sync!(
             "requestBacklogFiltered",
-            [
-                buffer_id,
-                first,
-                last,
-                limit,
-                additional,
-                msgtype.bits(),
-                flags
-            ]
+            [buffer_id, first, last, limit, additional, msgtype.bits(), flags]
         );
     }
 
@@ -159,7 +148,16 @@ impl BacklogManager {
     ) {
         sync!(
             "receiveBacklogFiltered",
-            [buffer_id, first, last, limit, additional, msgtype.bits(), flags, messages]
+            [
+                buffer_id,
+                first,
+                last,
+                limit,
+                additional,
+                msgtype.bits(),
+                flags,
+                messages
+            ]
         );
     }
 
@@ -172,10 +170,7 @@ impl BacklogManager {
         additional: i32,
         messages: VariantList,
     ) {
-        sync!(
-            "receiveBacklogAll",
-            [first, last, limit, additional, messages]
-        );
+        sync!("receiveBacklogAll", [first, last, limit, additional, messages]);
     }
 
     /// Same as `receiveBacklogFiltered`, but applied to all buffers.
@@ -197,10 +192,10 @@ impl BacklogManager {
 }
 
 #[cfg(feature = "client")]
-impl StatefulSyncableClient for BacklogManager {}
+impl crate::message::StatefulSyncableClient for BacklogManager {}
 
 #[cfg(feature = "server")]
-impl StatefulSyncableServer for BacklogManager {}
+impl crate::message::StatefulSyncableServer for BacklogManager {}
 
 impl Syncable for BacklogManager {
     const CLASS: Class = Class::BacklogManager;

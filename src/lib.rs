@@ -19,7 +19,7 @@ pub mod session;
 
 #[allow(dead_code)]
 /// Error Types
-pub mod error;
+mod error;
 
 #[allow(unused_variables, dead_code)]
 #[cfg(feature = "framing")]
@@ -30,51 +30,13 @@ pub mod frame;
 #[cfg(all(feature = "client", feature = "server"))]
 compile_error!("feature \"client\" and feature \"server\" cannot be enabled at the same time");
 
-use crate::error::ProtocolError;
+pub use crate::error::ProtocolError;
 
 /// Traits for Serialization of objects
-pub mod serialize {
-    use crate::error::ProtocolError;
-
-    /// Serialization of types and structs to the quassel byteprotocol
-    pub trait Serialize {
-        fn serialize(&self) -> Result<Vec<u8>, ProtocolError>;
-    }
-
-    /// Serialization of UTF-8 based Strings to the quassel byteprotocol
-    pub trait SerializeUTF8 {
-        fn serialize_utf8(&self) -> Result<Vec<u8>, ProtocolError>;
-    }
-
-    pub trait SerializeVariant {
-        fn serialize_variant(&self) -> Result<Vec<u8>, ProtocolError>;
-    }
-}
+pub mod serialize;
 
 /// Traits for parsing objects
-pub mod deserialize {
-    use crate::error::ProtocolError;
-
-    /// Deserialization of types and structs to the quassel byteprotocol
-    pub trait Deserialize {
-        fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError>
-        where
-            Self: std::marker::Sized;
-    }
-
-    /// Deserialization of UTF-8 based Strings to the quassel byteprotocol
-    pub trait DeserializeUTF8 {
-        fn parse_utf8(b: &[u8]) -> Result<(usize, Self), ProtocolError>
-        where
-            Self: std::marker::Sized;
-    }
-
-    pub trait DeserializeVariant {
-        fn parse_variant(b: &[u8]) -> Result<(usize, Self), ProtocolError>
-        where
-            Self: std::marker::Sized;
-    }
-}
+pub mod deserialize;
 
 /// HandshakeSerialize implements the serialization needed during the handhake phase.
 ///

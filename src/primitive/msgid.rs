@@ -8,9 +8,16 @@ pub struct MsgId(
 use crate::error::ProtocolError;
 use crate::{deserialize::*, serialize::*};
 
+use crate::serialize::UserType;
+
 impl Serialize for MsgId {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
-        self.0.serialize()
+        let mut res = Vec::new();
+
+        res.append(&mut Self::NAME.serialize_utf8()?);
+        res.extend(self.0.serialize()?);
+
+        Ok(res)
     }
 }
 
@@ -49,6 +56,10 @@ impl std::ops::Deref for MsgId {
     }
 }
 
+impl UserType for MsgId {
+    const NAME: &str = "MsgId";
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -69,9 +80,9 @@ mod tests {
     pub fn msgid_serialize_test() {
         let res = MsgId(1).serialize().unwrap();
         let expected_bytes: &[u8] = if cfg!(feature = "long-message-id") {
-            &[0, 0, 0, 0, 0, 0, 0, 1]
+            &[0, 0, 0, 5, 77, 115, 103, 73, 100, 0, 0, 0, 0, 0, 0, 0, 1]
         } else {
-            &[0, 0, 0, 1]
+            &[0, 0, 0, 5, 77, 115, 103, 73, 100, 0, 0, 0, 1]
         };
         assert_eq!(res, expected_bytes);
     }

@@ -6,7 +6,9 @@ use std::result::Result;
 use std::vec::Vec;
 
 use crate::error::ProtocolError;
-use crate::{deserialize::*, serialize::*};
+use crate::{deserialize::*, primitive, serialize::*};
+
+use crate::serialize::SerializeVariant;
 
 impl Serialize for bool {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
@@ -29,6 +31,10 @@ impl Deserialize for bool {
     }
 }
 
+impl SerializeVariant for bool {
+    const TYPE: u32 = primitive::BOOL;
+}
+
 impl Serialize for u64 {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         Ok(Vec::from(self.to_be_bytes()))
@@ -40,6 +46,10 @@ impl Deserialize for u64 {
         let mut rdr = Cursor::new(&b[0..8]);
         return Ok((8, rdr.read_u64::<BigEndian>()?));
     }
+}
+
+impl SerializeVariant for u64 {
+    const TYPE: u32 = primitive::ULONG;
 }
 
 impl Serialize for u32 {
@@ -55,6 +65,10 @@ impl Deserialize for u32 {
     }
 }
 
+impl SerializeVariant for u32 {
+    const TYPE: u32 = primitive::UINT;
+}
+
 impl Serialize for u16 {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         Ok(Vec::from(self.to_be_bytes()))
@@ -68,6 +82,10 @@ impl Deserialize for u16 {
     }
 }
 
+impl SerializeVariant for u16 {
+    const TYPE: u32 = primitive::USHORT;
+}
+
 impl Serialize for u8 {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         Ok(Vec::from(self.to_be_bytes()))
@@ -78,4 +96,8 @@ impl Deserialize for u8 {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         return Ok((1, b[0]));
     }
+}
+
+impl SerializeVariant for u8 {
+    const TYPE: u32 = primitive::UCHAR;
 }

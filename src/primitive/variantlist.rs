@@ -7,6 +7,8 @@ use crate::{deserialize::*, serialize::*};
 
 use crate::primitive::Variant;
 
+use crate::serialize::SerializeVariant;
+
 /// VariantLists are represented as a Vec of Variants.
 ///
 /// They are serialized as the amount of entries as a i32 and then a Variant for each entry
@@ -43,6 +45,10 @@ impl Deserialize for VariantList {
 
         return Ok((pos, res));
     }
+}
+
+impl SerializeVariant for VariantList {
+    const TYPE: u32 = crate::primitive::QVARIANTLIST;
 }
 
 impl<S> crate::message::NetworkMap for Vec<S>

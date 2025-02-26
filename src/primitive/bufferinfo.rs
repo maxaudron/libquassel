@@ -3,6 +3,8 @@ use std::vec::Vec;
 use crate::primitive::BufferId;
 use crate::{deserialize::*, error::ProtocolError, serialize::*};
 
+use crate::serialize::UserType;
+
 /// The BufferInfo struct represents a BufferInfo as received in IRC
 ///
 /// BufferInfo is, like all other struct based types, serialized sequentially.
@@ -22,6 +24,7 @@ impl Serialize for BufferInfo {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
 
+        values.append(&mut Self::NAME.serialize_utf8()?);
         values.append(&mut BufferId::serialize(&self.id)?);
         values.append(&mut i32::serialize(&self.network_id)?);
         values.append(&mut i16::serialize(&(self.buffer_type as i16))?);
@@ -53,6 +56,10 @@ impl Deserialize for BufferInfo {
             },
         ));
     }
+}
+
+impl UserType for BufferInfo {
+    const NAME: &str = "BufferInfo";
 }
 
 /// The Type of the Buffer
@@ -92,7 +99,11 @@ mod tests {
 
         assert_eq!(
             buffer.serialize().unwrap(),
-            [0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 5, 35, 116, 101, 115, 116]
+            [
+                0, 0, 0, 10, 66, 117, 102, 102, 101, 114, 73, 110, 102, 111, 0, 0, 0, 8, 66, 117, 102, 102,
+                101, 114, 73, 100, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 5, 35, 116, 101, 115,
+                116
+            ]
         )
     }
 

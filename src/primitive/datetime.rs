@@ -1,4 +1,4 @@
-use crate::{deserialize::*, error::ProtocolError, serialize::*};
+use crate::{deserialize::*, error::ProtocolError, primitive, serialize::*};
 
 use time::{OffsetDateTime, PrimitiveDateTime, UtcOffset};
 
@@ -17,6 +17,8 @@ use time::{OffsetDateTime, PrimitiveDateTime, UtcOffset};
 
 pub type DateTime = OffsetDateTime;
 pub use time::{Date, Time};
+
+use crate::serialize::SerializeVariant;
 
 /// TimeSpec specifies whether the time is a local time, daylightsaving local time or a form of UTC Offset
 #[repr(i8)]
@@ -111,6 +113,10 @@ impl Deserialize for OffsetDateTime {
     }
 }
 
+impl SerializeVariant for OffsetDateTime {
+    const TYPE: u32 = primitive::QDATETIME;
+}
+
 impl Serialize for Date {
     fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
@@ -128,6 +134,10 @@ impl Deserialize for Date {
 
         Ok((4, date))
     }
+}
+
+impl SerializeVariant for Date {
+    const TYPE: u32 = primitive::QDATE;
 }
 
 impl Serialize for Time {
@@ -162,6 +172,10 @@ impl Deserialize for Time {
 
         Ok((4, time))
     }
+}
+
+impl SerializeVariant for Time {
+    const TYPE: u32 = primitive::QTIME;
 }
 
 #[test]

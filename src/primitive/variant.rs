@@ -4,8 +4,8 @@ use itertools::Itertools;
 use log::{error, trace};
 
 use crate::error::ProtocolError;
-use crate::primitive;
 use crate::primitive::StringList;
+use crate::primitive::{self, PeerPtr};
 use crate::{deserialize::*, serialize::*};
 
 use crate::primitive::{BufferId, BufferInfo, Date, DateTime, Message, MsgId, Time, VariantList, VariantMap};
@@ -40,6 +40,7 @@ pub enum Variant {
     #[from(ignore)]
     ByteArray(String),
     StringList(StringList),
+    PeerPtr(PeerPtr),
     char(char),
     bool(bool),
     u64(u64),
@@ -156,133 +157,46 @@ where
 
 impl Serialize for Variant {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
-        let unknown: u8 = 0x00;
-        let mut res: Vec<u8> = Vec::new();
-
         match self {
-            Variant::Unknown => {
-                return Err(ProtocolError::UnknownVariant);
-            }
-            Variant::VariantMap(v) => {
-                res.extend(primitive::QVARIANTMAP.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.serialize()?.iter());
-            }
-            Variant::VariantList(v) => {
-                res.extend(primitive::QVARIANTLIST.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.serialize()?.iter());
-            }
-            Variant::char(v) => {
-                res.extend(primitive::QCHAR.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.serialize()?.iter());
-            }
-            Variant::String(v) => {
-                res.extend(primitive::QSTRING.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.serialize()?.iter());
-            }
+            Variant::Unknown => Err(ProtocolError::UnknownVariant),
+            Variant::VariantMap(v) => v.serialize_variant(),
+            Variant::VariantList(v) => v.serialize_variant(),
+            Variant::char(v) => v.serialize_variant(),
+            Variant::String(v) => v.serialize_variant(),
             Variant::ByteArray(v) => {
+                let mut res: Vec<u8> = Vec::new();
                 res.extend(primitive::QBYTEARRAY.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
+                res.extend(0x00u8.to_be_bytes().iter());
                 res.extend(v.serialize_utf8()?.iter());
+                Ok(res)
             }
-            Variant::StringList(v) => {
-                res.extend(primitive::QSTRINGLIST.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.serialize()?.iter());
-            }
-            Variant::bool(v) => {
-                res.extend(primitive::BOOL.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                let i = *v as i8;
-                res.extend(i.to_be_bytes().iter());
-            }
-            Variant::u64(v) => {
-                res.extend(primitive::ULONG.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.to_be_bytes().iter());
-            }
-            Variant::u32(v) => {
-                res.extend(primitive::UINT.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.to_be_bytes().iter());
-            }
-            Variant::u16(v) => {
-                res.extend(primitive::USHORT.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.to_be_bytes().iter());
-            }
-            Variant::u8(v) => {
-                res.extend(primitive::UCHAR.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.to_be_bytes().iter());
-            }
-            Variant::i64(v) => {
-                res.extend(primitive::LONG.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.to_be_bytes().iter());
-            }
-            Variant::i32(v) => {
-                res.extend(primitive::INT.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.to_be_bytes().iter());
-            }
-            Variant::i16(v) => {
-                res.extend(primitive::SHORT.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.to_be_bytes().iter());
-            }
-            Variant::i8(v) => {
-                res.extend(primitive::CHAR.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.extend(v.to_be_bytes().iter());
-            }
+            Variant::StringList(v) => v.serialize_variant(),
+            Variant::bool(v) => v.serialize_variant(),
+            Variant::u64(v) => v.serialize_variant(),
+            Variant::u32(v) => v.serialize_variant(),
+            Variant::u16(v) => v.serialize_variant(),
+            Variant::u8(v) => v.serialize_variant(),
+            Variant::i64(v) => v.serialize_variant(),
+            Variant::i32(v) => v.serialize_variant(),
+            Variant::i16(v) => v.serialize_variant(),
+            Variant::i8(v) => v.serialize_variant(),
             Variant::UserType(name, bytes) => {
+                let mut res: Vec<u8> = Vec::new();
                 res.extend(primitive::USERTYPE.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
+                res.extend(0x00u8.to_be_bytes().iter());
                 res.append(&mut name.serialize_utf8()?);
                 res.extend(bytes);
+                Ok(res)
             }
-            Variant::BufferId(v) => {
-                let bytes = BufferId::serialize(v)?;
-                let user = Variant::UserType("BufferId".to_string(), bytes);
-                return Variant::serialize(&user);
-            }
-            Variant::BufferInfo(v) => {
-                let bytes = BufferInfo::serialize(v)?;
-                let user = Variant::UserType("BufferInfo".to_string(), bytes);
-                Variant::serialize(&user).unwrap();
-            }
-            Variant::Message(v) => {
-                let bytes = Message::serialize(v)?;
-                let user = Variant::UserType("Message".to_string(), bytes);
-                Variant::serialize(&user).unwrap();
-            }
-            Variant::MsgId(v) => {
-                let bytes = MsgId::serialize(v)?;
-                let user = Variant::UserType("MsgId".to_string(), bytes);
-                return Variant::serialize(&user);
-            }
-            Variant::DateTime(v) => {
-                res.extend(primitive::QDATETIME.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.append(&mut v.serialize()?);
-            }
-            Variant::Time(v) => {
-                res.extend(primitive::QTIME.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.append(&mut v.serialize()?);
-            }
-            Variant::Date(v) => {
-                res.extend(primitive::QDATE.to_be_bytes().iter());
-                res.extend(unknown.to_be_bytes().iter());
-                res.append(&mut v.serialize()?);
-            }
+            Variant::BufferId(v) => v.serialize_variant(),
+            Variant::BufferInfo(v) => v.serialize_variant(),
+            Variant::Message(v) => v.serialize_variant(),
+            Variant::MsgId(v) => v.serialize_variant(),
+            Variant::PeerPtr(v) => v.serialize_variant(),
+            Variant::DateTime(v) => v.serialize_variant(),
+            Variant::Time(v) => v.serialize_variant(),
+            Variant::Date(v) => v.serialize_variant(),
         }
-
-        return Ok(res);
     }
 }
 
@@ -297,22 +211,22 @@ impl Deserialize for Variant {
 
         let len = 5;
         match qtype {
-            primitive::QVARIANTMAP => {
+            VariantMap::TYPE => {
                 trace!(target: "primitive::Variant", "Parsing Variant: VariantMap");
                 let (vlen, value) = VariantMap::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::VariantMap(value)));
             }
-            primitive::QVARIANTLIST => {
+            VariantList::TYPE => {
                 trace!(target: "primitive::Variant", "Parsing Variant: VariantList");
                 let (vlen, value) = VariantList::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::VariantList(value)));
             }
-            primitive::QCHAR => {
+            char::TYPE => {
                 trace!(target: "primitive::Variant", "Parsing Variant: Char");
                 let (vlen, value) = char::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::char(value)));
             }
-            primitive::QSTRING => {
+            String::TYPE => {
                 trace!(target: "primitive::Variant", "Parsing Variant: String");
                 let (vlen, value) = String::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::String(value.clone())));
@@ -322,59 +236,59 @@ impl Deserialize for Variant {
                 let (vlen, value) = String::parse_utf8(&b[len..])?;
                 return Ok((len + vlen, Variant::ByteArray(value.clone())));
             }
-            primitive::QSTRINGLIST => {
+            StringList::TYPE => {
                 trace!(target: "primitive::Variant", "Parsing Variant: StringList");
                 let (vlen, value) = StringList::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::StringList(value.clone())));
             }
-            primitive::QDATETIME => {
+            DateTime::TYPE => {
                 trace!(target: "primitive::Variant", "Parsing Variant: DateTime");
                 let (vlen, value): (usize, DateTime) = Deserialize::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::DateTime(value.clone())));
             }
-            primitive::QDATE => {
+            Date::TYPE => {
                 trace!(target: "primitive::Variant", "Parsing Variant: Date");
                 let (vlen, value): (usize, Date) = Deserialize::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::Date(value.clone())));
             }
-            primitive::QTIME => {
+            Time::TYPE => {
                 trace!(target: "primitive::Variant", "Parsing Variant: Time");
                 let (vlen, value): (usize, Time) = Deserialize::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::Time(value.clone())));
             }
-            primitive::BOOL => {
+            bool::TYPE => {
                 let (vlen, value) = bool::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::bool(value)));
             }
-            primitive::ULONG => {
+            u64::TYPE => {
                 let (vlen, value) = u64::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::u64(value)));
             }
-            primitive::UINT => {
+            u32::TYPE => {
                 let (vlen, value) = u32::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::u32(value)));
             }
-            primitive::USHORT => {
+            u16::TYPE => {
                 let (vlen, value) = u16::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::u16(value)));
             }
-            primitive::UCHAR => {
+            u8::TYPE => {
                 let (vlen, value) = u8::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::u8(value)));
             }
-            primitive::LONG => {
+            i64::TYPE => {
                 let (vlen, value) = i64::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::i64(value)));
             }
-            primitive::INT => {
+            i32::TYPE => {
                 let (vlen, value) = i32::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::i32(value)));
             }
-            primitive::SHORT => {
+            i16::TYPE => {
                 let (vlen, value) = i16::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::i16(value)));
             }
-            primitive::CHAR => {
+            i8::TYPE => {
                 let (vlen, value) = i8::parse(&b[len..])?;
                 return Ok((len + vlen, Variant::i8(value)));
             }
@@ -406,11 +320,10 @@ impl Deserialize for Variant {
                         let (vlen, value) = i32::parse(&b[(len + user_type_len)..])?;
                         return Ok((len + user_type_len + vlen, Variant::i32(value)));
                     }
-                    // As i64
-                    "PeerPtr" => {
-                        trace!(target: "primitive::Variant", "UserType is i64");
-                        let (vlen, value) = i64::parse(&b[(len + user_type_len)..])?;
-                        return Ok((len + user_type_len + vlen, Variant::i64(value)));
+                    PeerPtr::NAME => {
+                        trace!(target: "primitive::Variant", "UserType is PeerPtr");
+                        let (vlen, value) = PeerPtr::parse(&b[(len + user_type_len)..])?;
+                        return Ok((len + user_type_len + vlen, Variant::PeerPtr(value)));
                     }
                     "BufferInfo" => {
                         trace!(target: "primitive::Variant", "UserType is BufferInfo");
@@ -604,16 +517,17 @@ mod tests {
 
     #[test]
     pub fn buffer_info_serialize() {
-        let test_buffer_info = BufferInfo {
-            id: BufferId(0),
-            network_id: 0,
-            buffer_type: primitive::BufferType::Status,
-            name: "test".to_string(),
-        };
+        let test_buffer_info = Variant::BufferInfo(BufferInfo {
+            id: BufferId(1),
+            network_id: 1,
+            buffer_type: primitive::BufferType::Channel,
+            name: "#test".to_string(),
+        });
 
         let bytes = vec![
-            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x74,
-            0x65, 0x73, 0x74,
+            0, 0, 0, 127, 0, 0, 0, 0, 10, 66, 117, 102, 102, 101, 114, 73, 110, 102, 111, 0, 0, 0, 8, 66,
+            117, 102, 102, 101, 114, 73, 100, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 5, 35, 116,
+            101, 115, 116,
         ];
         assert_eq!(test_buffer_info.serialize().unwrap(), bytes);
     }
