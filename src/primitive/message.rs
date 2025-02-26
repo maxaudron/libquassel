@@ -1,7 +1,7 @@
 use std::{collections::HashMap, vec::Vec};
 
 use crate::error::ProtocolError;
-use crate::{deserialize::*, serialize::*};
+use crate::serialize::*;
 
 use crate::primitive::{BufferInfo, MsgId};
 

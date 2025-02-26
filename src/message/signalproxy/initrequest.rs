@@ -1,7 +1,7 @@
 use crate::error::ProtocolError;
 use crate::message::MessageType;
 use crate::primitive::{Variant, VariantList};
-use crate::{deserialize::Deserialize, serialize::Serialize};
+use crate::serialize::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, std::cmp::PartialEq)]
 pub struct InitRequest {

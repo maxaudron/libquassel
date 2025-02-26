@@ -1,4 +1,4 @@
-use crate::{deserialize::Deserialize, serialize::Serialize};
+use crate::serialize::{Deserialize, Serialize};
 
 pub enum Protocol {
     Legacy = 0x00000001,

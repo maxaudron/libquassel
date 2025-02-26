@@ -4,12 +4,12 @@ use std::vec::Vec;
 use log::trace;
 
 use crate::error::ProtocolError;
-use crate::{deserialize::*, serialize::*};
+use crate::serialize::*;
 
 use crate::primitive::Variant;
 use crate::util;
 
-use crate::serialize::SerializeVariant;
+use crate::serialize::VariantType;
 
 /// VariantMaps are represented as a HashMap with String as key and Variant as value
 ///
@@ -55,6 +55,6 @@ impl Deserialize for VariantMap {
     }
 }
 
-impl SerializeVariant for VariantMap {
+impl VariantType for VariantMap {
     const TYPE: u32 = crate::primitive::QVARIANTMAP;
 }

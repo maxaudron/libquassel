@@ -5,9 +5,9 @@ use std::vec::Vec;
 
 use log::trace;
 
-use crate::{deserialize::*, error::ProtocolError, primitive, serialize::*, util};
+use crate::{error::ProtocolError, primitive, serialize::*, util};
 
-use crate::serialize::SerializeVariant;
+use crate::serialize::VariantType;
 
 impl Deserialize for char {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
@@ -27,7 +27,7 @@ impl Serialize for char {
     }
 }
 
-impl SerializeVariant for char {
+impl VariantType for char {
     const TYPE: u32 = crate::primitive::QCHAR;
 }
 
@@ -46,7 +46,7 @@ impl SerializeUTF8 for String {
     }
 }
 
-impl SerializeVariant for String {
+impl VariantType for String {
     const TYPE: u32 = primitive::QSTRING;
 }
 

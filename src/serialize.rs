@@ -46,36 +46,24 @@ pub trait UserType {
 ///     const TYPE: u32 = primitive::QVARIANTLIST;
 /// }
 /// ```
-pub trait SerializeVariant {
+pub trait VariantType {
     /// QT Type as defined by the [Primitive Constants]
     ///
     /// [Primitive Constants]: primitive#constants
     const TYPE: u32;
+}
 
+pub trait SerializeVariant: VariantType + Serialize {
     /// Default implementation that passes the serialization through to [SerializeVariantInner].
     /// [SerializeVariantInner] is automaticly implemented for all types that implement [Serialize]
     ///
     /// ```rust ignore
     /// self.serialize_variant_inner(Self::TYPE)
     /// ```
-    fn serialize_variant(&self) -> Result<Vec<u8>, ProtocolError>
-    where
-        Self: SerializeVariantInner,
-    {
-        self.serialize_variant_inner(Self::TYPE)
-    }
-}
-
-/// Implemented automaticly for all types that implement [Serialize] refer to [SerializeVariant]
-pub trait SerializeVariantInner {
-    fn serialize_variant_inner(&self, t: u32) -> Result<Vec<u8>, ProtocolError>;
-}
-
-impl<T: Serialize> SerializeVariantInner for T {
-    fn serialize_variant_inner(&self, t: u32) -> Result<Vec<u8>, ProtocolError> {
+    fn serialize_variant(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut res: Vec<u8> = Vec::new();
 
-        res.extend(t.to_be_bytes().iter());
+        res.extend(Self::TYPE.to_be_bytes().iter());
         res.extend(0x00u8.to_be_bytes().iter());
         res.extend(self.serialize()?);
 
@@ -83,6 +71,32 @@ impl<T: Serialize> SerializeVariantInner for T {
     }
 }
 
-impl<T: UserType> SerializeVariant for T {
+impl<T: VariantType + Serialize> SerializeVariant for T {}
+
+impl<T: UserType> VariantType for T {
     const TYPE: u32 = primitive::USERTYPE;
+}
+
+// =============================================
+// Deserialization
+//
+
+/// Deserialization of types and structs to the quassel byteprotocol
+pub trait Deserialize {
+    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError>
+    where
+        Self: std::marker::Sized;
+}
+
+/// Deserialization of UTF-8 based Strings to the quassel byteprotocol
+pub trait DeserializeUTF8 {
+    fn parse_utf8(b: &[u8]) -> Result<(usize, Self), ProtocolError>
+    where
+        Self: std::marker::Sized;
+}
+
+pub trait DeserializeVariant: VariantType {
+    fn parse_variant(b: &[u8]) -> Result<(usize, Self), ProtocolError>
+    where
+        Self: std::marker::Sized;
 }

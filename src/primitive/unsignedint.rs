@@ -6,9 +6,9 @@ use std::result::Result;
 use std::vec::Vec;
 
 use crate::error::ProtocolError;
-use crate::{deserialize::*, primitive, serialize::*};
+use crate::{primitive, serialize::*};
 
-use crate::serialize::SerializeVariant;
+use crate::serialize::VariantType;
 
 impl Serialize for bool {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
@@ -31,7 +31,7 @@ impl Deserialize for bool {
     }
 }
 
-impl SerializeVariant for bool {
+impl VariantType for bool {
     const TYPE: u32 = primitive::BOOL;
 }
 
@@ -48,7 +48,7 @@ impl Deserialize for u64 {
     }
 }
 
-impl SerializeVariant for u64 {
+impl VariantType for u64 {
     const TYPE: u32 = primitive::ULONG;
 }
 
@@ -65,7 +65,7 @@ impl Deserialize for u32 {
     }
 }
 
-impl SerializeVariant for u32 {
+impl VariantType for u32 {
     const TYPE: u32 = primitive::UINT;
 }
 
@@ -82,7 +82,7 @@ impl Deserialize for u16 {
     }
 }
 
-impl SerializeVariant for u16 {
+impl VariantType for u16 {
     const TYPE: u32 = primitive::USHORT;
 }
 
@@ -98,6 +98,6 @@ impl Deserialize for u8 {
     }
 }
 
-impl SerializeVariant for u8 {
+impl VariantType for u8 {
     const TYPE: u32 = primitive::UCHAR;
 }

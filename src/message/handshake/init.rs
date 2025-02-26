@@ -1,4 +1,4 @@
-use crate::{deserialize::Deserialize, serialize::Serialize};
+use crate::serialize::{Deserialize, Serialize};
 
 /// The first few bytes sent to the core to initialize the connection and setup if we want to use tls and compression
 #[derive(Clone, Debug)]

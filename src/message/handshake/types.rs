@@ -3,8 +3,8 @@ use std::vec::Vec;
 
 use crate::error::ProtocolError;
 use crate::primitive::Variant;
+use crate::serialize::{Deserialize, Serialize};
 use crate::util;
-use crate::{deserialize::Deserialize, serialize::Serialize};
 
 use crate::message::handshake::{HandshakeDeserialize, HandshakeSerialize};
 use crate::primitive::VariantMap;

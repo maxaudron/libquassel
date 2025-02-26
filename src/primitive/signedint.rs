@@ -4,9 +4,9 @@ use std::io::Cursor;
 use std::result::Result;
 use std::vec::Vec;
 
-use crate::{deserialize::*, error::ProtocolError, primitive, serialize::*};
+use crate::{error::ProtocolError, primitive, serialize::*};
 
-use crate::serialize::SerializeVariant;
+use crate::serialize::VariantType;
 
 impl Serialize for i64 {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
@@ -21,7 +21,7 @@ impl Deserialize for i64 {
     }
 }
 
-impl SerializeVariant for i64 {
+impl VariantType for i64 {
     const TYPE: u32 = primitive::LONG;
 }
 
@@ -38,7 +38,7 @@ impl Deserialize for i32 {
     }
 }
 
-impl SerializeVariant for i32 {
+impl VariantType for i32 {
     const TYPE: u32 = primitive::INT;
 }
 
@@ -55,7 +55,7 @@ impl Deserialize for i16 {
     }
 }
 
-impl SerializeVariant for i16 {
+impl VariantType for i16 {
     const TYPE: u32 = primitive::SHORT;
 }
 
@@ -72,6 +72,6 @@ impl Deserialize for i8 {
     }
 }
 
-impl SerializeVariant for i8 {
+impl VariantType for i8 {
     const TYPE: u32 = primitive::CHAR;
 }

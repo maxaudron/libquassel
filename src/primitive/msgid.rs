@@ -6,7 +6,7 @@ pub struct MsgId(
 );
 
 use crate::error::ProtocolError;
-use crate::{deserialize::*, serialize::*};
+use crate::serialize::*;
 
 use crate::serialize::UserType;
 

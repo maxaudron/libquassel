@@ -1,7 +1,7 @@
 use crate::error::ProtocolError;
 use crate::message::MessageType;
 use crate::primitive::{Variant, VariantList};
-use crate::{deserialize::Deserialize, serialize::Serialize};
+use crate::serialize::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Class {

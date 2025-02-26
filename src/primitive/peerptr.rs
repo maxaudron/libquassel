@@ -1,5 +1,5 @@
 use crate::{
-    deserialize::Deserialize,
+    serialize::Deserialize,
     serialize::{Serialize, SerializeUTF8},
 };
 

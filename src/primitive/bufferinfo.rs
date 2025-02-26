@@ -1,7 +1,7 @@
 use std::vec::Vec;
 
 use crate::primitive::BufferId;
-use crate::{deserialize::*, error::ProtocolError, serialize::*};
+use crate::{error::ProtocolError, serialize::*};
 
 use crate::serialize::UserType;
 

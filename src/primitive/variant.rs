@@ -6,7 +6,7 @@ use log::{error, trace};
 use crate::error::ProtocolError;
 use crate::primitive::StringList;
 use crate::primitive::{self, PeerPtr};
-use crate::{deserialize::*, serialize::*};
+use crate::serialize::*;
 
 use crate::primitive::{BufferId, BufferInfo, Date, DateTime, Message, MsgId, Time, VariantList, VariantMap};
 

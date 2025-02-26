@@ -2,7 +2,7 @@
 #[repr(transparent)]
 pub struct BufferId(pub i32);
 
-use crate::{deserialize::*, error::ProtocolError, serialize::*};
+use crate::{error::ProtocolError, serialize::*};
 
 use crate::serialize::UserType;
 

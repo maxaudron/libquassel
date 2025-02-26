@@ -1,7 +1,7 @@
 use crate::{
-    deserialize::Deserialize,
     error::ProtocolError,
     primitive::{Variant, VariantList},
+    serialize::Deserialize,
     serialize::Serialize,
 };
 

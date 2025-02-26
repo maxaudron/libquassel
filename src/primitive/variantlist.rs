@@ -3,11 +3,11 @@ use std::vec::Vec;
 use log::trace;
 
 use crate::error::ProtocolError;
-use crate::{deserialize::*, serialize::*};
+use crate::serialize::*;
 
 use crate::primitive::Variant;
 
-use crate::serialize::SerializeVariant;
+use crate::serialize::VariantType;
 
 /// VariantLists are represented as a Vec of Variants.
 ///
@@ -47,7 +47,7 @@ impl Deserialize for VariantList {
     }
 }
 
-impl SerializeVariant for VariantList {
+impl VariantType for VariantList {
     const TYPE: u32 = crate::primitive::QVARIANTLIST;
 }
 

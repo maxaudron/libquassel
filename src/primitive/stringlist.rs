@@ -5,9 +5,9 @@ use std::vec::Vec;
 
 use log::trace;
 
-use crate::{deserialize::*, error::ProtocolError, serialize::*};
+use crate::{error::ProtocolError, serialize::*};
 
-use crate::serialize::SerializeVariant;
+use crate::serialize::VariantType;
 
 /// StringList are represented as a Vec of Strings
 ///
@@ -47,7 +47,7 @@ impl Deserialize for StringList {
     }
 }
 
-impl SerializeVariant for StringList {
+impl VariantType for StringList {
     const TYPE: u32 = crate::primitive::QSTRINGLIST;
 }
 

@@ -32,11 +32,8 @@ compile_error!("feature \"client\" and feature \"server\" cannot be enabled at t
 
 pub use crate::error::ProtocolError;
 
-/// Traits for Serialization of objects
+/// Traits for Serialization & Deserialization of objects
 pub mod serialize;
-
-/// Traits for parsing objects
-pub mod deserialize;
 
 /// HandshakeSerialize implements the serialization needed during the handhake phase.
 ///

@@ -41,7 +41,7 @@ impl crate::serialize::Serialize for ConnAck {
     }
 }
 
-impl crate::deserialize::Deserialize for ConnAck {
+impl crate::serialize::Deserialize for ConnAck {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (flen, flags) = u8::parse(b)?;
         let (elen, extra) = i16::parse(&b[flen..])?;
