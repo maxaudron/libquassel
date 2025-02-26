@@ -8,6 +8,8 @@ pub enum ProtocolError {
     BoolOutOfRange,
     #[error("QVariant is not known")]
     UnknownVariant,
+    #[error("UserType is not known: {0}")]
+    UnknownUserType(String),
     #[error("wrong variant has been given")]
     WrongVariant,
     #[error("io error: {0}")]

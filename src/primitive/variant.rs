@@ -206,92 +206,32 @@ impl Deserialize for Variant {
         let (_, qtype) = i32::parse(&b[0..4])?;
         let qtype = qtype as u32;
 
-        #[allow(unused_variables)]
-        let unknown: u8 = b[4];
+        let _unknown: u8 = b[4];
 
         let len = 5;
         match qtype {
-            VariantMap::TYPE => {
-                trace!(target: "primitive::Variant", "Parsing Variant: VariantMap");
-                let (vlen, value) = VariantMap::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::VariantMap(value)));
-            }
-            VariantList::TYPE => {
-                trace!(target: "primitive::Variant", "Parsing Variant: VariantList");
-                let (vlen, value) = VariantList::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::VariantList(value)));
-            }
-            char::TYPE => {
-                trace!(target: "primitive::Variant", "Parsing Variant: Char");
-                let (vlen, value) = char::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::char(value)));
-            }
-            String::TYPE => {
-                trace!(target: "primitive::Variant", "Parsing Variant: String");
-                let (vlen, value) = String::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::String(value.clone())));
-            }
+            VariantMap::TYPE => return VariantMap::parse_variant(b, len),
+            VariantList::TYPE => return VariantList::parse_variant(b, len),
+            char::TYPE => return char::parse_variant(b, len),
+            String::TYPE => String::parse_variant(b, len),
             primitive::QBYTEARRAY => {
                 trace!(target: "primitive::Variant", "Parsing Variant: ByteArray");
                 let (vlen, value) = String::parse_utf8(&b[len..])?;
                 return Ok((len + vlen, Variant::ByteArray(value.clone())));
             }
-            StringList::TYPE => {
-                trace!(target: "primitive::Variant", "Parsing Variant: StringList");
-                let (vlen, value) = StringList::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::StringList(value.clone())));
-            }
-            DateTime::TYPE => {
-                trace!(target: "primitive::Variant", "Parsing Variant: DateTime");
-                let (vlen, value): (usize, DateTime) = Deserialize::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::DateTime(value.clone())));
-            }
-            Date::TYPE => {
-                trace!(target: "primitive::Variant", "Parsing Variant: Date");
-                let (vlen, value): (usize, Date) = Deserialize::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::Date(value.clone())));
-            }
-            Time::TYPE => {
-                trace!(target: "primitive::Variant", "Parsing Variant: Time");
-                let (vlen, value): (usize, Time) = Deserialize::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::Time(value.clone())));
-            }
-            bool::TYPE => {
-                let (vlen, value) = bool::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::bool(value)));
-            }
-            u64::TYPE => {
-                let (vlen, value) = u64::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::u64(value)));
-            }
-            u32::TYPE => {
-                let (vlen, value) = u32::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::u32(value)));
-            }
-            u16::TYPE => {
-                let (vlen, value) = u16::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::u16(value)));
-            }
-            u8::TYPE => {
-                let (vlen, value) = u8::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::u8(value)));
-            }
-            i64::TYPE => {
-                let (vlen, value) = i64::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::i64(value)));
-            }
-            i32::TYPE => {
-                let (vlen, value) = i32::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::i32(value)));
-            }
-            i16::TYPE => {
-                let (vlen, value) = i16::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::i16(value)));
-            }
-            i8::TYPE => {
-                let (vlen, value) = i8::parse(&b[len..])?;
-                return Ok((len + vlen, Variant::i8(value)));
-            }
+            StringList::TYPE => StringList::parse_variant(b, len),
+            DateTime::TYPE => DateTime::parse_variant(b, len),
+            Date::TYPE => Date::parse_variant(b, len),
+            Time::TYPE => Time::parse_variant(b, len),
+            bool::TYPE => bool::parse_variant(b, len),
+            u64::TYPE => u64::parse_variant(b, len),
+            u32::TYPE => u32::parse_variant(b, len),
+            u16::TYPE => u16::parse_variant(b, len),
+            u8::TYPE => u8::parse_variant(b, len),
+            i64::TYPE => i64::parse_variant(b, len),
+            i32::TYPE => i32::parse_variant(b, len),
+            i16::TYPE => i16::parse_variant(b, len),
+            i8::TYPE => i8::parse_variant(b, len),
             primitive::USERTYPE => {
                 trace!(target: "primitive::Variant", "Parsing UserType");
                 // Parse UserType name
@@ -302,11 +242,7 @@ impl Deserialize for Variant {
                 // TODO implement all these types
                 // Match Possible User Types to basic structures
                 match user_type.as_str() {
-                    "BufferId" => {
-                        trace!(target: "primitive::Variant", "UserType is BufferId");
-                        let (vlen, value) = BufferId::parse(&b[(len + user_type_len)..])?;
-                        return Ok((len + user_type_len + vlen, Variant::BufferId(value)));
-                    }
+                    BufferId::NAME => BufferId::parse_variant(b, len + user_type_len),
                     // As VariantMap
                     "IrcUser" | "IrcChannel" | "Identity" | "NetworkInfo" | "Network::Server" => {
                         trace!(target: "primitive::Variant", "UserType is VariantMap");
@@ -320,27 +256,11 @@ impl Deserialize for Variant {
                         let (vlen, value) = i32::parse(&b[(len + user_type_len)..])?;
                         return Ok((len + user_type_len + vlen, Variant::i32(value)));
                     }
-                    PeerPtr::NAME => {
-                        trace!(target: "primitive::Variant", "UserType is PeerPtr");
-                        let (vlen, value) = PeerPtr::parse(&b[(len + user_type_len)..])?;
-                        return Ok((len + user_type_len + vlen, Variant::PeerPtr(value)));
-                    }
-                    "BufferInfo" => {
-                        trace!(target: "primitive::Variant", "UserType is BufferInfo");
-                        let (vlen, value) = BufferInfo::parse(&b[(len + user_type_len)..])?;
-                        return Ok((len + user_type_len + vlen, Variant::BufferInfo(value)));
-                    }
-                    "Message" => {
-                        trace!(target: "primitive::Variant", "UserType is Message");
-                        let (vlen, value) = Message::parse(&b[(len + user_type_len)..])?;
-                        return Ok((len + user_type_len + vlen, Variant::Message(value)));
-                    }
-                    "MsgId" => {
-                        trace!(target: "primitive::Variant", "UserType is MsgId");
-                        let (vlen, value) = MsgId::parse(&b[(len + user_type_len)..])?;
-                        return Ok((len + user_type_len + vlen, Variant::MsgId(value)));
-                    }
-                    _ => unimplemented!(),
+                    PeerPtr::NAME => PeerPtr::parse_variant(b, len + user_type_len),
+                    BufferInfo::NAME => BufferInfo::parse_variant(b, len + user_type_len),
+                    Message::NAME => Message::parse_variant(b, len + user_type_len),
+                    MsgId::NAME => MsgId::parse_variant(b, len + user_type_len),
+                    _ => Err(ProtocolError::UnknownUserType(user_type)),
                 }
             }
             err => {

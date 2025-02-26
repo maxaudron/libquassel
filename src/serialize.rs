@@ -1,14 +1,7 @@
-use crate::{error::ProtocolError, primitive};
-
-/// Serialization of types and structs to the quassel byteprotocol
-pub trait Serialize {
-    fn serialize(&self) -> Result<Vec<u8>, ProtocolError>;
-}
-
-/// Serialization of UTF-8 based Strings to the quassel byteprotocol
-pub trait SerializeUTF8 {
-    fn serialize_utf8(&self) -> Result<Vec<u8>, ProtocolError>;
-}
+use crate::{
+    error::ProtocolError,
+    primitive::{self, Variant},
+};
 
 /// Sets the usertype name to be used in serialization and deserialization of the types variants.
 /// Automaticly implements the [SerializeVariant] trait.
@@ -35,6 +28,24 @@ pub trait SerializeUTF8 {
 /// ```
 pub trait UserType {
     const NAME: &str;
+}
+
+impl<T: UserType> VariantType for T {
+    const TYPE: u32 = primitive::USERTYPE;
+}
+
+// =============================================
+// Serialization
+//
+
+/// Serialization of types and structs to the quassel byteprotocol
+pub trait Serialize {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError>;
+}
+
+/// Serialization of UTF-8 based Strings to the quassel byteprotocol
+pub trait SerializeUTF8 {
+    fn serialize_utf8(&self) -> Result<Vec<u8>, ProtocolError>;
 }
 
 /// Provides a easy default implementation for serializing a type to it's [Variant] given it's QT type id.
@@ -73,10 +84,6 @@ pub trait SerializeVariant: VariantType + Serialize {
 
 impl<T: VariantType + Serialize> SerializeVariant for T {}
 
-impl<T: UserType> VariantType for T {
-    const TYPE: u32 = primitive::USERTYPE;
-}
-
 // =============================================
 // Deserialization
 //
@@ -95,8 +102,15 @@ pub trait DeserializeUTF8 {
         Self: std::marker::Sized;
 }
 
-pub trait DeserializeVariant: VariantType {
-    fn parse_variant(b: &[u8]) -> Result<(usize, Self), ProtocolError>
-    where
-        Self: std::marker::Sized;
+pub trait DeserializeVariant: VariantType + Deserialize
+where
+    Variant: From<Self>,
+    Self: Sized,
+{
+    fn parse_variant(b: &[u8], len: usize) -> Result<(usize, Variant), ProtocolError> {
+        let (vlen, value) = Self::parse(&b[len..])?;
+        return Ok((len + vlen, value.into()));
+    }
 }
+
+impl<T: VariantType + Deserialize> DeserializeVariant for T where Variant: From<T> {}
