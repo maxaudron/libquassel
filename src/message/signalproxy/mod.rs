@@ -15,7 +15,7 @@ pub mod objects;
 mod rpccall;
 mod syncmessage;
 
-mod translation;
+pub mod translation;
 pub use translation::*;
 
 pub use heartbeat::*;

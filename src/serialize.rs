@@ -1,3 +1,51 @@
+//! Traits for Serializing and Deserializing types to their byte representations
+//!
+//! example for a simple type would look like this with the `TYPE` usually fetched from [libquassel::primitive#constants]
+//!
+//! ```rust
+//! use libquassel::{ProtocolError, serialize::*};
+//!
+//! pub struct Example;
+//!
+//! impl Serialize for Example {
+//!     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
+//!         // Serialize here
+//!         # todo!()
+//!     }
+//! }
+//!
+//! impl Deserialize for Example {
+//!     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
+//!         // Deserialize here
+//!         # todo!()
+//!     }
+//! }
+//!
+//! impl VariantType for Example {
+//!     // The QT Type identifier
+//!     const TYPE: u32 = 0x18;
+//! }
+//! ```
+//!
+//! Some types are not serialized directly but are a [UserType]:
+//! ```rust
+//! use libquassel::{ProtocolError, serialize::*};
+//!
+//! pub struct Example;
+//!
+//! impl Serialize for Example {
+//!     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
+//!         // Serialize here
+//!         # todo!()
+//!     }
+//! }
+//!
+//! impl UserType for Example {
+//!     const NAME: &str = "Example";
+//! }
+//! ```
+//! [UserType]: libquassel::serialize::UserType
+
 use crate::{
     error::ProtocolError,
     primitive::{self, Variant},
@@ -64,13 +112,11 @@ pub trait VariantType {
     const TYPE: u32;
 }
 
+/// Serialize a Type directly to it's Variant.
+///
+/// Has a default implementation and is automaticly implemented for all types that
+/// have a [VariantType] set and [Serialize] implemented.
 pub trait SerializeVariant: VariantType + Serialize {
-    /// Default implementation that passes the serialization through to [SerializeVariantInner].
-    /// [SerializeVariantInner] is automaticly implemented for all types that implement [Serialize]
-    ///
-    /// ```rust ignore
-    /// self.serialize_variant_inner(Self::TYPE)
-    /// ```
     fn serialize_variant(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut res: Vec<u8> = Vec::new();
 
@@ -102,6 +148,14 @@ pub trait DeserializeUTF8 {
         Self: std::marker::Sized;
 }
 
+/// Deserialize a Type for use in the Variant parsing. In opposite to [SerializeVariant] this does not deal
+/// with the variant type itself as we have to match onto it genericly before passing it on to per Type
+/// functions.
+///
+/// Still using this gives us automatic implementations and more code reuse
+///
+/// Has a default implementation and is automaticly implemented for all types that
+/// have a [VariantType] set and [Deserialize] implemented.
 pub trait DeserializeVariant: VariantType + Deserialize
 where
     Variant: From<Self>,

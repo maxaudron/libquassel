@@ -2,8 +2,8 @@ use syn;
 
 mod from;
 mod network;
-mod sync;
 mod setters;
+mod sync;
 
 #[proc_macro_derive(NetworkList, attributes(network))]
 pub fn network_list(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -25,12 +25,6 @@ pub fn setters(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     setters::setters(input)
 }
 
-/// Sugar to make sending sync messages nicer
-///
-/// Example:
-/// ```
-/// sync!("requestCreateBufferView", [properties.to_network_map()])
-/// ```
 #[proc_macro]
 pub fn sync(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     sync::sync(input)

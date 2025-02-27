@@ -38,6 +38,17 @@ pub fn insert_bytes(pos: usize, buf: &mut Vec<u8>, input: &mut [u8]) {
     }
 }
 
+/// Easily create HashMaps for tests
+///
+/// ```rust
+/// use libquassel::{map, s};
+/// use libquassel::primitive::{Variant, VariantMap};
+///
+/// let example: VariantMap = map! {
+///    s!("id") => Variant::VariantList(vec![Variant::i32(1)]),
+///    s!("name") => Variant::StringList(vec![s!("testrule")]),
+///};
+/// ```
 #[macro_export]
 macro_rules! map {
     // map-like
@@ -50,6 +61,7 @@ macro_rules! map {
     };
 }
 
+/// Shorthand to make an owned string: `s!("example text")`
 #[macro_export]
 macro_rules! s {
     ($values:expr) => {
@@ -57,6 +69,7 @@ macro_rules! s {
     };
 }
 
+/// Remove the first entry in a SyncMessage
 #[macro_export]
 macro_rules! get_param {
     ( $msg:expr ) => {

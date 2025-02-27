@@ -88,7 +88,7 @@ impl From<&str> for Variant {
 }
 
 /// Implements the Network trait genericly for everything that
-/// can be a VariantList / Vec<T>
+/// can be a [VariantList]
 impl<T, S> crate::message::NetworkList for HashMap<T, S>
 where
     T: std::convert::TryFrom<Variant> + Into<Variant> + Clone + std::hash::Hash + std::cmp::Eq,

@@ -1,3 +1,8 @@
+//! Generic Session handling implementation
+//!
+//! This module provides a relativly generic example implementation for handling the whole quassel session in
+//! an application. This won't be usable in all cases but e.g. imediate mode GUIs can use it directly.
+
 use std::collections::HashMap;
 
 #[cfg(feature = "client")]
@@ -15,8 +20,7 @@ use crate::{
     primitive::NetworkId,
 };
 
-// TODO implement nested types init and sync like BufferViewConfig in BufferViewManager
-
+/// Central struct that hold all our state
 #[derive(Default, Debug)]
 pub struct Session {
     pub alias_manager: AliasManager,
@@ -33,6 +37,9 @@ pub struct Session {
 }
 
 /// The Session Trait is the main point of entry and implements the basic logic
+///
+/// Default implementations to handle sync and init of data structures is provided and you only have to
+/// provide the getter functions.
 pub trait SessionManager {
     fn alias_manager(&mut self) -> &mut AliasManager;
     fn buffer_syncer(&mut self) -> &mut BufferSyncer;
@@ -48,6 +55,7 @@ pub trait SessionManager {
     fn network(&mut self, id: i32) -> Option<&mut Network>;
     fn network_config(&mut self) -> &mut NetworkConfig;
 
+    /// Handles an incoming [SyncMessage] and passes it on to the correct destination Object.
     fn sync(&mut self, msg: SyncMessage)
     where
         Self: Sized,
@@ -158,6 +166,8 @@ pub trait SessionManager {
         *self.identities() = data.identities;
     }
 
+    /// Handles an [InitData] messages and initializes the SessionManagers Objects.
+    /// TODO handle automatic sending of InitRequest for whatever objects will need that.
     fn init(&mut self, data: InitData) {
         match data.init_data {
             Types::AliasManager(data) => self.alias_manager().init(data),

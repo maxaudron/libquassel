@@ -17,20 +17,22 @@ Native rust implementation of the Quassel protocol and library functions
 
 # TODOs
 
-- [TODO] Implementation of Syncable Objects {#implementation-of-syncable-objects}
-  - [DONE] AliasManager
-  - [TODO] BacklogManager
-  - [DONE] BufferSyncer
-  - [DONE] BufferViewConfig
-  - [DONE] BufferViewManager
-  - [DONE] CertManager
-  - [DONE] CoreInfo
-  - [DONE] HighlightRuleManager
-  - [DONE] Identity
-  - [DONE] IgnoreListManager
-  - [DONE] IrcChannel
-  - [TODO] IrcListHelper
-  - [TODO] IrcUser
-  - [TODO] Network
-  - [TODO] NetworkInfo
-  - [TODO] NetworkConfig
+- [ ] Implementation of Syncable Objects
+  - [X] AliasManager
+  - [ ] BacklogManager
+  - [X] BufferSyncer
+  - [X] BufferViewConfig
+  - [X] BufferViewManager
+  - [X] CertManager
+  - [X] CoreInfo
+  - [X] HighlightRuleManager
+  - [X] Identity
+  - [X] IgnoreListManager
+  - [X] IrcChannel
+  - [ ] IrcListHelper
+  - [X] IrcUser
+  - [X] Network
+  - [X] NetworkInfo
+  - [X] NetworkConfig
+- [ ] Rework Error handling to actually handle errors
+- [ ] Rewrite the parsers using nom
