@@ -5,6 +5,8 @@ use crate::{
     serialize::Serialize,
 };
 
+use rpccall::RpcCall;
+
 use log::debug;
 use num_derive::{FromPrimitive, ToPrimitive};
 
@@ -12,7 +14,7 @@ mod heartbeat;
 mod initdata;
 mod initrequest;
 pub mod objects;
-mod rpccall;
+pub mod rpccall;
 mod syncmessage;
 
 pub mod translation;
@@ -21,7 +23,6 @@ pub use translation::*;
 pub use heartbeat::*;
 pub use initdata::*;
 pub use initrequest::*;
-pub use rpccall::*;
 pub use syncmessage::*;
 
 use once_cell::sync::OnceCell;

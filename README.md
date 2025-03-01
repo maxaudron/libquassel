@@ -34,5 +34,9 @@ Native rust implementation of the Quassel protocol and library functions
   - [X] Network
   - [X] NetworkInfo
   - [X] NetworkConfig
+- [ ] Implement RPC Calls
+  - [X] RPC Call Objects
+  - [X] Serialization
+  - [ ] Add to SessionManager
 - [ ] Rework Error handling to actually handle errors
 - [ ] Rewrite the parsers using nom
