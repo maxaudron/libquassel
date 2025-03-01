@@ -195,13 +195,13 @@ pub struct HighlightRule {
     pub id: i32,
     #[network(stringlist)]
     pub name: String,
-    #[quassel(name = "isRegEx")]
+    #[network(rename = "isRegEx")]
     pub is_regex: bool,
-    #[quassel(name = "isCaseSensitive")]
+    #[network(rename = "isCaseSensitive")]
     pub is_case_sensitive: bool,
-    #[quassel(name = "isEnabled")]
+    #[network(rename = "isEnabled")]
     pub is_enabled: bool,
-    #[quassel(name = "isInverse")]
+    #[network(rename = "isInverse")]
     pub is_inverse: bool,
     #[network(stringlist)]
     pub sender: String,

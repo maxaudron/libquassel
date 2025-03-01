@@ -8,8 +8,7 @@ use num_derive::{FromPrimitive, ToPrimitive};
 
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct IgnoreListManager {
-    #[quassel(name = "IgnoreList")]
-    #[network(variant = "VariantMap", network = "map")]
+    #[network(rename = "IgnoreList", variant = "VariantMap", network = "map")]
     pub ignore_list: Vec<IgnoreListItem>,
 }
 

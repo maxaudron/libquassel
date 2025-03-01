@@ -16,48 +16,48 @@ use crate::primitive::IdentityId;
 
 #[derive(Default, Debug, Clone, PartialEq, NetworkMap, NetworkList, Setters)]
 pub struct Identity {
-    #[quassel(name = "identityId")]
+    #[network(rename = "identityId")]
     pub identity_id: IdentityId,
-    #[quassel(name = "identityName")]
+    #[network(rename = "identityName")]
     pub identity_name: String,
-    #[quassel(name = "realName")]
+    #[network(rename = "realName")]
     pub real_name: String,
-    #[quassel(name = "nicks")]
+    #[network(rename = "nicks")]
     #[network(type = "StringList")]
     pub nicks: Vec<String>,
 
     /// Away Nick is not actually used
-    /// in official quassel client
-    #[quassel(name = "awayNick")]
+    /// in official network client
+    #[network(rename = "awayNick")]
     pub away_nick: String,
-    #[quassel(name = "awayNickEnabled")]
+    #[network(rename = "awayNickEnabled")]
     pub away_nick_enabled: bool,
 
-    #[quassel(name = "awayReason")]
+    #[network(rename = "awayReason")]
     pub away_reason: String,
-    #[quassel(name = "awayReasonEnabled")]
+    #[network(rename = "awayReasonEnabled")]
     pub away_reason_enabled: bool,
-    #[quassel(name = "autoAwayEnabled")]
+    #[network(rename = "autoAwayEnabled")]
     pub auto_away_enabled: bool,
-    #[quassel(name = "autoAwayTime")]
+    #[network(rename = "autoAwayTime")]
     pub auto_away_time: i32,
-    #[quassel(name = "autoAwayReason")]
+    #[network(rename = "autoAwayReason")]
     pub auto_away_reason: String,
-    #[quassel(name = "autoAwayReasonEnabled")]
+    #[network(rename = "autoAwayReasonEnabled")]
     pub auto_away_reason_enabled: bool,
-    #[quassel(name = "detachAwayEnabled")]
+    #[network(rename = "detachAwayEnabled")]
     pub detach_away_enabled: bool,
-    #[quassel(name = "detachAwayReason")]
+    #[network(rename = "detachAwayReason")]
     pub detach_away_reason: String,
-    #[quassel(name = "detachAwayReasonEnabled")]
+    #[network(rename = "detachAwayReasonEnabled")]
     pub detach_away_reason_enabled: bool,
-    #[quassel(name = "ident")]
+    #[network(rename = "ident")]
     pub ident: String,
-    #[quassel(name = "kickReason")]
+    #[network(rename = "kickReason")]
     pub kick_reason: String,
-    #[quassel(name = "partReason")]
+    #[network(rename = "partReason")]
     pub part_reason: String,
-    #[quassel(name = "quitReason")]
+    #[network(rename = "quitReason")]
     pub quit_reason: String,
 }
 

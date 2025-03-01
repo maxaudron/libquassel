@@ -15,30 +15,30 @@ pub struct IrcUser {
     pub user: String,
     pub host: String,
     pub nick: String,
-    #[quassel(name = "realName")]
+    #[network(rename = "realName")]
     pub real_name: String,
     pub account: String,
     pub away: bool,
-    #[quassel(name = "awayMessage")]
+    #[network(rename = "awayMessage")]
     pub away_message: String,
-    #[quassel(name = "idleTime")]
+    #[network(rename = "idleTime")]
     pub idle_time: DateTime,
-    #[quassel(name = "loginTime")]
+    #[network(rename = "loginTime")]
     pub login_time: DateTime,
     pub server: String,
-    #[quassel(name = "ircOperator")]
+    #[network(rename = "ircOperator")]
     pub irc_operator: String,
     // #[quassel(name = "lastAwayMessage")]
     // pub last_away_message: i32,
-    #[quassel(name = "lastAwayMessageTime")]
+    #[network(rename = "lastAwayMessageTime")]
     pub last_away_message_time: DateTime,
-    #[quassel(name = "whoisServiceReply")]
+    #[network(rename = "whoisServiceReply")]
     pub whois_service_reply: String,
-    #[quassel(name = "suserHost")]
+    #[network(rename = "suserHost")]
     pub suser_host: String,
     pub encrypted: bool,
     pub channels: StringList,
-    #[quassel(name = "userModes")]
+    #[network(rename = "userModes")]
     pub user_modes: String,
 }
 
