@@ -1,6 +1,7 @@
 use crate::{
-    message::{Class, Syncable},
-    primitive::{IdentityId, NetworkId, StringList},
+    message::{signalproxy::translation::NetworkMap, Class, Syncable},
+    primitive::{IdentityId, NetworkId, StringList, VariantMap},
+    serialize::{Deserialize, Serialize, UserType},
 };
 
 use libquassel_derive::{NetworkList, NetworkMap, Setters};
@@ -69,6 +70,26 @@ pub struct NetworkInfo {
     pub unlimited_message_rate: bool,
     // #[network(rename = "autoAwayActive")]
     // pub auto_away_active: bool,
+}
+
+impl UserType for NetworkInfo {
+    const NAME: &str = "NetworkInfo";
+}
+
+impl Serialize for NetworkInfo {
+    fn serialize(&self) -> Result<Vec<u8>, crate::ProtocolError> {
+        self.to_network_map().serialize()
+    }
+}
+
+impl Deserialize for NetworkInfo {
+    fn parse(b: &[u8]) -> Result<(usize, Self), crate::ProtocolError>
+    where
+        Self: std::marker::Sized,
+    {
+        let (vlen, mut value) = VariantMap::parse(b)?;
+        return Ok((vlen, Self::from_network_map(&mut value)));
+    }
 }
 
 impl NetworkInfo {

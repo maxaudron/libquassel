@@ -13,6 +13,10 @@ use crate::message::Syncable;
 #[allow(unused_imports)]
 use crate::message::signalproxy::translation::NetworkMap;
 use crate::primitive::IdentityId;
+use crate::primitive::VariantMap;
+use crate::serialize::Deserialize;
+use crate::serialize::Serialize;
+use crate::serialize::UserType;
 
 #[derive(Default, Debug, Clone, PartialEq, NetworkMap, NetworkList, Setters)]
 pub struct Identity {
@@ -59,6 +63,26 @@ pub struct Identity {
     pub part_reason: String,
     #[network(rename = "quitReason")]
     pub quit_reason: String,
+}
+
+impl UserType for Identity {
+    const NAME: &str = "Identity";
+}
+
+impl Serialize for Identity {
+    fn serialize(&self) -> Result<Vec<u8>, crate::ProtocolError> {
+        self.to_network_map().serialize()
+    }
+}
+
+impl Deserialize for Identity {
+    fn parse(b: &[u8]) -> Result<(usize, Self), crate::ProtocolError>
+    where
+        Self: std::marker::Sized,
+    {
+        let (vlen, mut value) = VariantMap::parse(b)?;
+        return Ok((vlen, Self::from_network_map(&mut value)));
+    }
 }
 
 impl Identity {

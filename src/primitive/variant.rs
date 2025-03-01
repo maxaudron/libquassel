@@ -1,9 +1,10 @@
 use std::{collections::HashMap, vec::Vec};
 
 use itertools::Itertools;
-use log::{debug, error, trace};
+use log::{error, trace};
 
 use crate::error::ProtocolError;
+use crate::message::objects::{Identity, IrcChannel, IrcUser, NetworkInfo, NetworkServer};
 use crate::primitive::{self, NetworkId, PeerPtr};
 use crate::primitive::{IdentityId, StringList};
 use crate::serialize::*;
@@ -29,9 +30,14 @@ pub enum Variant {
     BufferId(BufferId),
     BufferInfo(BufferInfo),
     IdentityId(IdentityId),
+    IrcUser(IrcUser),
+    IrcChannel(IrcChannel),
+    Identity(Identity),
     Message(Message),
     MsgId(MsgId),
     NetworkId(NetworkId),
+    NetworkInfo(NetworkInfo),
+    NetworkServer(NetworkServer),
     Time(Time),
     Date(Date),
     DateTime(DateTime),
@@ -200,6 +206,11 @@ impl Serialize for Variant {
             Variant::DateTime(v) => v.serialize_variant(),
             Variant::Time(v) => v.serialize_variant(),
             Variant::Date(v) => v.serialize_variant(),
+            Variant::IrcUser(v) => v.serialize_variant(),
+            Variant::IrcChannel(v) => v.serialize_variant(),
+            Variant::Identity(v) => v.serialize_variant(),
+            Variant::NetworkInfo(v) => v.serialize_variant(),
+            Variant::NetworkServer(v) => v.serialize_variant(),
         }
     }
 }
@@ -246,12 +257,11 @@ impl Deserialize for Variant {
                 // Match Possible User Types to basic structures
                 match user_type.as_str() {
                     BufferId::NAME => BufferId::parse_variant(b, len + user_type_len),
-                    // As VariantMap
-                    "IrcUser" | "IrcChannel" | "Identity" | "NetworkInfo" | "Network::Server" => {
-                        let (vlen, value) = VariantMap::parse(&b[(len + user_type_len)..])?;
-                        debug!(target: "primitive::Variant", "UserType is VariantMap {:?}", value);
-                        return Ok((len + user_type_len + vlen, Variant::VariantMap(value)));
-                    }
+                    IrcUser::NAME => IrcUser::parse_variant(b, len + user_type_len),
+                    IrcChannel::NAME => IrcChannel::parse_variant(b, len + user_type_len),
+                    Identity::NAME => Identity::parse_variant(b, len + user_type_len),
+                    NetworkInfo::NAME => NetworkInfo::parse_variant(b, len + user_type_len),
+                    NetworkServer::NAME => NetworkServer::parse_variant(b, len + user_type_len),
                     NetworkId::NAME => NetworkId::parse_variant(b, len + user_type_len),
                     IdentityId::NAME => IdentityId::parse_variant(b, len + user_type_len),
                     PeerPtr::NAME => PeerPtr::parse_variant(b, len + user_type_len),

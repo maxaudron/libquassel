@@ -1,6 +1,7 @@
 use crate::{
-    message::{Class, Syncable},
-    primitive::{DateTime, StringList},
+    message::{Class, NetworkMap, Syncable},
+    primitive::{DateTime, StringList, VariantMap},
+    serialize::{Deserialize, Serialize, UserType},
 };
 
 use itertools::Itertools;
@@ -40,6 +41,26 @@ pub struct IrcUser {
     pub channels: StringList,
     #[network(rename = "userModes")]
     pub user_modes: String,
+}
+
+impl UserType for IrcUser {
+    const NAME: &str = "IrcUser";
+}
+
+impl Serialize for IrcUser {
+    fn serialize(&self) -> Result<Vec<u8>, crate::ProtocolError> {
+        self.to_network_map().serialize()
+    }
+}
+
+impl Deserialize for IrcUser {
+    fn parse(b: &[u8]) -> Result<(usize, Self), crate::ProtocolError>
+    where
+        Self: std::marker::Sized,
+    {
+        let (vlen, mut value) = VariantMap::parse(b)?;
+        return Ok((vlen, Self::from_network_map(&mut value)));
+    }
 }
 
 impl IrcUser {

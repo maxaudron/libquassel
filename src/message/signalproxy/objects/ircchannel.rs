@@ -5,8 +5,9 @@ use libquassel_derive::sync;
 use libquassel_derive::{NetworkList, NetworkMap, Setters};
 use log::{error, warn};
 
-use crate::message::{Class, Syncable};
-use crate::primitive::StringList;
+use crate::message::{signalproxy::translation::NetworkMap, Class, Syncable};
+use crate::primitive::{StringList, VariantMap};
+use crate::serialize::{Deserialize, Serialize, UserType};
 
 use super::{ChanModes, ChannelModeType};
 
@@ -28,6 +29,26 @@ pub struct IrcChannel {
     pub topic: String,
     pub password: String,
     pub encrypted: bool,
+}
+
+impl UserType for IrcChannel {
+    const NAME: &str = "IrcChannel";
+}
+
+impl Serialize for IrcChannel {
+    fn serialize(&self) -> Result<Vec<u8>, crate::ProtocolError> {
+        self.to_network_map().serialize()
+    }
+}
+
+impl Deserialize for IrcChannel {
+    fn parse(b: &[u8]) -> Result<(usize, Self), crate::ProtocolError>
+    where
+        Self: std::marker::Sized,
+    {
+        let (vlen, mut value) = VariantMap::parse(b)?;
+        return Ok((vlen, Self::from_network_map(&mut value)));
+    }
 }
 
 // TODO keep user modes sorted

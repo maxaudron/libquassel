@@ -11,6 +11,7 @@ use crate::error::ProtocolError;
 use crate::message::signalproxy::translation::NetworkMap;
 use crate::message::{Class, Syncable};
 use crate::primitive::{Variant, VariantList, VariantMap};
+use crate::serialize::{Deserialize, Serialize, UserType};
 
 use super::{ircchannel::IrcChannel, ircuser::IrcUser, networkinfo::NetworkInfo};
 
@@ -614,6 +615,26 @@ pub struct NetworkServer {
     pub proxy_user: String,
     #[network(rename = "ProxyPass")]
     pub proxy_pass: String,
+}
+
+impl UserType for NetworkServer {
+    const NAME: &str = "Network::Server";
+}
+
+impl Serialize for NetworkServer {
+    fn serialize(&self) -> Result<Vec<u8>, crate::ProtocolError> {
+        self.to_network_map().serialize()
+    }
+}
+
+impl Deserialize for NetworkServer {
+    fn parse(b: &[u8]) -> Result<(usize, Self), crate::ProtocolError>
+    where
+        Self: std::marker::Sized,
+    {
+        let (vlen, mut value) = VariantMap::parse(b)?;
+        return Ok((vlen, Self::from_network_map(&mut value)));
+    }
 }
 
 #[cfg(test)]
