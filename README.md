@@ -17,6 +17,8 @@ Native rust implementation of the Quassel protocol and library functions
 
 # TODOs
 
+## Road to 1.0
+
 - [ ] Implementation of Syncable Objects
   - [X] AliasManager
   - [ ] BacklogManager
@@ -34,9 +36,15 @@ Native rust implementation of the Quassel protocol and library functions
   - [X] Network
   - [X] NetworkInfo
   - [X] NetworkConfig
-- [ ] Implement RPC Calls
+- [X] Implement RPC Calls
   - [X] RPC Call Objects
   - [X] Serialization
-  - [ ] Add to SessionManager
 - [ ] Rework Error handling to actually handle errors
+- [ ] Rework Quassel feature flags to work at runtime, not compile time
+
+## Nice to Have
+
 - [ ] Rewrite the parsers using nom
+- [ ] SessionManager
+  - [ ] Automatic InitRequest handling in SessionManager
+  - [ ] Add RPC Calls to SessionManager
