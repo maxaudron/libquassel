@@ -9,6 +9,7 @@ use rpccall::RpcCall;
 use log::debug;
 use num_derive::{FromPrimitive, ToPrimitive};
 
+mod class;
 mod heartbeat;
 mod initdata;
 mod initrequest;
@@ -19,6 +20,7 @@ mod syncmessage;
 pub mod translation;
 pub use translation::*;
 
+pub use class::*;
 pub use heartbeat::*;
 pub use initdata::*;
 pub use initrequest::*;

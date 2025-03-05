@@ -3,9 +3,11 @@ use crate::message::MessageType;
 use crate::primitive::{Variant, VariantList};
 use crate::serialize::{Deserialize, Serialize};
 
+use super::Class;
+
 #[derive(Clone, Debug, std::cmp::PartialEq)]
 pub struct InitRequest {
-    pub class_name: String,
+    pub class_name: Class,
     pub object_name: String,
 }
 
@@ -13,7 +15,7 @@ impl Serialize for InitRequest {
     fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         vec![
             Variant::i32(MessageType::InitRequest as i32),
-            Variant::ByteArray(self.class_name.clone()),
+            Variant::ByteArray(self.class_name.as_str().to_owned()),
             Variant::ByteArray(self.object_name.clone()),
         ]
         .serialize()
@@ -29,7 +31,7 @@ impl Deserialize for InitRequest {
         Ok((
             size,
             Self {
-                class_name: res.remove(0).try_into()?,
+                class_name: Class::from(TryInto::<String>::try_into(res.remove(0))?),
                 object_name: res.remove(0).try_into()?,
             },
         ))
