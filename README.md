@@ -45,6 +45,7 @@ Native rust implementation of the Quassel protocol and library functions
   - [X] Serialization
 - [ ] Rework Error handling to actually handle errors
 - [ ] Rework Quassel feature flags to work at runtime, not compile time
+- [X] Rewrite NetworkList impl to convert to NetworkMap first
 
 ## Nice to Have
 

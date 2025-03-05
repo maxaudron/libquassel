@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     message::NetworkMap,
     primitive::{StringList, Variant, VariantMap},
-    Result,
+    ProtocolError, Result,
 };
 
 /// Irc Channel modes
@@ -64,24 +64,36 @@ impl NetworkMap for ChanModes {
     }
 
     fn from_network_map(input: &mut Self::Item) -> Result<Self> {
-        let channel_modes_a: VariantMap = input.remove("A").unwrap().try_into().unwrap();
-        let channel_modes_b: VariantMap = input.remove("B").unwrap().try_into().unwrap();
-        let channel_modes_c: VariantMap = input.remove("C").unwrap().try_into().unwrap();
+        let channel_modes_a: VariantMap = input
+            .remove("A")
+            .ok_or(ProtocolError::MissingField(s!("ChanModes A")))?
+            .try_into()?;
+        let channel_modes_b: VariantMap = input
+            .remove("B")
+            .ok_or(ProtocolError::MissingField(s!("ChanModes A")))?
+            .try_into()?;
+        let channel_modes_c: VariantMap = input
+            .remove("C")
+            .ok_or(ProtocolError::MissingField(s!("ChanModes A")))?
+            .try_into()?;
 
         Ok(ChanModes {
             channel_modes_a: channel_modes_a
                 .into_iter()
-                .map(|(mut k, v)| (k.remove(0), v.try_into().unwrap()))
-                .collect(),
+                .map(|(mut k, v)| -> Result<(char, Vec<String>)> { Ok((k.remove(0), v.try_into()?)) })
+                .collect::<Result<HashMap<char, Vec<String>>>>()?,
             channel_modes_b: channel_modes_b
                 .into_iter()
-                .map(|(mut k, v)| (k.remove(0), v.try_into().unwrap()))
-                .collect(),
+                .map(|(mut k, v)| -> Result<(char, String)> { Ok((k.remove(0), v.try_into()?)) })
+                .collect::<Result<HashMap<char, String>>>()?,
             channel_modes_c: channel_modes_c
                 .into_iter()
-                .map(|(mut k, v)| (k.remove(0), v.try_into().unwrap()))
-                .collect(),
-            channel_modes_d: input.remove("D").unwrap().try_into().unwrap(),
+                .map(|(mut k, v)| -> Result<(char, String)> { Ok((k.remove(0), v.try_into()?)) })
+                .collect::<Result<HashMap<char, String>>>()?,
+            channel_modes_d: input
+                .remove("D")
+                .ok_or(ProtocolError::MissingField(s!("ChanModes A")))?
+                .try_into()?,
         })
     }
 }
@@ -136,6 +148,9 @@ mod tests {
 
     #[test]
     fn chanmodes_from_network() {
-        assert_eq!(ChanModes::from_network_map(&mut get_network()).unwrap(), get_runtime())
+        assert_eq!(
+            ChanModes::from_network_map(&mut get_network()).unwrap(),
+            get_runtime()
+        )
     }
 }

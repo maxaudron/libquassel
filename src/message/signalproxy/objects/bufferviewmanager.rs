@@ -29,14 +29,14 @@ impl BufferViewManager {
     }
 
     pub fn request_create_buffer_views(&self, properties: &[BufferViewConfig]) -> Result<()> {
-        let properties = properties.iter().map(|view| view.to_network_map()).collect::<Result<Vec<VariantMap>>>()?;
+        let properties = properties
+            .iter()
+            .map(|view| view.to_network_map())
+            .collect::<Result<Vec<VariantMap>>>()?;
 
         self.send_sync(
             "requestCreateBufferViews",
-            properties
-                .into_iter()
-                .map(|view| view.into())
-                .collect(),
+            properties.into_iter().map(|view| view.into()).collect(),
         )
     }
 
@@ -148,19 +148,21 @@ impl super::NetworkList for BufferViewManager {
     fn from_network_list(input: VariantList) -> Result<Self> {
         let mut i = input.into_iter();
         i.position(|x| x == Variant::ByteArray(String::from("BufferViewIds")))
-            .expect("failed to get field BufferViewIds");
+            .ok_or(ProtocolError::MissingField("BufferViewIds".to_string()))?;
 
-        let ids = match i.next().expect("failed to get next field") {
-            libquassel::primitive::Variant::VariantList(var) => var.clone(),
-            _ => panic!("network::list::from: wrong variant type"),
-        };
+        let ids = match i.next().ok_or(ProtocolError::MissingField("BufferViewIds".to_string()))? {
+            libquassel::primitive::Variant::VariantList(var) => Ok(var.clone()),
+            _ => Err(ProtocolError::WrongVariant),
+        }?;
+
+        let ids: Vec<i32> = ids
+            .into_iter()
+            .map(|i| -> Result<i32> { i.try_into() })
+            .collect::<Result<Vec<i32>>>()?;
 
         // TODO Somehow do the initrequests for all the IDs we get here
         Ok(Self {
-            buffer_view_configs: ids
-                .into_iter()
-                .map(|id| (i32::try_from(id).unwrap(), Option::None))
-                .collect(),
+            buffer_view_configs: ids.into_iter().map(|id| (id, Option::None)).collect(),
         })
     }
 }

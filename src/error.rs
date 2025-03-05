@@ -44,6 +44,13 @@ pub enum ProtocolError {
     UnknownScopeType(i32),
     #[error("got unkown message slot_name: {0}")]
     UnknownMsgSlotName(String),
+    #[error("got unknown connection state")]
+    UnknownConnectionState,
+
+    // TODO potentially move this to a higher error type for the object implementations
+    // to sepperate it from parser errors
+    #[error("buffer was not found: {0:?}")]
+    BufferNotFound(crate::primitive::BufferId)
 }
 
 #[derive(Debug, Error)]

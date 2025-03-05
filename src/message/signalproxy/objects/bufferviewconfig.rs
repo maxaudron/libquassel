@@ -80,7 +80,7 @@ impl BufferViewConfig {
     }
 
     pub fn move_buffer(&mut self, id: BufferId, pos: usize) -> Result<()> {
-        let old_pos = self.buffers.iter().position(|&x| x == id).unwrap();
+        let old_pos = self.buffers.iter().position(|&x| x == id).ok_or(ProtocolError::BufferNotFound(id))?;
         self.buffers.remove(old_pos);
         self.buffers.insert(pos, id);
 

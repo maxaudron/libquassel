@@ -57,7 +57,7 @@ impl Serialize for Message {
         #[cfg(feature = "long-time")]
         values.append(&mut i64::serialize(&self.timestamp)?);
         #[cfg(not(feature = "long-time"))]
-        values.append(&mut i32::serialize(&(self.timestamp as i32))?);
+        values.append(&mut i32::serialize(&self.timestamp)?);
 
         values.append(&mut i32::serialize(&(self.msg_type.bits()))?);
         values.append(&mut i8::serialize(&self.flags)?);
@@ -211,18 +211,18 @@ where
 
         let mut res = HashMap::with_capacity(input.len() / 2);
 
-        input.into_iter().tuples().for_each(|(k, v)| {
+        for (k, v) in input.into_iter().tuples() {
             res.insert(
                 match T::try_from(k.clone()) {
                     Ok(it) => it,
                     _ => unreachable!(),
                 },
                 {
-                    let typ = v.try_into().expect("failed to get from variant");
-                    MessageType::from_bits(typ).expect("failed to get messagetype from i32")
+                    let typ = v.try_into()?;
+                    MessageType::from_bits(typ).ok_or(ProtocolError::UnknownMsgType)?
                 },
             );
-        });
+        }
 
         Ok(res)
     }

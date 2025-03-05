@@ -375,7 +375,6 @@ impl crate::message::signalproxy::NetworkList for Network {
         Ok(res)
     }
 
-    // TODO VariantList -> VariantMap conversion
     fn from_network_list(input: VariantList) -> Result<Self> {
         let mut i = input.into_iter();
         let mut map: VariantMap = VariantMap::new();
@@ -462,27 +461,42 @@ impl crate::message::signalproxy::NetworkMap for Network {
     }
 
     fn from_network_map(input: &mut Self::Item) -> Result<Self> {
-        let mut users_and_channels: VariantMap =
-            { input.remove("IrcUsersAndChannels").unwrap().try_into().unwrap() };
+        let mut users_and_channels: VariantMap = {
+            input
+                .remove("IrcUsersAndChannels")
+                .ok_or(ProtocolError::MissingField(s!("IrcUsersAndChannels")))?
+                .try_into()?
+        };
 
         Ok(Self {
-            my_nick: input.remove("myNick").unwrap().try_into().unwrap(),
-            latency: input.remove("latency").unwrap().try_into().unwrap(),
-            current_server: input.remove("currentServer").unwrap().try_into().unwrap(),
-            is_connected: input.remove("isConnected").unwrap().try_into().unwrap(),
-            connection_state: ConnectionState::from_i32(
-                input.remove("connectionState").unwrap().try_into().unwrap(),
-            )
-            .unwrap(),
+            my_nick: input
+                .remove("myNick")
+                .ok_or(ProtocolError::MissingField(s!("myNick")))?
+                .try_into()?,
+            latency: input
+                .remove("latency")
+                .ok_or(ProtocolError::MissingField(s!("latency")))?
+                .try_into()?,
+            current_server: input
+                .remove("currentServer")
+                .ok_or(ProtocolError::MissingField(s!("currentServer")))?
+                .try_into()?,
+            is_connected: input
+                .remove("isConnected")
+                .ok_or(ProtocolError::MissingField(s!("isConnected")))?
+                .try_into()?,
+            connection_state: ConnectionState::try_from(
+                input
+                    .remove("connectionState")
+                    .ok_or(ProtocolError::MissingField(s!("connectionState")))?,
+            )?,
             prefixes: Vec::new(),
             prefix_modes: Vec::new(),
             channel_modes: HashMap::with_capacity(4),
             irc_users: {
                 match users_and_channels.remove("Users") {
                     Some(users) => {
-                        let users: Vec<IrcUser> = Vec::<IrcUser>::from_network_map(
-                            &mut users.try_into().expect("failed to convert Users"),
-                        )?;
+                        let users: Vec<IrcUser> = Vec::<IrcUser>::from_network_map(&mut users.try_into()?)?;
 
                         users.into_iter().map(|user| (user.nick.clone(), user)).collect()
                     }
@@ -493,7 +507,7 @@ impl crate::message::signalproxy::NetworkMap for Network {
                 match users_and_channels.remove("Channels") {
                     Some(channels) => {
                         let channels: Vec<IrcChannel> =
-                            Vec::<IrcChannel>::from_network_map(&mut channels.try_into().unwrap())?;
+                            Vec::<IrcChannel>::from_network_map(&mut channels.try_into()?)?;
                         channels
                             .into_iter()
                             .map(|channel| (channel.name.clone(), channel))
@@ -502,21 +516,30 @@ impl crate::message::signalproxy::NetworkMap for Network {
                     None => HashMap::new(),
                 }
             },
-            supports: VariantMap::try_from(input.get("Supports").unwrap())
-                .unwrap()
-                .into_iter()
-                .map(|(k, v)| (k, v.try_into().unwrap()))
-                .collect(),
-            caps: VariantMap::try_from(input.get("Caps").unwrap())
-                .unwrap()
-                .into_iter()
-                .map(|(k, v)| (k, v.try_into().unwrap()))
-                .collect(),
-            caps_enabled: VariantList::try_from(input.get("CapsEnabled").unwrap())
-                .unwrap()
-                .into_iter()
-                .map(|v| v.try_into().unwrap())
-                .collect(),
+            supports: VariantMap::try_from(
+                input
+                    .get("Supports")
+                    .ok_or(ProtocolError::MissingField(s!("CapsEnabled")))?,
+            )?
+            .into_iter()
+            .map(|(k, v)| Ok((k, v.try_into()?)))
+            .collect::<Result<HashMap<String, String>>>()?,
+            caps: VariantMap::try_from(
+                input
+                    .get("Caps")
+                    .ok_or(ProtocolError::MissingField(s!("CapsEnabled")))?,
+            )?
+            .into_iter()
+            .map(|(k, v)| Ok((k, v.try_into()?)))
+            .collect::<Result<HashMap<String, String>>>()?,
+            caps_enabled: VariantList::try_from(
+                input
+                    .get("CapsEnabled")
+                    .ok_or(ProtocolError::MissingField(s!("CapsEnabled")))?,
+            )?
+            .into_iter()
+            .map(|v| v.try_into())
+            .collect::<Result<Vec<String>>>()?,
             network_info: NetworkInfo::from_network_map(input)?,
         })
     }
@@ -560,7 +583,7 @@ impl NetworkList for Vec<NetworkServer> {
     }
 
     fn from_network_list(input: super::VariantList) -> Result<Self> {
-        Ok(input.into_iter().map(|b| b.try_into().unwrap()).collect())
+        input.into_iter().map(|b| b.try_into()).collect()
     }
 }
 
@@ -745,7 +768,7 @@ impl TryFrom<Variant> for ConnectionState {
 
     fn try_from(value: Variant) -> Result<Self> {
         match value {
-            Variant::i32(n) => Ok(ConnectionState::from_i32(n).unwrap()),
+            Variant::i32(n) => ConnectionState::from_i32(n).ok_or(ProtocolError::UnknownConnectionState),
             _ => Err(ProtocolError::WrongVariant),
         }
     }
