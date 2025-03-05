@@ -12,6 +12,7 @@ use crate::Result;
 
 use super::{ChanModes, ChannelModeType};
 
+/// IRC Channel on a network
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Setters, NetworkList, NetworkMap)]
 #[network(repr = "maplist")]
@@ -20,7 +21,6 @@ pub struct IrcChannel {
     #[network(rename = "ChanModes", variant = "VariantMap", network = "map")]
     pub chan_modes: ChanModes,
 
-    // pub channel_modes: HashMap<char, ChannelMode>,
     #[setter(skip)]
     #[network(rename = "UserModes", variant = "VariantMap", network = "map")]
     pub user_modes: HashMap<String, String>,

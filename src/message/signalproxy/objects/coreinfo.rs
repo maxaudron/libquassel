@@ -5,6 +5,7 @@ use crate::message::{Class, Syncable};
 use crate::primitive::{DateTime, StringList};
 use crate::Result;
 
+/// Metadata about the Core a client is connected to
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
 #[network(repr = "map")]
 pub struct CoreInfo {
@@ -60,6 +61,7 @@ impl Syncable for CoreInfo {
     const CLASS: Class = Class::CoreInfo;
 }
 
+/// Metadata about the Core a client is connected to
 #[derive(Debug, Clone, PartialEq, NetworkMap)]
 #[network(repr = "map")]
 pub struct CoreData {

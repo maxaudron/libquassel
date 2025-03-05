@@ -18,7 +18,7 @@ use crate::{
         objects::{Types, *},
         Class, InitData, SessionInit, SyncMessage, Syncable,
     },
-    primitive::NetworkId,
+    primitive::{IdentityId, NetworkId},
 };
 
 /// Central struct that hold all our state
@@ -31,7 +31,7 @@ pub struct Session {
     pub cert_manager: CertManager,
     pub core_info: CoreInfo,
     pub highlight_rule_manager: HighlightRuleManager,
-    pub identities: Vec<Identity>,
+    pub identities: HashMap<IdentityId, Identity>,
     pub ignore_list_manager: IgnoreListManager,
     pub networks: HashMap<NetworkId, Network>,
     pub network_config: NetworkConfig,
@@ -49,8 +49,8 @@ pub trait SessionManager {
     fn cert_manager(&mut self) -> &mut CertManager;
     fn core_info(&mut self) -> &mut CoreInfo;
     fn highlight_rule_manager(&mut self) -> &mut HighlightRuleManager;
-    fn identities(&mut self) -> &mut Vec<Identity>;
-    fn identity(&mut self, id: usize) -> Option<&mut Identity>;
+    fn identities(&mut self) -> &mut HashMap<IdentityId, Identity>;
+    fn identity(&mut self, id: IdentityId) -> Option<&mut Identity>;
     fn ignore_list_manager(&mut self) -> &mut IgnoreListManager;
     fn networks(&mut self) -> &mut HashMap<NetworkId, Network>;
     fn network(&mut self, id: i32) -> Option<&mut Network>;
@@ -73,7 +73,7 @@ pub trait SessionManager {
             Class::HighlightRuleManager => self.highlight_rule_manager().sync(msg),
             Class::Identity => {
                 let identity_id: i32 = msg.object_name.parse()?;
-                if let Some(identity) = self.identity(identity_id as usize) {
+                if let Some(identity) = self.identity(identity_id.into()) {
                     identity.sync(msg)?;
                 } else {
                     warn!("could not find identity with id: {:?}", identity_id);
@@ -186,7 +186,10 @@ pub trait SessionManager {
     }
 
     fn session_init(&mut self, data: SessionInit) {
-        *self.identities() = data.identities;
+        let identities = self.identities();
+        for identity in data.identities {
+            identities.insert(identity.identity_id, identity);
+        }
     }
 
     /// Handles an [InitData] messages and initializes the SessionManagers Objects.
@@ -197,6 +200,7 @@ pub trait SessionManager {
             Types::BufferSyncer(data) => self.buffer_syncer().init(*data),
             Types::BufferViewConfig(data) => self.buffer_view_manager().init_buffer_view_config(*data),
             Types::BufferViewManager(data) => self.buffer_view_manager().init(*data),
+            Types::CoreInfo(data) => self.core_info().init(*data),
             Types::CoreData(data) => self.core_info().set_core_data(*data)?,
             Types::HighlightRuleManager(data) => self.highlight_rule_manager().init(*data),
             Types::IgnoreListManager(data) => self.ignore_list_manager().init(*data),
@@ -204,9 +208,11 @@ pub trait SessionManager {
             Types::Network(network) => {
                 let id: NetworkId = NetworkId(data.object_name.parse()?);
                 self.networks().insert(id, *network);
-            }
-            Types::NetworkInfo(_) => (),
-            Types::NetworkConfig(_) => (),
+            },
+            Types::Identity(identity) => {
+                let id: IdentityId = IdentityId(data.object_name.parse()?);
+                self.identities().insert(id, *identity);
+            },
             Types::IrcChannel(channel) => {
                 let mut name = data.object_name.split("/");
                 let id: i32 = name
@@ -220,6 +226,16 @@ pub trait SessionManager {
                     network.add_channel(name, *channel)
                 }
             }
+            Types::IrcUser(user) => {
+                let mut name = data.object_name.split("/");
+                let id: i32 = name.next().unwrap().parse().unwrap();
+                let name = name.next().unwrap();
+                if let Some(network) = self.network(id) {
+                    network.add_user(name, *user)
+                }
+            }
+            Types::NetworkInfo(_) => (),
+            Types::NetworkConfig(_) => (),
             Types::Unknown(_) => (),
         };
 
@@ -256,12 +272,12 @@ impl SessionManager for Session {
         &mut self.highlight_rule_manager
     }
 
-    fn identities(&mut self) -> &mut Vec<Identity> {
+    fn identities(&mut self) -> &mut HashMap<IdentityId, Identity> {
         &mut self.identities
     }
 
-    fn identity(&mut self, id: usize) -> Option<&mut Identity> {
-        self.identities.get_mut(id)
+    fn identity(&mut self, id: IdentityId) -> Option<&mut Identity> {
+        self.identities.get_mut(&id)
     }
 
     fn ignore_list_manager(&mut self) -> &mut IgnoreListManager {

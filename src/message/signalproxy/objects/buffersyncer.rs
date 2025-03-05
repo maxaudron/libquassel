@@ -8,6 +8,7 @@ use crate::{
 
 use libquassel_derive::{sync, NetworkList, NetworkMap};
 
+/// Contains meta information about buffers like it's activity and number of highlights
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct BufferSyncer {
     #[network(rename = "Activities", network = "list", variant = "VariantList")]

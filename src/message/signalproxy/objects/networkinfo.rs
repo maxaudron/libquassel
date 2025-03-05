@@ -7,6 +7,7 @@ use crate::{
 
 use libquassel_derive::{NetworkList, NetworkMap, Setters};
 
+/// IRC Network related settings
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap, Setters)]
 pub struct NetworkInfo {
     #[network(rename = "networkName")]

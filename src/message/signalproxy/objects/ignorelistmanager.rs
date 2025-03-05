@@ -7,6 +7,7 @@ use crate::{
 use libquassel_derive::{sync, NetworkList, NetworkMap};
 use num_derive::{FromPrimitive, ToPrimitive};
 
+/// User configuration for ignoring specific irc channel activity
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct IgnoreListManager {
     #[network(rename = "IgnoreList", variant = "VariantMap", network = "map")]

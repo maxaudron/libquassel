@@ -15,6 +15,7 @@ use crate::{ProtocolError, Result};
 
 use super::{ircchannel::IrcChannel, ircuser::IrcUser, networkinfo::NetworkInfo};
 
+/// An IRC Network containing it's Users and Channels
 #[derive(Default, Debug, Clone, PartialEq, Setters)]
 pub struct Network {
     pub my_nick: String,
@@ -90,6 +91,10 @@ impl Network {
 
     pub fn add_channel(&mut self, name: &str, channel: IrcChannel) {
         self.irc_channels.insert(name.to_owned(), channel);
+    }
+
+    pub fn add_user(&mut self, name: &str, user: IrcUser) {
+        self.irc_users.insert(name.to_owned(), user);
     }
 
     pub fn connect(&self) -> Result<()> {

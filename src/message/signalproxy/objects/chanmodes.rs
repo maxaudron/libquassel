@@ -6,6 +6,7 @@ use crate::{
     Result,
 };
 
+/// Irc Channel modes
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChanModes {
     /// Modes that add or remove items from a list, like commonly +b for the banlist.

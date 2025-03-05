@@ -12,6 +12,7 @@ use crate::message::Syncable;
 use crate::primitive::Variant;
 use crate::Result;
 
+/// Rules for triggering highlights
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct HighlightRuleManager {
     #[network(rename = "HighlightRuleList", variant = "VariantMap", network = "map")]

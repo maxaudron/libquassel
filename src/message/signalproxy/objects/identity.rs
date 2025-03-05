@@ -19,6 +19,7 @@ use crate::serialize::Serialize;
 use crate::serialize::UserType;
 use crate::{Result, SyncProxyError};
 
+/// The User information presented to an IRC Network
 #[derive(Default, Debug, Clone, PartialEq, NetworkMap, NetworkList, Setters)]
 pub struct Identity {
     #[network(rename = "identityId")]

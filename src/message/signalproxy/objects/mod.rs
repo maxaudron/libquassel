@@ -50,11 +50,11 @@ use crate::Result;
 ///  - [X] CoreInfo
 ///  - [X] CoreData
 ///  - [X] HighlightRuleManager
-///  - [ ] Identity
+///  - [X] Identity
 ///  - [X] IgnoreListManager
-///  - [ ] IrcChannel
+///  - [X] IrcChannel
 ///  - [ ] IrcListHelper
-///  - [ ] IrcUser
+///  - [X] IrcUser
 ///  - [X] Network
 ///  - [X] NetworkInfo
 ///  - [X] NetworkConfig
@@ -65,15 +65,17 @@ pub enum Types {
     BufferSyncer(Box<BufferSyncer>),
     BufferViewConfig(Box<BufferViewConfig>),
     BufferViewManager(Box<BufferViewManager>),
-    // CoreInfo(Box< CoreInfo >),
+    CoreInfo(Box< CoreInfo >),
     CoreData(Box<CoreData>),
     HighlightRuleManager(Box<HighlightRuleManager>),
+    Identity(Box<Identity>),
     IgnoreListManager(Box<IgnoreListManager>),
+    IrcChannel(Box<IrcChannel>),
+    IrcUser(Box<IrcUser>),
     CertManager(Box<CertManager>),
     Network(Box<network::Network>),
     NetworkInfo(Box<NetworkInfo>),
     NetworkConfig(Box<NetworkConfig>),
-    IrcChannel(Box<IrcChannel>),
     Unknown(Box<VariantList>),
 }
 
@@ -85,7 +87,7 @@ impl Types {
             Types::BufferSyncer(val) => val.to_network_list()?,
             Types::BufferViewConfig(val) => val.to_network_list()?,
             Types::BufferViewManager(val) => val.to_network_list()?,
-            // Types::CoreInfo(val) => vec![val.to_network_map().into()],
+            Types::CoreInfo(val) => vec![val.to_network_map()?.into()],
             Types::CoreData(val) => vec![val.to_network_map()?.into()],
             Types::HighlightRuleManager(val) => val.to_network_list()?,
             Types::IgnoreListManager(val) => val.to_network_list()?,
@@ -93,6 +95,8 @@ impl Types {
             Types::Network(val) => val.to_network_list()?,
             Types::NetworkInfo(val) => val.to_network_list()?,
             Types::NetworkConfig(val) => val.to_network_list()?,
+            Types::Identity(v) => v.to_network_list()?,
+            Types::IrcUser(v) => v.to_network_list()?,
             Types::IrcChannel(val) => val.to_network_list()?,
             Types::Unknown(val) => *val.clone(),
         })
@@ -111,9 +115,9 @@ impl Types {
             "BufferViewManager" => {
                 Types::BufferViewManager(Box::new(BufferViewManager::from_network_list(input).unwrap()))
             }
-            // "CoreInfo" => Types::CoreInfo(CoreInfo::from_network_map(
-            //     &mut input.remove(0).try_into()?.unwrap(),
-            // )),
+            "CoreInfo" => Types::CoreInfo(Box::new(CoreInfo::from_network_map(
+                &mut input.remove(0).try_into().unwrap(),
+            )?)),
             "CoreData" => Types::CoreData(Box::new(CoreData::from_network_map(
                 &mut input.remove(0).try_into().unwrap(),
             )?)),
@@ -123,13 +127,15 @@ impl Types {
             "IgnoreListManager" => {
                 Types::IgnoreListManager(Box::new(IgnoreListManager::from_network_list(input).unwrap()))
             }
+            "Identity" => Types::Identity(Box::new(Identity::from_network_list(input)?)),
+            "IrcChannel" => Types::IrcChannel(Box::new(IrcChannel::from_network_list(input).unwrap())),
+            "IrcUser" => Types::IrcUser(Box::new(IrcUser::from_network_list(input)?)),
             "CertManager" => Types::CertManager(Box::new(CertManager::from_network_list(input).unwrap())),
             "Network" => Types::Network(Box::new(Network::from_network_list(input).unwrap())),
             "NetworkInfo" => Types::NetworkInfo(Box::new(NetworkInfo::from_network_list(input).unwrap())),
             "NetworkConfig" => {
                 Types::NetworkConfig(Box::new(NetworkConfig::from_network_list(input).unwrap()))
             }
-            "IrcChannel" => Types::IrcChannel(Box::new(IrcChannel::from_network_list(input).unwrap())),
             _ => Types::Unknown(Box::new(input.to_owned())),
         })
     }

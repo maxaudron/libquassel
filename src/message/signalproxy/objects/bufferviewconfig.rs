@@ -10,6 +10,7 @@ use crate::message::{Class, Syncable};
 use crate::primitive::{BufferId, NetworkId, VariantList};
 use crate::{ProtocolError, Result, SyncProxyError};
 
+/// Configuration for the Chat List displaying our buffers
 #[derive(Debug, Default, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct BufferViewConfig {
     #[network(rename = "BufferList", network = "list", variant = "VariantList")]

@@ -10,6 +10,7 @@ use itertools::Itertools;
 use libquassel_derive::sync;
 use libquassel_derive::{NetworkList, NetworkMap, Setters};
 
+/// IRC User on a network including the channels they are in
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, NetworkList, NetworkMap, Setters)]
 #[network(repr = "maplist")]

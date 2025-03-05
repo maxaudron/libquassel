@@ -5,6 +5,7 @@ use crate::message::{Class, Syncable};
 use crate::primitive::Variant;
 use crate::Result;
 
+/// Store an Identities SSL Certificate and Key
 #[derive(Debug, Clone, PartialEq, NetworkList, NetworkMap, Default)]
 pub struct CertManager {
     #[network(rename = "sslKey", variant = "ByteArray")]

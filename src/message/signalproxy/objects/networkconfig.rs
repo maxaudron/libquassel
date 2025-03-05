@@ -5,6 +5,7 @@ use crate::{
     ProtocolError,
 };
 
+/// Global IRC Network configuration
 #[derive(Debug, Default, Clone, PartialEq, NetworkList, NetworkMap, Setters)]
 pub struct NetworkConfig {
     #[network(rename = "pingTimeoutEnabled")]

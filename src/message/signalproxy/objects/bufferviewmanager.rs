@@ -15,6 +15,7 @@ use crate::Result;
 
 use super::BufferViewConfig;
 
+/// Manages the [BufferViewConfig]s the user has
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct BufferViewManager {
     pub buffer_view_configs: HashMap<i32, Option<BufferViewConfig>>,
