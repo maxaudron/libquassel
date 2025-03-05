@@ -1,20 +1,19 @@
 use crate::{error::ProtocolError, primitive, serialize::*};
 
-use time::{OffsetDateTime, PrimitiveDateTime, UtcOffset};
+use time::{Duration, OffsetDateTime, PrimitiveDateTime, UtcOffset};
 
-// The DateTime struct represents a DateTime as received in IRC
-//
-// DateTime is, like all other struct based types, serialized sequentially.
-// #[derive(Clone, Debug, std::cmp::PartialEq)]
-// pub struct DateTime {
-//     /// Day in Julian calendar, unknown if signed or unsigned
-//     julian_day: i32,
-//     /// Milliseconds since start of day
-//     millis_of_day: i32,
-//     /// Timezone of DateTime, 0x00 is local, 0x01 is UTC
-//     zone: u8,
-// }
-
+/// The DateTime struct represents a DateTime as received in IRC
+///
+/// DateTime is, like all other struct based types, serialized sequentially.
+/// #[derive(Clone, Debug, std::cmp::PartialEq)]
+/// pub struct DateTime {
+///     /// Day in Julian calendar, unknown if signed or unsigned
+///     julian_day: i32,
+///     /// Milliseconds since start of day
+///     millis_of_day: i32,
+///     /// Timezone of DateTime, 0x00 is local, 0x01 is UTC
+///     zone: u8,
+/// }
 pub type DateTime = OffsetDateTime;
 pub use time::{Date, Time};
 
@@ -50,16 +49,10 @@ impl Serialize for OffsetDateTime {
 
         values.extend(i32::serialize(&self.date().to_julian_day())?);
 
-        let time: i32 = {
-            let hour: i32 = self.time().hour() as i32;
-            let minute: i32 = self.time().minute() as i32;
-            let second: i32 = self.time().second() as i32;
-            let milli: i32 = self.time().millisecond() as i32;
+        let duration = self.time() - Time::MIDNIGHT;
+        let time = duration.whole_milliseconds();
 
-            milli + (second * 1000) + (minute * 60000) + (hour * 60 * 60000)
-        };
-
-        values.extend(i32::serialize(&time)?);
+        values.extend(i32::serialize(&(time as i32))?);
         values.extend(u8::serialize(&(TimeSpec::OffsetFromUTC as u8))?);
         values.extend(i32::serialize(&self.offset().whole_seconds())?);
 
@@ -99,12 +92,9 @@ impl Deserialize for OffsetDateTime {
 
         let date = Date::from_julian_day(julian_day)?;
 
-        let hour = millis_of_day / 60 / 60000;
-        let minute = (millis_of_day - (hour * 60 * 60000)) / 60000;
-        let seconds = (millis_of_day - (hour * 60 * 60000) - (minute * 60000)) / 1000;
-        let millis = millis_of_day - (hour * 60 * 60000) - (minute * 60000) - (seconds * 1000);
+        let duration = Duration::milliseconds(millis_of_day as i64);
+        let time = Time::MIDNIGHT + duration;
 
-        let time = Time::from_hms_milli(hour as u8, minute as u8, seconds as u8, millis as u16)?;
         let primitivedatetime = PrimitiveDateTime::new(date, time);
         let datetime = primitivedatetime.assume_offset(offset);
 
@@ -143,16 +133,10 @@ impl Serialize for Time {
     fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
 
-        let time: i32 = {
-            let hour: i32 = self.hour() as i32;
-            let minute: i32 = self.minute() as i32;
-            let second: i32 = self.second() as i32;
-            let milli: i32 = self.millisecond() as i32;
+        let duration = *self - Time::MIDNIGHT;
+        let time = duration.whole_milliseconds();
 
-            milli + (second * 1000) + (minute * 60000) + (hour * 60 * 60000)
-        };
-
-        values.extend(i32::serialize(&time)?);
+        values.extend(i32::serialize(&(time as i32))?);
 
         Ok(values)
     }
@@ -162,12 +146,8 @@ impl Deserialize for Time {
     fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
         let (_, millis_of_day) = i32::parse(&b[0..4])?;
 
-        let hour = millis_of_day / 60 / 60000;
-        let minute = (millis_of_day - (hour * 60 * 60000)) / 60000;
-        let seconds = (millis_of_day - (hour * 60 * 60000) - (minute * 60000)) / 1000;
-        let millis = millis_of_day - (hour * 60 * 60000) - (minute * 60000) - (seconds * 1000);
-
-        let time = Time::from_hms_milli(hour as u8, minute as u8, seconds as u8, millis as u16)?;
+        let duration = Duration::milliseconds(millis_of_day as i64);
+        let time = Time::MIDNIGHT + duration;
 
         Ok((4, time))
     }
