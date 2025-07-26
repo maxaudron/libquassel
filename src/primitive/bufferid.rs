@@ -2,9 +2,12 @@
 #[repr(transparent)]
 pub struct BufferId(pub i32);
 
+use crate::message::NetworkList;
 use crate::{error::ProtocolError, serialize::*};
 
 use crate::serialize::UserType;
+
+use super::Variant;
 
 impl Serialize for BufferId {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
@@ -41,6 +44,19 @@ impl std::ops::Deref for BufferId {
 impl UserType for BufferId {
     const NAME: &str = "BufferId";
 }
+
+// TODO this is not correct usage, it's technically not really network repr were converting from
+// but just the conversion of VariantList -> Self directly
+impl NetworkList for Vec<BufferId> {
+    fn to_network_list(&self) -> super::VariantList {
+        self.iter().map(|b| Variant::BufferId(*b)).collect()
+    }
+
+    fn from_network_list(input: &mut super::VariantList) -> Self {
+        input.iter().map(|b| match_variant!(b, Variant::BufferId)).collect()
+    }
+}
+ 
 
 #[cfg(test)]
 mod tests {

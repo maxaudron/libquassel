@@ -50,33 +50,3 @@ impl Deserialize for VariantList {
 impl VariantType for VariantList {
     const TYPE: u32 = crate::primitive::QVARIANTLIST;
 }
-
-impl<S> crate::message::NetworkMap for Vec<S>
-where
-    S: std::convert::TryFrom<Variant> + Into<Variant> + Clone + std::hash::Hash + std::cmp::Eq,
-    <S as TryFrom<Variant>>::Error: std::fmt::Debug,
-{
-    type Item = VariantList;
-
-    fn to_network_map(&self) -> VariantList {
-        self.iter().map(|i| i.clone().into()).collect()
-    }
-
-    fn from_network_map(input: &mut VariantList) -> Self {
-        input.iter().map(|i| i.clone().try_into().unwrap()).collect()
-    }
-}
-
-impl<S> crate::message::NetworkList for Vec<S>
-where
-    S: std::convert::TryFrom<Variant> + Into<Variant> + Clone + std::hash::Hash + std::cmp::Eq,
-    <S as TryFrom<Variant>>::Error: std::fmt::Debug,
-{
-    fn to_network_list(&self) -> VariantList {
-        self.iter().map(|i| i.clone().into()).collect()
-    }
-
-    fn from_network_list(input: &mut VariantList) -> Self {
-        input.iter().map(|i| i.clone().try_into().unwrap()).collect()
-    }
-}

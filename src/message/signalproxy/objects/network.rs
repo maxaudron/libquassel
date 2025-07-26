@@ -9,7 +9,7 @@ use libquassel_derive::{sync, NetworkMap, Setters};
 
 use crate::error::ProtocolError;
 use crate::message::signalproxy::translation::NetworkMap;
-use crate::message::{Class, Syncable};
+use crate::message::{Class, NetworkList, Syncable};
 use crate::primitive::{Variant, VariantList, VariantMap};
 use crate::serialize::{Deserialize, Serialize, UserType};
 
@@ -615,6 +615,20 @@ pub struct NetworkServer {
     pub proxy_user: String,
     #[network(rename = "ProxyPass")]
     pub proxy_pass: String,
+}
+
+// TODO this is not correct usage, it's technically not really network repr were converting from
+// but just the conversion of VariantList -> Self directly
+// we have this problem since now we have generic VariantList impls
+// for all the variants and this type is now also directly a variant
+impl NetworkList for Vec<NetworkServer> {
+    fn to_network_list(&self) -> super::VariantList {
+        self.iter().map(|b| Variant::NetworkServer(b.clone())).collect()
+    }
+
+    fn from_network_list(input: &mut super::VariantList) -> Self {
+        input.iter().map(|b| match_variant!(b, Variant::NetworkServer)).collect()
+    }
 }
 
 impl UserType for NetworkServer {

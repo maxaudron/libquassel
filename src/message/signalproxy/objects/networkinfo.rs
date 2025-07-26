@@ -14,7 +14,7 @@ pub struct NetworkInfo {
     pub network_name: String,
 
     #[setter(skip)]
-    #[network(rename = "ServerList", variant = "VariantList", network = "map")]
+    #[network(rename = "ServerList", variant = "VariantList", network = "list")]
     pub server_list: Vec<NetworkServer>,
     #[network(rename = "perform")]
     pub perform: StringList,

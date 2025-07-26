@@ -11,15 +11,11 @@ use crate::primitive::{BufferId, NetworkId, VariantList};
 
 #[derive(Debug, Default, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct BufferViewConfig {
-    #[network(rename = "BufferList", network = "map", variant = "VariantList")]
+    #[network(rename = "BufferList", network = "list", variant = "VariantList")]
     pub buffers: Vec<BufferId>,
-    #[network(rename = "RemovedBuffers", network = "map", variant = "VariantList")]
+    #[network(rename = "RemovedBuffers", network = "list", variant = "VariantList")]
     pub removed_buffers: Vec<BufferId>,
-    #[network(
-        rename = "TemporarilyRemovedBuffers",
-        network = "map",
-        variant = "VariantList"
-    )]
+    #[network(rename = "TemporarilyRemovedBuffers", network = "list", variant = "VariantList")]
     pub temporarily_removed_buffers: Vec<BufferId>,
 
     #[network(rename = "bufferViewId", default, skip)]

@@ -98,6 +98,7 @@ pub fn network_map(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     });
 
     let name = &input.ident;
+    let name_str = name.to_string();
 
     let to_network_map = match network.repr {
         Repr::Maplist => maplist::to(&fields),
@@ -122,6 +123,7 @@ pub fn network_map(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             }
 
             fn from_network_map(input: &mut libquassel::primitive::VariantMap) -> Self {
+                log::trace!("converting {} from network object: {:#?}", #name_str, input);
                 Self {
                     #(#from_network_map)*
                 }
@@ -181,6 +183,7 @@ pub fn network_list(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     });
 
     let name = &input.ident;
+    let name_str = name.to_string();
 
     let to_network_list = list::to(&fields);
     let from_network_list = list::from(&fields);
@@ -196,6 +199,7 @@ pub fn network_list(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             }
 
             fn from_network_list(input: &mut libquassel::primitive::VariantList) -> Self {
+                log::trace!("converting {} from network object: {:#?}", #name_str, input);
                 Self {
                     #(#from_network_list)*
                 }
