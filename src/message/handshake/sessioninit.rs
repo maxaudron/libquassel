@@ -17,15 +17,16 @@ pub struct SessionInit {
 
 impl From<VariantMap> for SessionInit {
     fn from(input: VariantMap) -> Self {
-        use crate::message::signalproxy::NetworkMap;
         let state: VariantMap = input.get("SessionState").unwrap().try_into().unwrap();
 
         log::trace!("sessionstate: {:#?}", state);
 
         SessionInit {
-            identities: Vec::<Identity>::from_network_map(
-                &mut state.get("Identities").unwrap().try_into().unwrap(),
-            ),
+            identities: std::convert::TryInto::<Vec<Variant>>::try_into(state.get("Identities").unwrap())
+                .unwrap()
+                .into_iter()
+                .map(|x| x.try_into().unwrap())
+                .collect(),
             buffers: match_variant!(state.get("BufferInfos").unwrap(), Variant::VariantList)
                 .iter()
                 .map(|buffer| match buffer {
