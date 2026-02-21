@@ -63,13 +63,27 @@ impl HandshakeSerialize for ClientInit {
     }
 }
 
-impl From<VariantMap> for ClientInit {
-    fn from(mut input: VariantMap) -> Self {
-        ClientInit {
-            client_version: input.remove("ClientVersion").unwrap().try_into().unwrap(),
-            client_date: input.remove("ClientDate").unwrap().try_into().unwrap(),
-            client_features: input.remove("Features").unwrap().try_into().unwrap(),
-            feature_list: input.remove("FeatureList").unwrap().try_into().unwrap(),
-        }
+impl TryFrom<VariantMap> for ClientInit {
+    type Error = ProtocolError;
+
+    fn try_from(mut input: VariantMap) -> Result<Self, Self::Error> {
+        Ok(ClientInit {
+            client_version: input
+                .remove("ClientVersion")
+                .ok_or_else(|| ProtocolError::MissingField("ClientVersion".to_string()))?
+                .try_into()?,
+            client_date: input
+                .remove("ClientDate")
+                .ok_or_else(|| ProtocolError::MissingField("ClientDate".to_string()))?
+                .try_into()?,
+            client_features: input
+                .remove("Features")
+                .ok_or_else(|| ProtocolError::MissingField("Features".to_string()))?
+                .try_into()?,
+            feature_list: input
+                .remove("FeatureList")
+                .ok_or_else(|| ProtocolError::MissingField("FeatureList".to_string()))?
+                .try_into()?,
+        })
     }
 }

@@ -109,16 +109,17 @@ impl Deserialize for SyncMessage {
 
         res.remove(0);
 
-        let class_name: String = res.remove(0).try_into().unwrap();
+        let class_name: String = res.remove(0).try_into()?;
 
         Ok((
             size,
             Self {
                 class_name: Class::from(class_name),
-                object_name: res.remove(0).try_into().unwrap(),
-                slot_name: res.remove(0).try_into().unwrap(),
+                object_name: res.remove(0).try_into()?,
+                slot_name: res.remove(0).try_into()?,
                 params: res,
             },
         ))
     }
 }
+

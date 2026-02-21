@@ -15,33 +15,50 @@ pub struct SessionInit {
     pub network_ids: Vec<NetworkId>,
 }
 
-impl From<VariantMap> for SessionInit {
-    fn from(input: VariantMap) -> Self {
-        let mut state: VariantMap = input.get("SessionState").unwrap().try_into().unwrap();
+impl TryFrom<VariantMap> for SessionInit {
+    type Error = ProtocolError;
+
+    fn try_from(input: VariantMap) -> Result<Self, Self::Error> {
+        let mut state: VariantMap = input
+            .get("SessionState")
+            .ok_or_else(|| ProtocolError::MissingField("SessionState".to_string()))?
+            .try_into()?;
 
         log::trace!("sessionstate: {:#?}", state);
 
-        let identities: VariantList = state.remove("Identities").unwrap().try_into().unwrap();
-        let buffers: VariantList = state.remove("BufferInfos").unwrap().try_into().unwrap();
-        let network_ids: VariantList = state.remove("NetworkIds").unwrap().try_into().unwrap();
+        let identities: VariantList = state
+            .remove("Identities")
+            .ok_or_else(|| ProtocolError::MissingField("Identities".to_string()))?
+            .try_into()?;
+        let buffers: VariantList = state
+            .remove("BufferInfos")
+            .ok_or_else(|| ProtocolError::MissingField("BufferInfos".to_string()))?
+            .try_into()?;
+        let network_ids: VariantList = state
+            .remove("NetworkIds")
+            .ok_or_else(|| ProtocolError::MissingField("NetworkIds".to_string()))?
+            .try_into()?;
 
-        SessionInit {
-            identities: identities.into_iter().map(|x| x.try_into().unwrap()).collect(),
+        Ok(SessionInit {
+            identities: identities
+                .into_iter()
+                .map(|x| x.try_into())
+                .collect::<Result<Vec<_>, _>>()?,
             buffers: buffers
                 .iter()
                 .map(|buffer| match buffer {
-                    Variant::BufferInfo(buffer) => buffer.clone(),
-                    _ => unimplemented!(),
+                    Variant::BufferInfo(buffer) => Ok(buffer.clone()),
+                    _ => Err(ProtocolError::WrongVariant),
                 })
-                .collect(),
+                .collect::<Result<Vec<_>, _>>()?,
             network_ids: network_ids
                 .iter()
                 .map(|network| match network {
-                    Variant::NetworkId(network) => *network,
-                    _ => unimplemented!(),
+                    Variant::NetworkId(network) => Ok(*network),
+                    _ => Err(ProtocolError::WrongVariant),
                 })
-                .collect(),
-        }
+                .collect::<Result<Vec<_>, _>>()?,
+        })
     }
 }
 

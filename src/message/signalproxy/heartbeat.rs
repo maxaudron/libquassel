@@ -27,7 +27,7 @@ impl Deserialize for HeartBeat {
         Ok((
             size,
             Self {
-                timestamp: res.remove(0).try_into().unwrap(),
+                timestamp: res.remove(0).try_into()?,
             },
         ))
     }
@@ -57,7 +57,7 @@ impl Deserialize for HeartBeatReply {
         Ok((
             size,
             Self {
-                timestamp: res.remove(0).try_into().unwrap(),
+                timestamp: res.remove(0).try_into()?,
             },
         ))
     }

@@ -110,7 +110,7 @@ impl Deserialize for RpcCall {
 
         res.remove(0);
 
-        let rpc: String = res.remove(0).try_into().unwrap();
+        let rpc: String = res.remove(0).try_into()?;
 
         match rpc.as_str() {
             DisplayMessage::NAME => DisplayMessage::from_network(size, &mut res),

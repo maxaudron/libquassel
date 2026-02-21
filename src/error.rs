@@ -12,6 +12,8 @@ pub enum ProtocolError {
     UnknownUserType(String),
     #[error("wrong variant has been given")]
     WrongVariant,
+    #[error("missing required field: {0}")]
+    MissingField(String),
     #[error("io error: {0}")]
     IOError(#[from] std::io::Error),
     #[error("could not convert from int: {0}")]

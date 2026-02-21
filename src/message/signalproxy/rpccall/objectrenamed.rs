@@ -33,9 +33,9 @@ impl RpcCallType for ObjectRenamed {
         Ok((
             size,
             Self {
-                classname: input.remove(0).try_into().unwrap(),
-                oldname: input.remove(0).try_into().unwrap(),
-                newname: input.remove(0).try_into().unwrap(),
+                classname: input.remove(0).try_into()?,
+                oldname: input.remove(0).try_into()?,
+                newname: input.remove(0).try_into()?,
             }
             .into(),
         ))

@@ -32,8 +32,8 @@ impl Deserialize for InitData {
 
         res.remove(0);
 
-        let class_name: String = res.remove(0).try_into().unwrap();
-        let object_name: String = res.remove(0).try_into().unwrap();
+        let class_name: String = res.remove(0).try_into()?;
+        let object_name: String = res.remove(0).try_into()?;
 
         Ok((
             size,

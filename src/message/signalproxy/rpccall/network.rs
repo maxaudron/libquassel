@@ -33,8 +33,8 @@ impl RpcCallType for CreateNetwork {
         Ok((
             size,
             Self {
-                network: input.remove(0).try_into().unwrap(),
-                channels: input.remove(0).try_into().unwrap(),
+                network: input.remove(0).try_into()?,
+                channels: input.remove(0).try_into()?,
             }
             .into(),
         ))
@@ -67,7 +67,7 @@ impl RpcCallType for RemoveNetwork {
         Ok((
             size,
             Self {
-                network_id: input.remove(0).try_into().unwrap(),
+                network_id: input.remove(0).try_into()?,
             }
             .into(),
         ))
@@ -100,7 +100,7 @@ impl RpcCallType for NetworkCreated {
         Ok((
             size,
             Self {
-                network_id: input.remove(0).try_into().unwrap(),
+                network_id: input.remove(0).try_into()?,
             }
             .into(),
         ))
@@ -133,7 +133,7 @@ impl RpcCallType for NetworkRemoved {
         Ok((
             size,
             Self {
-                network_id: input.remove(0).try_into().unwrap(),
+                network_id: input.remove(0).try_into()?,
             }
             .into(),
         ))

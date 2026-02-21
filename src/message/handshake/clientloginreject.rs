@@ -21,10 +21,15 @@ impl HandshakeSerialize for ClientLoginReject {
     }
 }
 
-impl From<VariantMap> for ClientLoginReject {
-    fn from(mut input: VariantMap) -> Self {
-        ClientLoginReject {
-            error: input.remove("ErrorString").unwrap().try_into().unwrap(),
-        }
+impl TryFrom<VariantMap> for ClientLoginReject {
+    type Error = ProtocolError;
+
+    fn try_from(mut input: VariantMap) -> Result<Self, Self::Error> {
+        Ok(ClientLoginReject {
+            error: input
+                .remove("ErrorString")
+                .ok_or_else(|| ProtocolError::MissingField("ErrorString".to_string()))?
+                .try_into()?,
+        })
     }
 }

@@ -38,10 +38,10 @@ impl RpcCallType for ChangePassword {
         Ok((
             size,
             Self {
-                peer: input.remove(0).try_into().unwrap(),
-                user: input.remove(0).try_into().unwrap(),
-                before: input.remove(0).try_into().unwrap(),
-                after: input.remove(0).try_into().unwrap(),
+                peer: input.remove(0).try_into()?,
+                user: input.remove(0).try_into()?,
+                before: input.remove(0).try_into()?,
+                after: input.remove(0).try_into()?,
             }
             .into(),
         ))
@@ -79,8 +79,8 @@ impl RpcCallType for PasswordChanged {
         Ok((
             size,
             Self {
-                peer: input.remove(0).try_into().unwrap(),
-                success: input.remove(0).try_into().unwrap(),
+                peer: input.remove(0).try_into()?,
+                success: input.remove(0).try_into()?,
             }
             .into(),
         ))

@@ -45,16 +45,30 @@ impl HandshakeSerialize for ClientInitAck {
     }
 }
 
-impl From<VariantMap> for ClientInitAck {
-    fn from(input: VariantMap) -> Self {
-        ClientInitAck {
+impl TryFrom<VariantMap> for ClientInitAck {
+    type Error = ProtocolError;
+
+    fn try_from(input: VariantMap) -> Result<Self, Self::Error> {
+        Ok(ClientInitAck {
             // TODO make this compatible with older clients
             core_features: 0,
-            core_configured: input.get("Configured").unwrap().try_into().unwrap(),
-            storage_backends: input.get("StorageBackends").unwrap().try_into().unwrap(),
+            core_configured: input
+                .get("Configured")
+                .ok_or_else(|| ProtocolError::MissingField("Configured".to_string()))?
+                .try_into()?,
+            storage_backends: input
+                .get("StorageBackends")
+                .ok_or_else(|| ProtocolError::MissingField("StorageBackends".to_string()))?
+                .try_into()?,
             #[cfg(feature = "authenticators")]
-            authenticators: input.get("Authenticators").unwrap().try_into().unwrap(),
-            feature_list: input.get("FeatureList").unwrap().try_into().unwrap(),
-        }
+            authenticators: input
+                .get("Authenticators")
+                .ok_or_else(|| ProtocolError::MissingField("Authenticators".to_string()))?
+                .try_into()?,
+            feature_list: input
+                .get("FeatureList")
+                .ok_or_else(|| ProtocolError::MissingField("FeatureList".to_string()))?
+                .try_into()?,
+        })
     }
 }

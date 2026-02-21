@@ -29,9 +29,11 @@ impl Deserialize for InitRequest {
         Ok((
             size,
             Self {
-                class_name: res.remove(0).try_into().unwrap(),
-                object_name: res.remove(0).try_into().unwrap(),
+                class_name: res.remove(0).try_into()?,
+                object_name: res.remove(0).try_into()?,
             },
         ))
     }
 }
+
+

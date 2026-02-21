@@ -29,7 +29,7 @@ impl RpcCallType for KickClient {
         Ok((
             size,
             Self {
-                id: input.remove(0).try_into().unwrap(),
+                id: input.remove(0).try_into()?,
             }
             .into(),
         ))

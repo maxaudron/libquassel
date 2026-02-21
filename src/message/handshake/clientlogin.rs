@@ -20,11 +20,19 @@ impl HandshakeSerialize for ClientLogin {
     }
 }
 
-impl From<VariantMap> for ClientLogin {
-    fn from(mut input: VariantMap) -> Self {
-        ClientLogin {
-            user: input.remove("User").unwrap().try_into().unwrap(),
-            password: input.remove("Password").unwrap().try_into().unwrap(),
-        }
+impl TryFrom<VariantMap> for ClientLogin {
+    type Error = ProtocolError;
+
+    fn try_from(mut input: VariantMap) -> Result<Self, Self::Error> {
+        Ok(ClientLogin {
+            user: input
+                .remove("User")
+                .ok_or_else(|| ProtocolError::MissingField("User".to_string()))?
+                .try_into()?,
+            password: input
+                .remove("Password")
+                .ok_or_else(|| ProtocolError::MissingField("Password".to_string()))?
+                .try_into()?,
+        })
     }
 }

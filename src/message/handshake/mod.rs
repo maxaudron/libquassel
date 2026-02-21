@@ -58,15 +58,18 @@ impl HandshakeDeserialize for HandshakeMessage {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (size, mut res) = VariantMap::parse(b)?;
 
-        let msgtype: String = res.remove("MsgType").unwrap().try_into().unwrap();
+        let msgtype: String = res
+            .remove("MsgType")
+            .ok_or_else(|| ProtocolError::MissingField("MsgType".to_string()))?
+            .try_into()?;
         match msgtype.as_str() {
-            "ClientInit" => Ok((size, HandshakeMessage::ClientInit(res.into()))),
-            "ClientInitAck" => Ok((size, HandshakeMessage::ClientInitAck(res.into()))),
-            "ClientInitReject" => Ok((size, HandshakeMessage::ClientInitReject(res.into()))),
-            "ClientLogin" => Ok((size, HandshakeMessage::ClientLogin(res.into()))),
+            "ClientInit" => Ok((size, HandshakeMessage::ClientInit(res.try_into()?))),
+            "ClientInitAck" => Ok((size, HandshakeMessage::ClientInitAck(res.try_into()?))),
+            "ClientInitReject" => Ok((size, HandshakeMessage::ClientInitReject(res.try_into()?))),
+            "ClientLogin" => Ok((size, HandshakeMessage::ClientLogin(res.try_into()?))),
             "ClientLoginAck" => Ok((size, HandshakeMessage::ClientLoginAck)),
-            "ClientLoginReject" => Ok((size, HandshakeMessage::ClientLoginReject(res.into()))),
-            "SessionInit" => Ok((size, HandshakeMessage::SessionInit(res.into()))),
+            "ClientLoginReject" => Ok((size, HandshakeMessage::ClientLoginReject(res.try_into()?))),
+            "SessionInit" => Ok((size, HandshakeMessage::SessionInit(res.try_into()?))),
             _ => unimplemented!(),
         }
     }

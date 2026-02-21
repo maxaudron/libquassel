@@ -22,7 +22,10 @@ impl HandshakeDeserialize for ClientLoginAck {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (len, mut values): (usize, VariantMap) = HandshakeDeserialize::parse(b)?;
 
-        let msgtype: String = values.remove("MsgType").unwrap().try_into().unwrap();
+        let msgtype: String = values
+            .remove("MsgType")
+            .ok_or_else(|| ProtocolError::MissingField("MsgType".to_string()))?
+            .try_into()?;
 
         if msgtype == "ClientLogin" {
             Ok((len, Self {}))
