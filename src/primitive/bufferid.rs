@@ -53,7 +53,7 @@ impl NetworkList for Vec<BufferId> {
     }
 
     fn from_network_list(input: &mut super::VariantList) -> Self {
-        input.iter().map(|b| match_variant!(b, Variant::BufferId)).collect()
+        input.iter().map(|b| b.try_into().unwrap()).collect()
     }
 }
  

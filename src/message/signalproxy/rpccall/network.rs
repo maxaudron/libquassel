@@ -33,8 +33,8 @@ impl RpcCallType for CreateNetwork {
         Ok((
             size,
             Self {
-                network: match_variant!(input.remove(0), Variant::NetworkInfo),
-                channels: match_variant!(input.remove(0), Variant::StringList),
+                network: input.remove(0).try_into().unwrap(),
+                channels: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))
@@ -67,7 +67,7 @@ impl RpcCallType for RemoveNetwork {
         Ok((
             size,
             Self {
-                network_id: match_variant!(input.remove(0), Variant::NetworkId),
+                network_id: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))
@@ -100,7 +100,7 @@ impl RpcCallType for NetworkCreated {
         Ok((
             size,
             Self {
-                network_id: match_variant!(input.remove(0), Variant::NetworkId),
+                network_id: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))
@@ -133,7 +133,7 @@ impl RpcCallType for NetworkRemoved {
         Ok((
             size,
             Self {
-                network_id: match_variant!(input.remove(0), Variant::NetworkId),
+                network_id: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))

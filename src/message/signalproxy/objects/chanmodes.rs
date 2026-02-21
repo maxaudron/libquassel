@@ -62,20 +62,24 @@ impl NetworkMap for ChanModes {
     }
 
     fn from_network_map(input: &mut Self::Item) -> Self {
+        let channel_modes_a: VariantMap = input.remove("A").unwrap().try_into().unwrap();
+        let channel_modes_b: VariantMap = input.remove("B").unwrap().try_into().unwrap();
+        let channel_modes_c: VariantMap = input.remove("C").unwrap().try_into().unwrap();
+
         ChanModes {
-            channel_modes_a: match_variant!(input.remove("A").unwrap(), Variant::VariantMap)
+            channel_modes_a: channel_modes_a
                 .into_iter()
-                .map(|(mut k, v)| (k.remove(0), match_variant!(v, Variant::StringList)))
+                .map(|(mut k, v)| (k.remove(0), v.try_into().unwrap()))
                 .collect(),
-            channel_modes_b: match_variant!(input.remove("B").unwrap(), Variant::VariantMap)
+            channel_modes_b: channel_modes_b
                 .into_iter()
-                .map(|(mut k, v)| (k.remove(0), match_variant!(v, Variant::String)))
+                .map(|(mut k, v)| (k.remove(0), v.try_into().unwrap()))
                 .collect(),
-            channel_modes_c: match_variant!(input.remove("C").unwrap(), Variant::VariantMap)
+            channel_modes_c: channel_modes_c
                 .into_iter()
-                .map(|(mut k, v)| (k.remove(0), match_variant!(v, Variant::String)))
+                .map(|(mut k, v)| (k.remove(0), v.try_into().unwrap()))
                 .collect(),
-            channel_modes_d: match_variant!(input.remove("D").unwrap(), Variant::String),
+            channel_modes_d: input.remove("D").unwrap().try_into().unwrap(),
         }
     }
 }

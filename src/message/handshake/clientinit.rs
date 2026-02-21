@@ -64,12 +64,12 @@ impl HandshakeSerialize for ClientInit {
 }
 
 impl From<VariantMap> for ClientInit {
-    fn from(input: VariantMap) -> Self {
+    fn from(mut input: VariantMap) -> Self {
         ClientInit {
-            client_version: match_variant!(input.get("ClientVersion").unwrap(), Variant::String),
-            client_date: match_variant!(input.get("ClientDate").unwrap(), Variant::String),
-            client_features: match_variant!(input.get("Features").unwrap(), Variant::u32),
-            feature_list: match_variant!(input.get("FeatureList").unwrap(), Variant::StringList),
+            client_version: input.remove("ClientVersion").unwrap().try_into().unwrap(),
+            client_date: input.remove("ClientDate").unwrap().try_into().unwrap(),
+            client_features: input.remove("Features").unwrap().try_into().unwrap(),
+            feature_list: input.remove("FeatureList").unwrap().try_into().unwrap(),
         }
     }
 }

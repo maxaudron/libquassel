@@ -29,7 +29,7 @@ impl RpcCallType for DisplayMessage {
         Ok((
             size,
             RpcCall::DisplayMessage(DisplayMessage {
-                message: match_variant!(input.remove(0), Variant::Message),
+                message: input.remove(0).try_into().unwrap(),
             }),
         ))
     }
@@ -64,8 +64,8 @@ impl RpcCallType for DisplayStatusMessage {
         Ok((
             size,
             DisplayStatusMessage {
-                network: match_variant!(input.remove(0), Variant::String),
-                message: match_variant!(input.remove(0), Variant::String),
+                network: input.remove(0).try_into().unwrap(),
+                message: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))
@@ -100,8 +100,8 @@ impl RpcCallType for SendInput {
         Ok((
             size,
             Self {
-                buffer: match_variant!(input.remove(0), Variant::BufferInfo),
-                message: match_variant!(input.remove(0), Variant::String),
+                buffer: input.remove(0).try_into().unwrap(),
+                message: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))

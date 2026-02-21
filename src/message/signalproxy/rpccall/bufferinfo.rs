@@ -28,7 +28,7 @@ impl RpcCallType for BufferInfoUpdated {
         Ok((
             size,
             Self {
-                buffer: match_variant!(input.remove(0), Variant::BufferInfo),
+                buffer: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))

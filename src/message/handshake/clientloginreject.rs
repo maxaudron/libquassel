@@ -17,14 +17,14 @@ impl HandshakeSerialize for ClientLoginReject {
             Variant::String("ClientLoginReject".to_string()),
         );
         values.insert("ErrorString".to_string(), Variant::String(self.error.clone()));
-        return HandshakeSerialize::serialize(&values);
+        HandshakeSerialize::serialize(&values)
     }
 }
 
 impl From<VariantMap> for ClientLoginReject {
-    fn from(input: VariantMap) -> Self {
+    fn from(mut input: VariantMap) -> Self {
         ClientLoginReject {
-            error: match_variant!(input.get("ErrorString").unwrap(), Variant::String),
+            error: input.remove("ErrorString").unwrap().try_into().unwrap(),
         }
     }
 }

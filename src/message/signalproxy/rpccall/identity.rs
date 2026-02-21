@@ -34,8 +34,8 @@ impl RpcCallType for CreateIdentity {
         Ok((
             size,
             CreateIdentity {
-                identity: match_variant!(input.remove(0), Variant::Identity),
-                additional: match_variant!(input.remove(0), Variant::VariantMap),
+                identity: input.remove(0).try_into().unwrap(),
+                additional: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))
@@ -68,7 +68,7 @@ impl RpcCallType for RemoveIdentity {
         Ok((
             size,
             Self {
-                identity_id: match_variant!(input.remove(0), Variant::IdentityId),
+                identity_id: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))
@@ -101,7 +101,7 @@ impl RpcCallType for IdentityCreated {
         Ok((
             size,
             IdentityCreated {
-                identity: match_variant!(input.remove(0), Variant::Identity),
+                identity: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))
@@ -134,7 +134,7 @@ impl RpcCallType for IdentityRemoved {
         Ok((
             size,
             Self {
-                identity_id: match_variant!(input.remove(0), Variant::IdentityId),
+                identity_id: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))

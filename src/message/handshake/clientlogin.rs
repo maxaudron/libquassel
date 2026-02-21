@@ -21,10 +21,10 @@ impl HandshakeSerialize for ClientLogin {
 }
 
 impl From<VariantMap> for ClientLogin {
-    fn from(input: VariantMap) -> Self {
+    fn from(mut input: VariantMap) -> Self {
         ClientLogin {
-            user: match_variant!(input.get("User").unwrap(), Variant::String),
-            password: match_variant!(input.get("Password").unwrap(), Variant::String),
+            user: input.remove("User").unwrap().try_into().unwrap(),
+            password: input.remove("Password").unwrap().try_into().unwrap(),
         }
     }
 }

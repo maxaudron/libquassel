@@ -30,8 +30,8 @@ impl Deserialize for InitRequest {
         Ok((
             size,
             Self {
-                class_name: match_variant!(res.remove(0), Variant::ByteArray),
-                object_name: match_variant!(res.remove(0), Variant::ByteArray),
+                class_name: res.remove(0).try_into().unwrap(),
+                object_name: res.remove(0).try_into().unwrap(),
             },
         ))
     }

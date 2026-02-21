@@ -1,6 +1,6 @@
 use crate::error::ProtocolError;
 use crate::message::objects::Identity;
-use crate::primitive::{BufferInfo, NetworkId, Variant, VariantMap};
+use crate::primitive::{BufferInfo, NetworkId, Variant, VariantList, VariantMap};
 use crate::HandshakeSerialize;
 
 /// SessionInit is received along with ClientLoginAck to initialize that user Session
@@ -10,31 +10,31 @@ pub struct SessionInit {
     /// List of all configured identities
     pub identities: Vec<Identity>,
     /// List of all existing buffers
-    pub buffers: Vec<BufferInfo>,
+    pub buffers: Vec<BufferInfo>, // Vec<Variant::BufferInfo()>
     /// Ids of all networks
     pub network_ids: Vec<NetworkId>,
 }
 
 impl From<VariantMap> for SessionInit {
     fn from(input: VariantMap) -> Self {
-        let state: VariantMap = input.get("SessionState").unwrap().try_into().unwrap();
+        let mut state: VariantMap = input.get("SessionState").unwrap().try_into().unwrap();
 
         log::trace!("sessionstate: {:#?}", state);
 
+        let identities: VariantList = state.remove("Identities").unwrap().try_into().unwrap();
+        let buffers: VariantList = state.remove("BufferInfos").unwrap().try_into().unwrap();
+        let network_ids: VariantList = state.remove("NetworkIds").unwrap().try_into().unwrap();
+
         SessionInit {
-            identities: std::convert::TryInto::<Vec<Variant>>::try_into(state.get("Identities").unwrap())
-                .unwrap()
-                .into_iter()
-                .map(|x| x.try_into().unwrap())
-                .collect(),
-            buffers: match_variant!(state.get("BufferInfos").unwrap(), Variant::VariantList)
+            identities: identities.into_iter().map(|x| x.try_into().unwrap()).collect(),
+            buffers: buffers
                 .iter()
                 .map(|buffer| match buffer {
                     Variant::BufferInfo(buffer) => buffer.clone(),
                     _ => unimplemented!(),
                 })
                 .collect(),
-            network_ids: match_variant!(state.get("NetworkIds").unwrap(), Variant::VariantList)
+            network_ids: network_ids
                 .iter()
                 .map(|network| match network {
                     Variant::NetworkId(network) => network.clone(),

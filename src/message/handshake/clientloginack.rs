@@ -20,9 +20,9 @@ impl HandshakeSerialize for ClientLoginAck {
 
 impl HandshakeDeserialize for ClientLoginAck {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
-        let (len, values): (usize, VariantMap) = HandshakeDeserialize::parse(b)?;
+        let (len, mut values): (usize, VariantMap) = HandshakeDeserialize::parse(b)?;
 
-        let msgtype = match_variant!(&values["MsgType"], Variant::ByteArray);
+        let msgtype: String = values.remove("MsgType").unwrap().try_into().unwrap();
 
         if msgtype == "ClientLogin" {
             Ok((len, Self {}))

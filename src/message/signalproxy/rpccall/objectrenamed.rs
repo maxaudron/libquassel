@@ -33,9 +33,9 @@ impl RpcCallType for ObjectRenamed {
         Ok((
             size,
             Self {
-                classname: match_variant!(input.remove(0), Variant::ByteArray),
-                oldname: match_variant!(input.remove(0), Variant::String),
-                newname: match_variant!(input.remove(0), Variant::String),
+                classname: input.remove(0).try_into().unwrap(),
+                oldname: input.remove(0).try_into().unwrap(),
+                newname: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))

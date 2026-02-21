@@ -346,6 +346,7 @@ impl crate::message::signalproxy::NetworkList for Network {
         res
     }
 
+    // TODO VariantList -> VariantMap conversion
     fn from_network_list(input: &mut VariantList) -> Self {
         let mut i = input.iter().cycle();
 
@@ -363,7 +364,7 @@ impl crate::message::signalproxy::NetworkList for Network {
                 i.position(|x| *x == Variant::ByteArray(String::from("myNick")))
                     .unwrap();
 
-                i.next().unwrap().try_into().unwrap()
+                i.next().unwrap().clone().try_into().unwrap()
             },
             latency: {
                 i.position(|x| *x == Variant::ByteArray(String::from("latency")))
@@ -375,7 +376,7 @@ impl crate::message::signalproxy::NetworkList for Network {
                 i.position(|x| *x == Variant::ByteArray(String::from("currentServer")))
                     .unwrap();
 
-                i.next().unwrap().try_into().unwrap()
+                i.next().unwrap().clone().try_into().unwrap()
             },
             is_connected: {
                 i.position(|x| *x == Variant::ByteArray(String::from("isConnected")))
@@ -529,23 +530,23 @@ impl crate::message::signalproxy::NetworkMap for Network {
     }
 
     fn from_network_map(input: &mut Self::Item) -> Self {
-        let users_and_channels: VariantMap =
-            { input.get("IrcUsersAndChannels").unwrap().try_into().unwrap() };
+        let mut users_and_channels: VariantMap =
+            { input.remove("IrcUsersAndChannels").unwrap().try_into().unwrap() };
 
-        return Self {
-            my_nick: input.get("myNick").unwrap().into(),
-            latency: input.get("latency").unwrap().try_into().unwrap(),
-            current_server: input.get("currentServer").unwrap().into(),
-            is_connected: input.get("isConnected").unwrap().try_into().unwrap(),
+        Self {
+            my_nick: input.remove("myNick").unwrap().try_into().unwrap(),
+            latency: input.remove("latency").unwrap().try_into().unwrap(),
+            current_server: input.remove("currentServer").unwrap().try_into().unwrap(),
+            is_connected: input.remove("isConnected").unwrap().try_into().unwrap(),
             connection_state: ConnectionState::from_i32(
-                input.get("connectionState").unwrap().try_into().unwrap(),
+                input.remove("connectionState").unwrap().try_into().unwrap(),
             )
             .unwrap(),
             prefixes: Vec::new(),
             prefix_modes: Vec::new(),
             channel_modes: HashMap::with_capacity(4),
             irc_users: {
-                match users_and_channels.get("Users") {
+                match users_and_channels.remove("Users") {
                     Some(users) => {
                         let users: Vec<IrcUser> = Vec::<IrcUser>::from_network_map(
                             &mut users.try_into().expect("failed to convert Users"),
@@ -557,7 +558,7 @@ impl crate::message::signalproxy::NetworkMap for Network {
                 }
             },
             irc_channels: {
-                match users_and_channels.get("Channels") {
+                match users_and_channels.remove("Channels") {
                     Some(channels) => {
                         let channels: Vec<IrcChannel> =
                             Vec::<IrcChannel>::from_network_map(&mut channels.try_into().unwrap());
@@ -572,20 +573,20 @@ impl crate::message::signalproxy::NetworkMap for Network {
             supports: VariantMap::try_from(input.get("Supports").unwrap())
                 .unwrap()
                 .into_iter()
-                .map(|(k, v)| (k, v.into()))
+                .map(|(k, v)| (k, v.try_into().unwrap()))
                 .collect(),
             caps: VariantMap::try_from(input.get("Caps").unwrap())
                 .unwrap()
                 .into_iter()
-                .map(|(k, v)| (k, v.into()))
+                .map(|(k, v)| (k, v.try_into().unwrap()))
                 .collect(),
             caps_enabled: VariantList::try_from(input.get("CapsEnabled").unwrap())
                 .unwrap()
                 .into_iter()
-                .map(|v| v.into())
+                .map(|v| v.try_into().unwrap())
                 .collect(),
             network_info: NetworkInfo::from_network_map(input),
-        };
+        }
     }
 }
 
@@ -627,7 +628,7 @@ impl NetworkList for Vec<NetworkServer> {
     }
 
     fn from_network_list(input: &mut super::VariantList) -> Self {
-        input.iter().map(|b| match_variant!(b, Variant::NetworkServer)).collect()
+        input.iter().map(|b| b.try_into().unwrap()).collect()
     }
 }
 

@@ -50,11 +50,11 @@ impl From<VariantMap> for ClientInitAck {
         ClientInitAck {
             // TODO make this compatible with older clients
             core_features: 0,
-            core_configured: match_variant!(input.get("Configured").unwrap(), Variant::bool),
-            storage_backends: match_variant!(input.get("StorageBackends").unwrap(), Variant::VariantList),
+            core_configured: input.get("Configured").unwrap().try_into().unwrap(),
+            storage_backends: input.get("StorageBackends").unwrap().try_into().unwrap(),
             #[cfg(feature = "authenticators")]
-            authenticators: match_variant!(input.get("Authenticators").unwrap(), Variant::VariantList),
-            feature_list: match_variant!(input.get("FeatureList").unwrap(), Variant::StringList),
+            authenticators: input.get("Authenticators").unwrap().try_into().unwrap(),
+            feature_list: input.get("FeatureList").unwrap().try_into().unwrap(),
         }
     }
 }

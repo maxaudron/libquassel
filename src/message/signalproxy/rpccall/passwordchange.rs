@@ -38,10 +38,10 @@ impl RpcCallType for ChangePassword {
         Ok((
             size,
             Self {
-                peer: match_variant!(input.remove(0), Variant::PeerPtr),
-                user: match_variant!(input.remove(0), Variant::String),
-                before: match_variant!(input.remove(0), Variant::String),
-                after: match_variant!(input.remove(0), Variant::String),
+                peer: input.remove(0).try_into().unwrap(),
+                user: input.remove(0).try_into().unwrap(),
+                before: input.remove(0).try_into().unwrap(),
+                after: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))
@@ -79,8 +79,8 @@ impl RpcCallType for PasswordChanged {
         Ok((
             size,
             Self {
-                peer: match_variant!(input.remove(0), Variant::PeerPtr),
-                success: match_variant!(input.remove(0), Variant::bool),
+                peer: input.remove(0).try_into().unwrap(),
+                success: input.remove(0).try_into().unwrap(),
             }
             .into(),
         ))

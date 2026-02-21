@@ -105,16 +105,18 @@ impl Serialize for SyncMessage {
 
 impl Deserialize for SyncMessage {
     fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
-        let (size, mut res) = VariantList::parse(&b)?;
+        let (size, mut res) = VariantList::parse(b)?;
 
         res.remove(0);
+
+        let class_name: String = res.remove(0).try_into().unwrap();
 
         Ok((
             size,
             Self {
-                class_name: Class::from(match_variant!(res.remove(0), Variant::ByteArray)),
-                object_name: match_variant!(res.remove(0), Variant::ByteArray),
-                slot_name: match_variant!(res.remove(0), Variant::ByteArray),
+                class_name: Class::from(class_name),
+                object_name: res.remove(0).try_into().unwrap(),
+                slot_name: res.remove(0).try_into().unwrap(),
                 params: res,
             },
         ))

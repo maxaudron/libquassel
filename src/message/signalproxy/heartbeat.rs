@@ -28,7 +28,7 @@ impl Deserialize for HeartBeat {
         Ok((
             size,
             Self {
-                timestamp: match_variant!(res.remove(0), Variant::DateTime),
+                timestamp: res.remove(0).try_into().unwrap(),
             },
         ))
     }
@@ -59,7 +59,7 @@ impl Deserialize for HeartBeatReply {
         Ok((
             size,
             Self {
-                timestamp: match_variant!(res.remove(0), Variant::DateTime),
+                timestamp: res.remove(0).try_into().unwrap(),
             },
         ))
     }

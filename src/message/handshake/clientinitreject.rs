@@ -22,9 +22,9 @@ impl HandshakeSerialize for ClientInitReject {
 }
 
 impl From<VariantMap> for ClientInitReject {
-    fn from(input: VariantMap) -> Self {
+    fn from(mut input: VariantMap) -> Self {
         ClientInitReject {
-            error: match_variant!(input.get("ErrorString").unwrap(), Variant::String),
+            error: input.remove("ErrorString").unwrap().try_into().unwrap(),
         }
     }
 }

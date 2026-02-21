@@ -61,22 +61,14 @@ pub enum Variant {
     i8(i8),
 }
 
-impl From<Variant> for String {
-    fn from(input: Variant) -> Self {
-        match input {
-            Variant::String(value) => value,
-            Variant::ByteArray(value) => value,
-            _ => panic!("unknown variant expected string or bytearray {:?}", input),
-        }
-    }
-}
+impl TryFrom<Variant> for String {
+    type Error = ProtocolError;
 
-impl From<&Variant> for String {
-    fn from(input: &Variant) -> Self {
+    fn try_from(input: Variant) -> Result<Self, Self::Error> {
         match input {
-            Variant::String(value) => value.clone(),
-            Variant::ByteArray(value) => value.clone(),
-            _ => panic!("unknown variant expected string or bytearray {:?}", input),
+            Variant::String(value) => Ok(value),
+            Variant::ByteArray(value) => Ok(value),
+            _ => Err(ProtocolError::UnknownVariant)
         }
     }
 }

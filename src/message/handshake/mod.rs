@@ -56,9 +56,9 @@ impl HandshakeSerialize for HandshakeMessage {
 
 impl HandshakeDeserialize for HandshakeMessage {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
-        let (size, res) = VariantMap::parse(b)?;
+        let (size, mut res) = VariantMap::parse(b)?;
 
-        let msgtype: String = (&res["MsgType"]).into();
+        let msgtype: String = res.remove("MsgType").unwrap().try_into().unwrap();
         match msgtype.as_str() {
             "ClientInit" => Ok((size, HandshakeMessage::ClientInit(res.into()))),
             "ClientInitAck" => Ok((size, HandshakeMessage::ClientInitAck(res.into()))),
