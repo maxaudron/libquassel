@@ -106,8 +106,7 @@ pub trait Network {
 
 pub trait NetworkMap
 where
-    // TODO correct this error type
-    Self::Item: TryFrom<Variant, Error = String>,
+    Self::Item: TryFrom<Variant, Error = crate::error::ProtocolError>,
     Self::Item: Into<Variant>,
 {
     type Item;

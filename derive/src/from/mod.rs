@@ -43,7 +43,6 @@ pub fn from(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         .map(|field| {
             let variant = &field.ident;
             let inner_type = &field.fields.fields[0];
-            let inner_type_str = format!("{}", quote! { #inner_type });
 
             quote! {
                 impl From<#inner_type> for #enum_name {
@@ -53,23 +52,23 @@ pub fn from(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 }
 
                 impl std::convert::TryFrom<#enum_name> for #inner_type {
-                    type Error = String;
+                    type Error = crate::error::ProtocolError;
 
                     fn try_from(input: #enum_name) -> Result<Self, Self::Error> {
                         match input {
                             #enum_name::#variant(input) => Ok(input),
-                            v => Err(format!("variant::from: wrong variant, expected: {}, got: {:?}", #inner_type_str, v)),
+                            _ => Err(crate::error::ProtocolError::WrongVariant),
                         }
                     }
                 }
 
                 impl std::convert::TryFrom<&#enum_name> for #inner_type {
-                    type Error = String;
+                    type Error = crate::error::ProtocolError;
 
                     fn try_from(input: &#enum_name) -> Result<Self, Self::Error> {
                         match input {
                             #enum_name::#variant(input) => Ok(input.clone()),
-                            v => Err(format!("variant::from: wrong variant, expected: {}, got: {:?}", #inner_type_str, v)),
+                            _ => Err(crate::error::ProtocolError::WrongVariant),
                         }
                     }
                 }
@@ -86,3 +85,5 @@ pub fn from(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     gen.into()
 }
+
+
