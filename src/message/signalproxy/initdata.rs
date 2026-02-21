@@ -28,7 +28,7 @@ impl Serialize for InitData {
 
 impl Deserialize for InitData {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
-        let (size, mut res) = VariantList::parse(&b)?;
+        let (size, mut res) = VariantList::parse(b)?;
 
         res.remove(0);
 

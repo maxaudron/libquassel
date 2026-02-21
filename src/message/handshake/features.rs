@@ -49,19 +49,18 @@ pub enum Feature {
 
 impl Feature {
     pub fn get() -> StringList {
-        let mut features = StringList::new();
-        features.push("ExtendedFeatures".to_string());
-        #[cfg(feature = "long-message-id")]
-        features.push("LongMessageId".to_string());
-        #[cfg(feature = "long-time")]
-        features.push("LongTime".to_string());
-        #[cfg(feature = "rich-messages")]
-        features.push("RichMessages".to_string());
-        #[cfg(feature = "sender-prefixes")]
-        features.push("SenderPrefixes".to_string());
-        #[cfg(feature = "authenticators")]
-        features.push("Authenticators".to_string());
-
-        return features;
+        vec![
+            "ExtendedFeatures".to_string(),
+            #[cfg(feature = "long-message-id")]
+            "LongMessageId".to_string(),
+            #[cfg(feature = "long-time")]
+            "LongTime".to_string(),
+            #[cfg(feature = "rich-messages")]
+            "RichMessages".to_string(),
+            #[cfg(feature = "sender-prefixes")]
+            "SenderPrefixes".to_string(),
+            #[cfg(feature = "authenticators")]
+            "Authenticators".to_string(),
+        ]
     }
 }

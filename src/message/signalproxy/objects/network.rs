@@ -71,23 +71,19 @@ impl Network {
         let default_prefixes = vec!['~', '&', '@', '%', '+'];
         let default_prefix_modes = vec!['q', 'a', 'o', 'h', 'v'];
 
-        match self.supports.get("PREFIX") {
-            Some(prefix) => {
-                if prefix.starts_with('(') {
-                    let (prefix_modes, prefixes) = prefix[1..].split_once(')').unwrap();
+        if let Some(prefix) = self.supports.get("PREFIX") {
+            if let Some(prefix) = prefix.strip_prefix('(') {
+                let (prefix_modes, prefixes) = prefix.split_once(')').unwrap();
 
-                    self.prefix_modes = prefix_modes.chars().collect();
-                    self.prefixes = prefixes.chars().collect();
-                } else {
-                    self.prefixes = default_prefixes;
-                    self.prefix_modes = default_prefix_modes;
-                }
-            }
-            None => {
-                self.prefixes = default_prefixes;
-                self.prefix_modes = default_prefix_modes;
+                self.prefix_modes = prefix_modes.chars().collect();
+                self.prefixes = prefixes.chars().collect();
+
+                return;
             }
         }
+
+        self.prefixes = default_prefixes;
+        self.prefix_modes = default_prefix_modes;
     }
 
     pub fn add_channel(&mut self, name: &str, channel: IrcChannel) {
@@ -280,6 +276,7 @@ impl crate::message::StatefulSyncableServer for Network {
 
 impl crate::message::signalproxy::NetworkList for Network {
     fn to_network_list(&self) -> VariantList {
+        #![allow(clippy::vec_init_then_push)]
         let mut res = VariantList::new();
 
         res.push(Variant::ByteArray(s!("myNick")));
@@ -449,7 +446,7 @@ impl crate::message::signalproxy::NetworkList for Network {
         network.determine_channel_mode_types();
         network.determine_prefixes();
 
-        return network;
+        network
     }
 }
 
@@ -526,7 +523,7 @@ impl crate::message::signalproxy::NetworkMap for Network {
 
         res.extend(self.network_info.to_network_map());
 
-        return res;
+        res
     }
 
     fn from_network_map(input: &mut Self::Item) -> Self {
@@ -648,7 +645,7 @@ impl Deserialize for NetworkServer {
         Self: std::marker::Sized,
     {
         let (vlen, mut value) = VariantMap::parse(b)?;
-        return Ok((vlen, Self::from_network_map(&mut value)));
+        Ok((vlen, Self::from_network_map(&mut value)))
     }
 }
 
@@ -802,9 +799,9 @@ impl Default for ConnectionState {
     }
 }
 
-impl Into<Variant> for ConnectionState {
-    fn into(self) -> Variant {
-        Variant::i32(self.to_i32().unwrap())
+impl From<ConnectionState> for Variant {
+    fn from(val: ConnectionState) -> Self {
+        Variant::i32(val.to_i32().unwrap())
     }
 }
 

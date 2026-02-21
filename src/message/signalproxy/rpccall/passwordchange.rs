@@ -21,7 +21,7 @@ impl RpcCallType for ChangePassword {
     fn to_network(&self) -> Result<Vec<crate::primitive::Variant>, crate::ProtocolError> {
         Ok(vec![
             Variant::ByteArray(Self::NAME.to_string()),
-            self.peer.clone().into(),
+            self.peer.into(),
             self.user.clone().into(),
             self.before.clone().into(),
             self.after.clone().into(),
@@ -64,8 +64,8 @@ impl RpcCallType for PasswordChanged {
     fn to_network(&self) -> Result<Vec<crate::primitive::Variant>, crate::ProtocolError> {
         Ok(vec![
             Variant::ByteArray(Self::NAME.to_string()),
-            self.peer.clone().into(),
-            self.success.clone().into(),
+            self.peer.into(),
+            self.success.into(),
         ])
     }
 

@@ -26,6 +26,7 @@ impl crate::message::StatefulSyncableClient for CoreInfo {
     where
         Self: Sized,
     {
+        #[allow(clippy::single_match)]
         match msg.slot_name.as_str() {
             "setCoreData" => self.set_core_data(CoreData::from_network_map(&mut get_param!(msg))),
             _ => (),

@@ -59,7 +59,7 @@ impl Deserialize for IrcUser {
         Self: std::marker::Sized,
     {
         let (vlen, mut value) = VariantMap::parse(b)?;
-        return Ok((vlen, Self::from_network_map(&mut value)));
+        Ok((vlen, Self::from_network_map(&mut value)))
     }
 }
 

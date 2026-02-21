@@ -20,7 +20,7 @@ impl Serialize for NetworkId {
 impl Deserialize for NetworkId {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (size, value) = i32::parse(b)?;
-        return Ok((size, NetworkId(value)));
+        Ok((size, NetworkId(value)))
     }
 }
 

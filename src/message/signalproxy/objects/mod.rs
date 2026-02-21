@@ -60,20 +60,20 @@ use crate::primitive::VariantList;
 // TODO Handle SyncedCoreInfo feature flag
 #[derive(Debug, Clone, PartialEq, From)]
 pub enum Types {
-    AliasManager(AliasManager),
-    BufferSyncer(BufferSyncer),
-    BufferViewConfig(BufferViewConfig),
-    BufferViewManager(BufferViewManager),
-    // CoreInfo(CoreInfo),
-    CoreData(CoreData),
-    HighlightRuleManager(HighlightRuleManager),
-    IgnoreListManager(IgnoreListManager),
-    CertManager(CertManager),
-    Network(network::Network),
-    NetworkInfo(NetworkInfo),
-    NetworkConfig(NetworkConfig),
-    IrcChannel(IrcChannel),
-    Unknown(VariantList),
+    AliasManager(Box<AliasManager>),
+    BufferSyncer(Box<BufferSyncer>),
+    BufferViewConfig(Box<BufferViewConfig>),
+    BufferViewManager(Box<BufferViewManager>),
+    // CoreInfo(Box< CoreInfo >),
+    CoreData(Box<CoreData>),
+    HighlightRuleManager(Box<HighlightRuleManager>),
+    IgnoreListManager(Box<IgnoreListManager>),
+    CertManager(Box<CertManager>),
+    Network(Box<network::Network>),
+    NetworkInfo(Box<NetworkInfo>),
+    NetworkConfig(Box<NetworkConfig>),
+    IrcChannel(Box<IrcChannel>),
+    Unknown(Box<VariantList>),
 }
 
 impl Types {
@@ -93,37 +93,41 @@ impl Types {
             Types::NetworkInfo(val) => val.to_network_list(),
             Types::NetworkConfig(val) => val.to_network_list(),
             Types::IrcChannel(val) => val.to_network_list(),
-            Types::Unknown(val) => val.clone(),
+            Types::Unknown(val) => *val.clone(),
         }
     }
 
     pub fn from_network(class_name: &str, object_name: &str, input: &mut VariantList) -> Self {
         debug!("converting {} from network object: {:#?}", class_name, input);
         match class_name {
-            "AliasManager" => Types::AliasManager(AliasManager::from_network_list(input)),
-            "BufferSyncer" => Types::BufferSyncer(BufferSyncer::from_network_list(input)),
+            "AliasManager" => Types::AliasManager(Box::new(AliasManager::from_network_list(input))),
+            "BufferSyncer" => Types::BufferSyncer(Box::new(BufferSyncer::from_network_list(input))),
             "BufferViewConfig" => {
                 let mut config = BufferViewConfig::from_network_list(input);
                 config.buffer_view_id = object_name.parse().unwrap();
-                Types::BufferViewConfig(config)
+                Types::BufferViewConfig(Box::new(config))
             }
-            "BufferViewManager" => Types::BufferViewManager(BufferViewManager::from_network_list(input)),
+            "BufferViewManager" => {
+                Types::BufferViewManager(Box::new(BufferViewManager::from_network_list(input)))
+            }
             // "CoreInfo" => Types::CoreInfo(CoreInfo::from_network_map(
             //     &mut input.remove(0).try_into().unwrap(),
             // )),
-            "CoreData" => Types::CoreData(CoreData::from_network_map(
+            "CoreData" => Types::CoreData(Box::new(CoreData::from_network_map(
                 &mut input.remove(0).try_into().unwrap(),
-            )),
+            ))),
             "HighlightRuleManager" => {
-                Types::HighlightRuleManager(HighlightRuleManager::from_network_list(input))
+                Types::HighlightRuleManager(Box::new(HighlightRuleManager::from_network_list(input)))
             }
-            "IgnoreListManager" => Types::IgnoreListManager(IgnoreListManager::from_network_list(input)),
-            "CertManager" => Types::CertManager(CertManager::from_network_list(input)),
-            "Network" => Types::Network(Network::from_network_list(input)),
-            "NetworkInfo" => Types::NetworkInfo(NetworkInfo::from_network_list(input)),
-            "NetworkConfig" => Types::NetworkConfig(NetworkConfig::from_network_list(input)),
-            "IrcChannel" => Types::IrcChannel(IrcChannel::from_network_list(input)),
-            _ => Types::Unknown(input.to_owned()),
+            "IgnoreListManager" => {
+                Types::IgnoreListManager(Box::new(IgnoreListManager::from_network_list(input)))
+            }
+            "CertManager" => Types::CertManager(Box::new(CertManager::from_network_list(input))),
+            "Network" => Types::Network(Box::new(Network::from_network_list(input))),
+            "NetworkInfo" => Types::NetworkInfo(Box::new(NetworkInfo::from_network_list(input))),
+            "NetworkConfig" => Types::NetworkConfig(Box::new(NetworkConfig::from_network_list(input))),
+            "IrcChannel" => Types::IrcChannel(Box::new(IrcChannel::from_network_list(input))),
+            _ => Types::Unknown(Box::new(input.to_owned())),
         }
     }
 }

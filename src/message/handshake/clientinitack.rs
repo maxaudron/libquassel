@@ -41,7 +41,7 @@ impl HandshakeSerialize for ClientInitAck {
             "FeatureList".to_string(),
             Variant::StringList(self.feature_list.clone()),
         );
-        return HandshakeSerialize::serialize(&values);
+        HandshakeSerialize::serialize(&values)
     }
 }
 

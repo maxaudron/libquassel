@@ -17,7 +17,7 @@ impl HandshakeSerialize for ClientInitReject {
             Variant::String("ClientInitReject".to_string()),
         );
         values.insert("ErrorString".to_string(), Variant::String(self.error.clone()));
-        return HandshakeSerialize::serialize(&values);
+        HandshakeSerialize::serialize(&values)
     }
 }
 

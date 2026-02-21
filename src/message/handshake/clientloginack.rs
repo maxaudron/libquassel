@@ -14,7 +14,7 @@ impl HandshakeSerialize for ClientLoginAck {
             "MsgType".to_string(),
             Variant::String("ClientLoginAck".to_string()),
         );
-        return HandshakeSerialize::serialize(&values);
+        HandshakeSerialize::serialize(&values)
     }
 }
 

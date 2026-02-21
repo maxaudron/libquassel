@@ -17,7 +17,7 @@ use crate::serialize::VariantType;
 pub type VariantMap = HashMap<String, Variant>;
 
 impl Serialize for VariantMap {
-    fn serialize<'a>(&'a self) -> Result<Vec<u8>, ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut res: Vec<u8> = Vec::new();
 
         for (k, v) in self {
@@ -28,7 +28,7 @@ impl Serialize for VariantMap {
         let len: i32 = self.len().try_into()?;
         util::insert_bytes(0, &mut res, &mut len.to_be_bytes());
 
-        return Ok(res);
+        Ok(res)
     }
 }
 
@@ -51,7 +51,7 @@ impl Deserialize for VariantMap {
             map.insert(name, value);
         }
 
-        return Ok((pos, map));
+        Ok((pos, map))
     }
 }
 

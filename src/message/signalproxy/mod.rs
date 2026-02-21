@@ -131,6 +131,7 @@ where
     where
         Self: Sized,
     {
+        #[allow(clippy::match_single_binding)]
         match msg.slot_name.as_str() {
             _ => (),
         }
@@ -170,6 +171,7 @@ pub trait StatefulSyncableClient: Syncable + translation::NetworkMap {
     where
         Self: Sized,
     {
+        #[allow(clippy::match_single_binding)]
         match msg.slot_name.as_str() {
             _ => (),
         }
@@ -199,7 +201,7 @@ pub enum Message {
     /// Bidirectional
     RpcCall(RpcCall),
     InitRequest(InitRequest),
-    InitData(InitData),
+    InitData(Box<InitData>),
     /// Bidirectional
     HeartBeat(HeartBeat),
     /// Bidirectional
@@ -238,32 +240,32 @@ impl Deserialize for Message {
 
         match MessageType::from(message_type) {
             MessageType::SyncMessage => {
-                let (size, res) = SyncMessage::parse(&b)?;
+                let (size, res) = SyncMessage::parse(b)?;
 
                 Ok((size, Message::SyncMessage(res)))
             }
             MessageType::RpcCall => {
-                let (size, res) = RpcCall::parse(&b)?;
+                let (size, res) = RpcCall::parse(b)?;
 
                 Ok((size, Message::RpcCall(res)))
             }
             MessageType::InitRequest => {
-                let (size, res) = InitRequest::parse(&b)?;
+                let (size, res) = InitRequest::parse(b)?;
 
                 Ok((size, Message::InitRequest(res)))
             }
             MessageType::InitData => {
-                let (size, res) = InitData::parse(&b)?;
+                let (size, res) = InitData::parse(b)?;
 
-                Ok((size, Message::InitData(res)))
+                Ok((size, Message::InitData(Box::new(res))))
             }
             MessageType::HeartBeat => {
-                let (size, res) = HeartBeat::parse(&b)?;
+                let (size, res) = HeartBeat::parse(b)?;
 
                 Ok((size, Message::HeartBeat(res)))
             }
             MessageType::HeartBeatReply => {
-                let (size, res) = HeartBeatReply::parse(&b)?;
+                let (size, res) = HeartBeatReply::parse(b)?;
 
                 Ok((size, Message::HeartBeatReply(res)))
             }

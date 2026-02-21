@@ -163,7 +163,7 @@ where
 {
     fn parse_variant(b: &[u8], len: usize) -> Result<(usize, Variant), ProtocolError> {
         let (vlen, value) = Self::parse(&b[len..])?;
-        return Ok((len + vlen, value.into()));
+        Ok((len + vlen, value.into()))
     }
 }
 

@@ -47,7 +47,7 @@ impl Deserialize for IrcChannel {
         Self: std::marker::Sized,
     {
         let (vlen, mut value) = VariantMap::parse(b)?;
-        return Ok((vlen, Self::from_network_map(&mut value)));
+        Ok((vlen, Self::from_network_map(&mut value)))
     }
 }
 
@@ -155,7 +155,7 @@ impl IrcChannel {
             None => warn!("tried to remove a user that is not joined to the channel"),
         }
 
-        if self.user_modes.len() == 0
+        if self.user_modes.is_empty()
         /* nick.is_me() */
         {
             // TODO Clean up channel and delete

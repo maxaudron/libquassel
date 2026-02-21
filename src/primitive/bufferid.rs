@@ -23,7 +23,7 @@ impl Serialize for BufferId {
 impl Deserialize for BufferId {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (size, value) = i32::parse(b)?;
-        return Ok((size, BufferId(value)));
+        Ok((size, BufferId(value)))
     }
 }
 

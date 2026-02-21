@@ -106,7 +106,7 @@ impl Serialize for RpcCall {
 
 impl Deserialize for RpcCall {
     fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
-        let (size, mut res) = VariantList::parse(&b)?;
+        let (size, mut res) = VariantList::parse(b)?;
 
         res.remove(0);
 
@@ -130,7 +130,7 @@ impl Deserialize for RpcCall {
             DisconnectFromCore::NAME => DisconnectFromCore::from_network(size, &mut res),
             ObjectRenamed::NAME => ObjectRenamed::from_network(size, &mut res),
             BufferInfoUpdated::NAME => BufferInfoUpdated::from_network(size, &mut res),
-            _ => return Ok((size, RpcCall::NotImplemented)),
+            _ => Ok((size, RpcCall::NotImplemented)),
         }
     }
 }

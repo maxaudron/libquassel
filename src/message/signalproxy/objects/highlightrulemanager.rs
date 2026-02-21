@@ -223,8 +223,10 @@ impl From<HighlightNickType> for Variant {
     }
 }
 
+// TODO error handling
 impl From<Variant> for HighlightNickType {
     fn from(value: Variant) -> Self {
+        #[allow(clippy::unnecessary_fallible_conversions)]
         HighlightNickType::try_from(value).unwrap()
     }
 }

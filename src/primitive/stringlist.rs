@@ -24,7 +24,7 @@ impl Serialize for StringList {
             res.extend(x.serialize()?);
         }
 
-        return Ok(res);
+        Ok(res)
     }
 }
 
@@ -43,7 +43,7 @@ impl Deserialize for StringList {
             }
         }
 
-        return Ok((pos, res));
+        Ok((pos, res))
     }
 }
 
@@ -70,8 +70,7 @@ pub fn string_list_deserialize() {
         0, 0, 0, 1, 0, 0, 0, 20, 0, 67, 0, 111, 0, 110, 0, 102, 0, 105, 0, 103, 0, 117, 0, 114, 0, 101, 0,
         100, 0, 0, 0, 1,
     ];
-    let mut test_list = StringList::new();
-    test_list.push("Configured".to_string());
+    let test_list = vec!["Configured".to_string()];
     let (len, res) = StringList::parse(test_bytes).unwrap();
     assert_eq!(len, 28);
     assert_eq!(test_list, res);

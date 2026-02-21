@@ -27,7 +27,7 @@ impl Deserialize for MsgId {
         let (size, value) = i32::parse(b)?;
         #[cfg(feature = "long-message-id")]
         let (size, value) = i64::parse(b)?;
-        return Ok((size, MsgId(value)));
+        Ok((size, MsgId(value)))
     }
 }
 

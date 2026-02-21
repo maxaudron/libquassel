@@ -1,5 +1,4 @@
 use quote::quote;
-use syn;
 use syn::parse_macro_input;
 
 use darling::{FromDeriveInput, FromVariant};
@@ -40,7 +39,7 @@ pub fn from(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     let derives = fields
         .iter()
-        .filter(|field| field.fields.fields.len() > 0 && !field.ignore)
+        .filter(|field| !field.fields.fields.is_empty() && !field.ignore)
         .map(|field| {
             let variant = &field.ident;
             let inner_type = &field.fields.fields[0];

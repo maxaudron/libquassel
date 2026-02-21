@@ -23,7 +23,7 @@ impl Serialize for PeerPtr {
 impl Deserialize for PeerPtr {
     fn parse(b: &[u8]) -> Result<(usize, Self), crate::error::ProtocolError> {
         let (size, value) = i64::parse(b)?;
-        return Ok((size, PeerPtr(value)));
+        Ok((size, PeerPtr(value)))
     }
 }
 

@@ -14,7 +14,7 @@ impl Deserialize for char {
         let (slen, qchar): (usize, u16) = u16::parse(&b[0..2])?;
         let qchar = char::from_u32(qchar as u32).ok_or(ProtocolError::CharError)?;
 
-        return Ok((slen, qchar));
+        Ok((slen, qchar))
     }
 }
 
@@ -23,7 +23,7 @@ impl Serialize for char {
         let mut b = [0, 0];
         self.encode_utf16(&mut b);
 
-        return Ok(b[0].to_be_bytes().to_vec());
+        Ok(b[0].to_be_bytes().to_vec())
     }
 }
 
@@ -55,13 +55,13 @@ impl VariantType for String {
 /// Strings can only be serialized as UTF-8 null-terminated ByteArrays with (de)serialize_utf8().
 impl Serialize for &str {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
-        let mut res: Vec<u8> = Vec::new();
+        let mut res = Vec::new();
 
         self.encode_utf16()
             .for_each(|i| res.extend(i.to_be_bytes().iter()));
 
         util::prepend_byte_len(&mut res);
-        return Ok(res);
+        Ok(res)
     }
 }
 
@@ -70,7 +70,7 @@ impl SerializeUTF8 for &str {
         let mut res: Vec<u8> = Vec::new();
         res.extend(self.bytes());
         util::prepend_byte_len(&mut res);
-        return Ok(res);
+        Ok(res)
     }
 }
 
@@ -101,7 +101,7 @@ impl Deserialize for String {
 
         let res: String = String::from_utf16(&chars).unwrap();
         trace!("parsed string: {}", res);
-        return Ok((pos, res));
+        Ok((pos, res))
     }
 }
 
@@ -123,14 +123,14 @@ impl DeserializeUTF8 for String {
         // If the last byte is zero remove it
         // Receiving a string as bytearray will sometimes have
         // the string null terminated
-        if res.chars().last().unwrap() == '\u{0}' {
+        if res.ends_with('\u{0}') {
             let _ = res.pop();
         }
 
         trace!("parsed string after trunc: {}", res);
         trace!("parsed bytes: {:x?}", &b[0..ulen]);
 
-        return Ok((ulen + 4, res));
+        Ok((ulen + 4, res))
     }
 }
 

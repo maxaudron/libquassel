@@ -170,17 +170,17 @@ pub trait SessionManager {
     /// TODO handle automatic sending of InitRequest for whatever objects will need that.
     fn init(&mut self, data: InitData) {
         match data.init_data {
-            Types::AliasManager(data) => self.alias_manager().init(data),
-            Types::BufferSyncer(data) => self.buffer_syncer().init(data),
-            Types::BufferViewConfig(data) => self.buffer_view_manager().init_buffer_view_config(data),
-            Types::BufferViewManager(data) => self.buffer_view_manager().init(data),
-            Types::CoreData(data) => self.core_info().set_core_data(data),
-            Types::HighlightRuleManager(data) => self.highlight_rule_manager().init(data),
-            Types::IgnoreListManager(data) => self.ignore_list_manager().init(data),
-            Types::CertManager(data) => self.cert_manager().init(data),
+            Types::AliasManager(data) => self.alias_manager().init(*data),
+            Types::BufferSyncer(data) => self.buffer_syncer().init(*data),
+            Types::BufferViewConfig(data) => self.buffer_view_manager().init_buffer_view_config(*data),
+            Types::BufferViewManager(data) => self.buffer_view_manager().init(*data),
+            Types::CoreData(data) => self.core_info().set_core_data(*data),
+            Types::HighlightRuleManager(data) => self.highlight_rule_manager().init(*data),
+            Types::IgnoreListManager(data) => self.ignore_list_manager().init(*data),
+            Types::CertManager(data) => self.cert_manager().init(*data),
             Types::Network(network) => {
                 let id: NetworkId = NetworkId(data.object_name.parse().unwrap());
-                self.networks().insert(id, network);
+                self.networks().insert(id, *network);
             }
             Types::NetworkInfo(_) => (),
             Types::NetworkConfig(_) => (),
@@ -189,7 +189,7 @@ pub trait SessionManager {
                 let id: i32 = name.next().unwrap().parse().unwrap();
                 let name = name.next().unwrap();
                 if let Some(network) = self.network(id) {
-                    network.add_channel(name, channel)
+                    network.add_channel(name, *channel)
                 }
             }
             Types::Unknown(_) => (),

@@ -102,12 +102,12 @@ pub fn network_map(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     let to_network_map = match network.repr {
         Repr::Maplist => maplist::to(&fields),
-        Repr::Map | _ => map::to(&fields),
+        _ => map::to(&fields),
     };
 
     let from_network_map = match network.repr {
         Repr::Maplist => maplist::from(&fields),
-        Repr::Map | _ => map::from(&fields),
+        _ => map::from(&fields),
     };
 
     let mut gen = quote! {
@@ -220,7 +220,7 @@ fn get_field_type(field: &NetworkField) -> syn::Type {
 
 fn get_field_variant_type(field: &NetworkField) -> syn::Type {
     match &field.variant {
-        Some(ty) => gen_type(&ty),
+        Some(ty) => gen_type(ty),
         None => get_field_type(field),
     }
 }

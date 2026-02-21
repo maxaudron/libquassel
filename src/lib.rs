@@ -1,5 +1,6 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(all(test, feature = "bench"), feature(test))]
+#![allow(clippy::too_many_arguments)]
 
 #[cfg(all(test, feature = "bench"))]
 extern crate test;

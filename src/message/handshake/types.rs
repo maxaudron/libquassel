@@ -10,7 +10,7 @@ use crate::message::handshake::{HandshakeDeserialize, HandshakeSerialize};
 use crate::primitive::VariantMap;
 
 impl HandshakeSerialize for VariantMap {
-    fn serialize<'a>(&'a self) -> Result<Vec<u8>, ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut res: Vec<u8> = Vec::new();
 
         for (k, v) in self {
@@ -22,7 +22,7 @@ impl HandshakeSerialize for VariantMap {
         let len: i32 = (self.len() * 2).try_into().unwrap();
         util::insert_bytes(0, &mut res, &mut (len).to_be_bytes());
 
-        return Ok(res);
+        Ok(res)
     }
 }
 
@@ -47,7 +47,7 @@ impl HandshakeDeserialize for VariantMap {
             };
         }
 
-        return Ok((pos, map));
+        Ok((pos, map))
     }
 }
 

@@ -10,18 +10,17 @@ pub struct HeartBeat {
 
 impl Serialize for HeartBeat {
     fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
-        let mut res = VariantList::new();
-
-        res.push(Variant::i32(MessageType::HeartBeat as i32));
-        res.push(Variant::DateTime(self.timestamp.clone()));
-
-        res.serialize()
+        vec![
+            Variant::i32(MessageType::HeartBeat as i32),
+            Variant::DateTime(self.timestamp),
+        ]
+        .serialize()
     }
 }
 
 impl Deserialize for HeartBeat {
     fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
-        let (size, mut res) = VariantList::parse(&b)?;
+        let (size, mut res) = VariantList::parse(b)?;
 
         res.remove(0);
 
@@ -41,18 +40,17 @@ pub struct HeartBeatReply {
 
 impl Serialize for HeartBeatReply {
     fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
-        let mut res = VariantList::new();
-
-        res.push(Variant::i32(MessageType::HeartBeatReply as i32));
-        res.push(Variant::DateTime(self.timestamp.clone()));
-
-        res.serialize()
+        vec![
+            Variant::i32(MessageType::HeartBeatReply as i32),
+            Variant::DateTime(self.timestamp),
+        ]
+        .serialize()
     }
 }
 
 impl Deserialize for HeartBeatReply {
     fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
-        let (size, mut res) = VariantList::parse(&b)?;
+        let (size, mut res) = VariantList::parse(b)?;
 
         res.remove(0);
 

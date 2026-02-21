@@ -37,7 +37,7 @@ impl From<VariantMap> for SessionInit {
             network_ids: network_ids
                 .iter()
                 .map(|network| match network {
-                    Variant::NetworkId(network) => network.clone(),
+                    Variant::NetworkId(network) => *network,
                     _ => unimplemented!(),
                 })
                 .collect(),
@@ -72,10 +72,10 @@ impl HandshakeSerialize for SessionInit {
             Variant::VariantList(
                 self.network_ids
                     .iter()
-                    .map(|id| Variant::NetworkId(id.clone()))
+                    .map(|id| Variant::NetworkId(*id))
                     .collect(),
             ),
         );
-        return HandshakeSerialize::serialize(&values);
+        HandshakeSerialize::serialize(&values)
     }
 }

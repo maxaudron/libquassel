@@ -11,19 +11,18 @@ pub struct InitRequest {
 
 impl Serialize for InitRequest {
     fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
-        let mut res = VariantList::new();
-
-        res.push(Variant::i32(MessageType::InitRequest as i32));
-        res.push(Variant::ByteArray(self.class_name.clone()));
-        res.push(Variant::ByteArray(self.object_name.clone()));
-
-        res.serialize()
+        vec![
+            Variant::i32(MessageType::InitRequest as i32),
+            Variant::ByteArray(self.class_name.clone()),
+            Variant::ByteArray(self.object_name.clone()),
+        ]
+        .serialize()
     }
 }
 
 impl Deserialize for InitRequest {
     fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
-        let (size, mut res) = VariantList::parse(&b)?;
+        let (size, mut res) = VariantList::parse(b)?;
 
         res.remove(0);
 

@@ -53,7 +53,7 @@ impl RpcCallType for RemoveNetwork {
     fn to_network(&self) -> Result<Vec<crate::primitive::Variant>, crate::ProtocolError> {
         Ok(vec![
             Variant::ByteArray(Self::NAME.to_string()),
-            self.network_id.clone().into(),
+            self.network_id.into(),
         ])
     }
 
@@ -86,7 +86,7 @@ impl RpcCallType for NetworkCreated {
     fn to_network(&self) -> Result<Vec<crate::primitive::Variant>, crate::ProtocolError> {
         Ok(vec![
             Variant::ByteArray(Self::NAME.to_string()),
-            self.network_id.clone().into(),
+            self.network_id.into(),
         ])
     }
 
@@ -119,7 +119,7 @@ impl RpcCallType for NetworkRemoved {
     fn to_network(&self) -> Result<Vec<crate::primitive::Variant>, crate::ProtocolError> {
         Ok(vec![
             Variant::ByteArray(Self::NAME.to_string()),
-            self.network_id.clone().into(),
+            self.network_id.into(),
         ])
     }
 

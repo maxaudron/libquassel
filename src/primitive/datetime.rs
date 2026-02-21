@@ -48,7 +48,7 @@ impl Serialize for OffsetDateTime {
     fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
 
-        values.extend(i32::serialize(&(self.date().to_julian_day() as i32))?);
+        values.extend(i32::serialize(&self.date().to_julian_day())?);
 
         let time: i32 = {
             let hour: i32 = self.time().hour() as i32;
@@ -82,21 +82,20 @@ impl Deserialize for OffsetDateTime {
             return Ok((pos, OffsetDateTime::UNIX_EPOCH));
         }
 
-        let offset: UtcOffset;
-        match zone {
+        let offset = match zone {
             TimeSpec::LocalUnknown | TimeSpec::LocalStandard | TimeSpec::LocalDST => {
-                offset = UtcOffset::current_local_offset().unwrap_or_else(|_| {
+                UtcOffset::current_local_offset().unwrap_or_else(|_| {
                     log::warn!("could not get local offset defaulting to utc");
                     UtcOffset::UTC
                 })
             }
-            TimeSpec::UTC => offset = UtcOffset::UTC,
+            TimeSpec::UTC => UtcOffset::UTC,
             TimeSpec::OffsetFromUTC => {
                 let (_, tmp_offset) = i32::parse(&b[9..13])?;
                 pos += 4;
-                offset = UtcOffset::from_whole_seconds(tmp_offset).unwrap_or(UtcOffset::UTC)
+                UtcOffset::from_whole_seconds(tmp_offset).unwrap_or(UtcOffset::UTC)
             }
-        }
+        };
 
         let date = Date::from_julian_day(julian_day)?;
 
@@ -121,7 +120,7 @@ impl Serialize for Date {
     fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
         let mut values: Vec<u8> = Vec::new();
 
-        values.extend(i32::serialize(&(self.to_julian_day() as i32))?);
+        values.extend(i32::serialize(&self.to_julian_day())?);
 
         Ok(values)
     }

@@ -100,7 +100,7 @@ where
             res.push((*v).clone().into());
         });
 
-        return res;
+        res
     }
 
     fn from_network_list(input: &mut VariantList) -> Self {
@@ -119,7 +119,7 @@ where
             );
         });
 
-        return res;
+        res
     }
 }
 
@@ -136,12 +136,12 @@ where
             res.insert(k.clone(), (*v).clone().into());
         });
 
-        return res;
+        res
     }
 
     fn from_network_map(input: &mut Self::Item) -> Self {
         input
-            .into_iter()
+            .iter_mut()
             .map(|(k, v)| {
                 (
                     k.clone(),
@@ -217,14 +217,14 @@ impl Deserialize for Variant {
 
         let len = 5;
         match qtype {
-            VariantMap::TYPE => return VariantMap::parse_variant(b, len),
-            VariantList::TYPE => return VariantList::parse_variant(b, len),
-            char::TYPE => return char::parse_variant(b, len),
+            VariantMap::TYPE => VariantMap::parse_variant(b, len),
+            VariantList::TYPE => VariantList::parse_variant(b, len),
+            char::TYPE => char::parse_variant(b, len),
             String::TYPE => String::parse_variant(b, len),
             primitive::QBYTEARRAY => {
                 trace!(target: "primitive::Variant", "Parsing Variant: ByteArray");
                 let (vlen, value) = String::parse_utf8(&b[len..])?;
-                return Ok((len + vlen, Variant::ByteArray(value.clone())));
+                Ok((len + vlen, Variant::ByteArray(value.clone())))
             }
             StringList::TYPE => StringList::parse_variant(b, len),
             DateTime::TYPE => DateTime::parse_variant(b, len),
@@ -265,7 +265,7 @@ impl Deserialize for Variant {
             }
             err => {
                 error!(target: "parser", "UnknownVariant: {:x?}", err);
-                return Err(ProtocolError::UnknownVariant);
+                Err(ProtocolError::UnknownVariant)
             }
         }
     }
@@ -392,8 +392,7 @@ mod tests {
 
     #[test]
     pub fn variantlist_serialize() {
-        let mut test_variantlist = VariantList::new();
-        test_variantlist.push(Variant::bool(true));
+        let test_variantlist = vec![Variant::bool(true)];
         assert_eq!(
             test_variantlist.serialize().unwrap(),
             [0, 0, 0, 1, 0, 0, 0, 1, 0, 1]
@@ -404,8 +403,7 @@ mod tests {
     pub fn variantlist_deserialize() {
         let test_bytes: &[u8] = &[0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1];
         let (len, res) = VariantList::parse(test_bytes).unwrap();
-        let mut test_variantlist = VariantList::new();
-        test_variantlist.push(Variant::bool(true));
+        let test_variantlist = vec![Variant::bool(true)];
         assert_eq!(len, 10);
         assert_eq!(res, test_variantlist);
     }

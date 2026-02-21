@@ -90,12 +90,12 @@ pub struct SyncMessage {
 
 impl Serialize for SyncMessage {
     fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
-        let mut res = VariantList::new();
-
-        res.push(Variant::i32(MessageType::SyncMessage as i32));
-        res.push(Variant::ByteArray(self.class_name.as_str().to_owned()));
-        res.push(Variant::ByteArray(self.object_name.clone()));
-        res.push(Variant::ByteArray(self.slot_name.clone()));
+        let mut res = vec![
+            Variant::i32(MessageType::SyncMessage as i32),
+            Variant::ByteArray(self.class_name.as_str().to_owned()),
+            Variant::ByteArray(self.object_name.clone()),
+            Variant::ByteArray(self.slot_name.clone()),
+        ];
 
         res.append(&mut self.params.clone());
 

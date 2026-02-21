@@ -44,7 +44,7 @@ impl Serialize for u64 {
 impl Deserialize for u64 {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let mut rdr = Cursor::new(&b[0..8]);
-        return Ok((8, rdr.read_u64::<BigEndian>()?));
+        Ok((8, rdr.read_u64::<BigEndian>()?))
     }
 }
 
@@ -61,7 +61,7 @@ impl Serialize for u32 {
 impl Deserialize for u32 {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let mut rdr = Cursor::new(&b[0..4]);
-        return Ok((4, rdr.read_u32::<BigEndian>()?));
+        Ok((4, rdr.read_u32::<BigEndian>()?))
     }
 }
 
@@ -78,7 +78,7 @@ impl Serialize for u16 {
 impl Deserialize for u16 {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let mut rdr = Cursor::new(&b[0..2]);
-        return Ok((2, rdr.read_u16::<BigEndian>()?));
+        Ok((2, rdr.read_u16::<BigEndian>()?))
     }
 }
 
@@ -94,7 +94,7 @@ impl Serialize for u8 {
 
 impl Deserialize for u8 {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
-        return Ok((1, b[0]));
+        Ok((1, b[0]))
     }
 }
 

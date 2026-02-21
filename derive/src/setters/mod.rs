@@ -70,7 +70,7 @@ pub fn setters(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                     let mut res = String::new();
 
                     for c in raw_name.chars().rev() {
-                        if c <= 'Z' && c >= 'A' {
+                        if c.is_ascii_uppercase() {
                             res.push(c.to_ascii_lowercase());
                             break;
                         } else {
@@ -119,5 +119,5 @@ pub fn setters(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         }
     };
 
-    return gen.into();
+    gen.into()
 }

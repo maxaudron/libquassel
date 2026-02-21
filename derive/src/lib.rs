@@ -1,5 +1,3 @@
-use syn;
-
 mod from;
 mod network;
 mod setters;

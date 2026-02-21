@@ -47,13 +47,13 @@ impl crate::serialize::Deserialize for ConnAck {
         let (elen, extra) = i16::parse(&b[flen..])?;
         let (vlen, version) = i8::parse(&b[(flen + elen)..])?;
 
-        return Ok((
+        Ok((
             flen + elen + vlen,
             Self {
                 flags,
                 extra,
                 version,
             },
-        ));
+        ))
     }
 }

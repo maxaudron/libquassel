@@ -20,7 +20,7 @@ impl Serialize for IdentityId {
 impl Deserialize for IdentityId {
     fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
         let (size, value) = i32::parse(b)?;
-        return Ok((size, IdentityId(value)));
+        Ok((size, IdentityId(value)))
     }
 }
 

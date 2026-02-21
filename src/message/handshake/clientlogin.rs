@@ -16,7 +16,7 @@ impl HandshakeSerialize for ClientLogin {
         values.insert("MsgType".to_string(), Variant::String("ClientLogin".to_string()));
         values.insert("User".to_string(), Variant::String(self.user.clone()));
         values.insert("Password".to_string(), Variant::String(self.password.clone()));
-        return HandshakeSerialize::serialize(&values);
+        HandshakeSerialize::serialize(&values)
     }
 }
 

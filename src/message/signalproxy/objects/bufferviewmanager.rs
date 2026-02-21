@@ -133,23 +133,16 @@ impl Syncable for BufferViewManager {
 
 impl super::NetworkList for BufferViewManager {
     fn to_network_list(&self) -> VariantList {
-        let mut res = Vec::with_capacity(2);
-
-        res.push(Variant::ByteArray(s!("bufferViewIds")));
-        res.push(Variant::VariantList(
-            self.buffer_view_configs
-                .iter()
-                .map(|(k, _)| i32::try_into(*k).unwrap())
-                .collect(),
-        ));
-
-        return res;
+        vec![
+            Variant::ByteArray(s!("bufferViewIds")),
+            Variant::VariantList(self.buffer_view_configs.keys().map(|k| i32::into(*k)).collect()),
+        ]
     }
 
     fn from_network_list(input: &mut VariantList) -> Self {
         let mut i = input.iter();
         i.position(|x| *x == Variant::ByteArray(String::from("BufferViewIds")))
-            .expect(format!("failed to get field BufferViewIds").as_str());
+            .expect("failed to get field BufferViewIds");
 
         let ids = match i.next().expect("failed to get next field") {
             libquassel::primitive::Variant::VariantList(var) => var.clone(),
@@ -174,15 +167,10 @@ impl super::NetworkMap for BufferViewManager {
 
         res.insert(
             s!("bufferViewIds"),
-            Variant::VariantList(
-                self.buffer_view_configs
-                    .iter()
-                    .map(|(k, _)| i32::try_into(*k).unwrap())
-                    .collect(),
-            ),
+            Variant::VariantList(self.buffer_view_configs.keys().map(|k| i32::into(*k)).collect()),
         );
 
-        return res;
+        res
     }
 
     fn from_network_map(_input: &mut Self::Item) -> Self {

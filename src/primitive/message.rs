@@ -60,7 +60,7 @@ impl Serialize for Message {
         values.append(&mut i32::serialize(&(self.timestamp as i32))?);
 
         values.append(&mut i32::serialize(&(self.msg_type.bits()))?);
-        values.append(&mut i8::serialize(&(self.flags as i8))?);
+        values.append(&mut i8::serialize(&self.flags)?);
         values.append(&mut BufferInfo::serialize(&self.buffer)?);
         values.append(&mut String::serialize_utf8(&self.sender)?);
 
@@ -75,7 +75,7 @@ impl Serialize for Message {
 
         values.append(&mut String::serialize_utf8(&self.content)?);
 
-        return Ok(values);
+        Ok(values)
     }
 }
 
@@ -138,7 +138,7 @@ impl Deserialize for Message {
         let (parsed, content) = String::parse_utf8(&b[pos..])?;
         pos += parsed;
 
-        return Ok((
+        Ok((
             pos,
             Self {
                 msg_id,
@@ -155,7 +155,7 @@ impl Deserialize for Message {
                 avatar_url,
                 content,
             },
-        ));
+        ))
     }
 }
 
@@ -203,7 +203,7 @@ where
             res.push((*v).clone().bits().into());
         });
 
-        return res;
+        res
     }
 
     fn from_network_list(input: &mut VariantList) -> Self {
@@ -224,7 +224,7 @@ where
             );
         });
 
-        return res;
+        res
     }
 }
 

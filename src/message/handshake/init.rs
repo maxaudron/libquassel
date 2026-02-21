@@ -1,7 +1,7 @@
 use crate::serialize::{Deserialize, Serialize};
 
 /// The first few bytes sent to the core to initialize the connection and setup if we want to use tls and compression
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Init {
     pub tls: bool,
     pub compression: bool,
@@ -9,10 +9,7 @@ pub struct Init {
 
 impl Init {
     pub fn new() -> Self {
-        Self {
-            tls: false,
-            compression: false,
-        }
+        Self::default()
     }
 
     pub fn compression(mut self, v: bool) -> Self {
@@ -47,7 +44,7 @@ impl Init {
         init.extend(handshake.serialize().unwrap());
         init.extend(crate::message::Protocol::Datastream.serialize());
 
-        return init;
+        init
     }
 
     pub fn parse(buf: &[u8]) -> Self {
@@ -66,6 +63,6 @@ impl Init {
             init.tls = true
         }
 
-        return init;
+        init
     }
 }

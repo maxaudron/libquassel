@@ -1,13 +1,15 @@
 use crate::serialize::{Deserialize, Serialize};
 
+#[derive(Debug, Default)]
 pub enum Protocol {
     Legacy = 0x00000001,
+    #[default]
     Datastream = 0x00000002,
 }
 
 impl Protocol {
     pub fn new() -> Self {
-        Protocol::Datastream
+        Protocol::default()
     }
 
     pub fn serialize(self) -> Vec<u8> {

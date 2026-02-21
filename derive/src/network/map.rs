@@ -3,18 +3,18 @@ use quote::quote;
 
 use super::{get_field_variant_type, NetworkField};
 
-pub(crate) fn to(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
+pub(crate) fn to(fields: &[NetworkField]) -> Vec<TokenStream> {
     fields
         .iter()
         .map(|field| {
             if !field.skip {
                 let field_rename = match &field.rename {
                     Some(name) => name.clone(),
-                    None => format!("{}", field.ident.as_ref().unwrap()).into(),
+                    None => format!("{}", field.ident.as_ref().unwrap()),
                 };
 
                 let field_name = field.ident.as_ref().unwrap();
-                let field_variant_type = get_field_variant_type(&field);
+                let field_variant_type = get_field_variant_type(field);
 
                 let field_inner = match field.network {
                     crate::network::NetworkRepr::List => quote! {
@@ -39,7 +39,7 @@ pub(crate) fn to(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
         .collect()
 }
 
-pub(crate) fn from(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
+pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
     fields
         .iter()
         .map(|field| {
@@ -53,7 +53,7 @@ pub(crate) fn from(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
 
             let field_rename = match &field.rename {
                 Some(name) => name.clone(),
-                None => format!("{}", field.ident.as_ref().unwrap()).into(),
+                None => format!("{}", field.ident.as_ref().unwrap()),
             };
 
             match field.network {
@@ -73,7 +73,7 @@ pub(crate) fn from(fields: &Vec<NetworkField>) -> Vec<TokenStream> {
         .collect()
 }
 
-pub(crate) fn to_vec(_type_name: &Ident, _fields: &Vec<NetworkField>) -> TokenStream {
+pub(crate) fn to_vec(_type_name: &Ident, _fields: &[NetworkField]) -> TokenStream {
     quote! {
         self.iter().map(|item| {
             item.to_network_map().into()
@@ -81,7 +81,7 @@ pub(crate) fn to_vec(_type_name: &Ident, _fields: &Vec<NetworkField>) -> TokenSt
     }
 }
 
-pub(crate) fn from_vec(type_name: &Ident, _fields: &Vec<NetworkField>) -> TokenStream {
+pub(crate) fn from_vec(type_name: &Ident, _fields: &[NetworkField]) -> TokenStream {
     quote! {
         input.iter().map(
             |item| #type_name::from_network_map(

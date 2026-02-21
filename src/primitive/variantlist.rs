@@ -24,7 +24,7 @@ impl Serialize for VariantList {
             res.extend(v.serialize()?.iter());
         }
 
-        return Ok(res);
+        Ok(res)
     }
 }
 
@@ -43,7 +43,7 @@ impl Deserialize for VariantList {
             pos += vlen;
         }
 
-        return Ok((pos, res));
+        Ok((pos, res))
     }
 }
 

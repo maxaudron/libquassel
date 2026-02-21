@@ -15,7 +15,7 @@ impl RpcCallType for KickClient {
     fn to_network(&self) -> Result<Vec<crate::primitive::Variant>, crate::ProtocolError> {
         Ok(vec![
             Variant::ByteArray(Self::NAME.to_string()),
-            self.id.clone().into(),
+            self.id.into(),
         ])
     }
 

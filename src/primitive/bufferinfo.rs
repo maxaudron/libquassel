@@ -46,7 +46,7 @@ impl Deserialize for BufferInfo {
         // TODO is groupid
         let (size, name) = String::parse_utf8(&b[14..])?;
 
-        return Ok((
+        Ok((
             14 + size,
             Self {
                 id,
@@ -54,7 +54,7 @@ impl Deserialize for BufferInfo {
                 buffer_type: BufferType::from(buffer_type),
                 name,
             },
-        ));
+        ))
     }
 }
 
@@ -75,10 +75,10 @@ pub enum BufferType {
 impl From<i16> for BufferType {
     fn from(value: i16) -> Self {
         match value {
-            0x01 => return Self::Status,
-            0x02 => return Self::Channel,
-            0x04 => return Self::Query,
-            0x08 => return Self::Group,
+            0x01 => Self::Status,
+            0x02 => Self::Channel,
+            0x04 => Self::Query,
+            0x08 => Self::Group,
             _ => unimplemented!(),
         }
     }

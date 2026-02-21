@@ -54,7 +54,7 @@ impl RpcCallType for RemoveIdentity {
     fn to_network(&self) -> Result<Vec<crate::primitive::Variant>, crate::ProtocolError> {
         Ok(vec![
             Variant::ByteArray(Self::NAME.to_string()),
-            Variant::IdentityId(self.identity_id.clone()),
+            Variant::IdentityId(self.identity_id),
         ])
     }
 
@@ -120,7 +120,7 @@ impl RpcCallType for IdentityRemoved {
     fn to_network(&self) -> Result<Vec<crate::primitive::Variant>, crate::ProtocolError> {
         Ok(vec![
             Variant::ByteArray(Self::NAME.to_string()),
-            Variant::IdentityId(self.identity_id.clone()),
+            Variant::IdentityId(self.identity_id),
         ])
     }
 
