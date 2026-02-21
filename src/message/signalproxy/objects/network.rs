@@ -192,7 +192,7 @@ impl Syncable for Network {
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for Network {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
@@ -223,9 +223,10 @@ impl crate::message::StatefulSyncableClient for Network {
             "setMessageRateDelay" => self.network_info.set_msg_rate_message_delay(get_param!(msg)),
             "setMyNick" => self.set_my_nick(get_param!(msg)),
             "setNetworkName" => self.network_info.set_network_name(get_param!(msg)),
-            "setNetworkInfo" => self.set_network_info(NetworkInfo::from_network_map(
-                &mut VariantMap::try_from(msg.params.remove(0)).unwrap(),
-            )),
+            "setNetworkInfo" => {
+                let mut map = VariantMap::try_from(msg.params.remove(0))?;
+                self.set_network_info(NetworkInfo::from_network_map(&mut map));
+            }
             "setPerform" => self.network_info.set_perform(get_param!(msg)),
             "setRejoinChannels" => self.network_info.set_rejoin_channels(get_param!(msg)),
             "setSaslAccount" => self.network_info.set_sasl_account(get_param!(msg)),
@@ -254,23 +255,26 @@ impl crate::message::StatefulSyncableClient for Network {
             "setUseSasl" => self.network_info.set_use_sasl(get_param!(msg)),
             _ => (),
         }
+        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for Network {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
         match msg.slot_name.as_str() {
             "requestConnect" => self.connect(),
             "requestDisconnect" => self.disconnect(),
-            "requestSetNetworkInfo" => self.set_network_info(NetworkInfo::from_network_map(
-                &mut VariantMap::try_from(msg.params.remove(0)).unwrap(),
-            )),
+            "requestSetNetworkInfo" => {
+                let mut map = VariantMap::try_from(msg.params.remove(0))?;
+                self.set_network_info(NetworkInfo::from_network_map(&mut map));
+            }
             _ => (),
         }
+        Ok(())
     }
 }
 

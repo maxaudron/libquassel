@@ -1,4 +1,5 @@
 use crate::{
+    error::ProtocolError,
     message::{Class, Syncable},
     primitive::Variant,
 };
@@ -118,7 +119,7 @@ impl IgnoreListManager {
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for IgnoreListManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
@@ -142,12 +143,13 @@ impl crate::message::StatefulSyncableClient for IgnoreListManager {
             }
             _ => (),
         }
+        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for IgnoreListManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
@@ -171,6 +173,7 @@ impl crate::message::StatefulSyncableServer for IgnoreListManager {
             }
             _ => (),
         }
+        Ok(())
     }
 }
 
@@ -201,8 +204,6 @@ pub struct IgnoreListItem {
 
 //////////////////////////////////////
 
-use num_traits::{FromPrimitive, ToPrimitive};
-
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, FromPrimitive, ToPrimitive)]
 pub enum IgnoreType {
@@ -213,19 +214,22 @@ pub enum IgnoreType {
 
 impl From<IgnoreType> for Variant {
     fn from(value: IgnoreType) -> Self {
-        Variant::i32(value.to_i32().unwrap())
+        Variant::i32(value as i32)
     }
 }
 
-impl From<Variant> for IgnoreType {
-    fn from(value: Variant) -> Self {
-        IgnoreType::from_i32(value.try_into().unwrap()).unwrap()
+impl TryFrom<Variant> for IgnoreType {
+    type Error = ProtocolError;
+
+    fn try_from(value: Variant) -> Result<Self, Self::Error> {
+        let i: i32 = value.try_into()?;
+        Self::try_from(i).map_err(|_| ProtocolError::WrongVariant)
     }
 }
 
 impl From<IgnoreType> for i32 {
     fn from(value: IgnoreType) -> Self {
-        value.to_i32().unwrap()
+        value as i32
     }
 }
 
@@ -252,19 +256,22 @@ pub enum StrictnessType {
 
 impl From<StrictnessType> for Variant {
     fn from(value: StrictnessType) -> Self {
-        Variant::i32(value.to_i32().unwrap())
+        Variant::i32(value as i32)
     }
 }
 
-impl From<Variant> for StrictnessType {
-    fn from(value: Variant) -> Self {
-        StrictnessType::from_i32(value.try_into().unwrap()).unwrap()
+impl TryFrom<Variant> for StrictnessType {
+    type Error = ProtocolError;
+
+    fn try_from(value: Variant) -> Result<Self, Self::Error> {
+        let i: i32 = value.try_into()?;
+        Self::try_from(i).map_err(|_| ProtocolError::WrongVariant)
     }
 }
 
 impl From<StrictnessType> for i32 {
     fn from(value: StrictnessType) -> Self {
-        value.to_i32().unwrap()
+        value as i32
     }
 }
 
@@ -291,19 +298,22 @@ pub enum ScopeType {
 
 impl From<ScopeType> for Variant {
     fn from(value: ScopeType) -> Self {
-        Variant::i32(value.to_i32().unwrap())
+        Variant::i32(value as i32)
     }
 }
 
-impl From<Variant> for ScopeType {
-    fn from(value: Variant) -> Self {
-        ScopeType::from_i32(value.try_into().unwrap()).unwrap()
+impl TryFrom<Variant> for ScopeType {
+    type Error = ProtocolError;
+
+    fn try_from(value: Variant) -> Result<Self, Self::Error> {
+        let i: i32 = value.try_into()?;
+        Self::try_from(i).map_err(|_| ProtocolError::WrongVariant)
     }
 }
 
 impl From<ScopeType> for i32 {
     fn from(value: ScopeType) -> Self {
-        value.to_i32().unwrap()
+        value as i32
     }
 }
 

@@ -1,6 +1,6 @@
 use libquassel_derive::{NetworkList, NetworkMap};
 
-use crate::message::{Syncable, Class};
+use crate::message::{Class, Syncable};
 #[allow(unused_imports)]
 use crate::primitive::Variant;
 
@@ -30,7 +30,7 @@ impl CertManager {
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for CertManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -39,6 +39,7 @@ impl crate::message::StatefulSyncableClient for CertManager {
             "setSslKey" => self.set_ssl_key(get_param!(msg)),
             _ => (),
         }
+        Ok(())
     }
 }
 

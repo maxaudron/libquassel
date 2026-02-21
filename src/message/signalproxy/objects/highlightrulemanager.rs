@@ -1,5 +1,6 @@
 use libquassel_derive::{sync, NetworkList, NetworkMap};
 
+use crate::error::ProtocolError;
 use crate::message::Class;
 
 #[allow(unused_imports)]
@@ -135,7 +136,7 @@ impl HighlightRuleManager {
 
 #[cfg(feature = "client")]
 impl StatefulSyncableClient for HighlightRuleManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
@@ -156,12 +157,13 @@ impl StatefulSyncableClient for HighlightRuleManager {
             "setNicksCaseSensitive" => self.set_nicks_case_sensitive(get_param!(msg)),
             _ => (),
         }
+        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl StatefulSyncableServer for HighlightRuleManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
@@ -182,6 +184,7 @@ impl StatefulSyncableServer for HighlightRuleManager {
             "requestSetNicksCaseSensitive" => self.set_nicks_case_sensitive(get_param!(msg)),
             _ => (),
         }
+        Ok(())
     }
 }
 
@@ -223,11 +226,12 @@ impl From<HighlightNickType> for Variant {
     }
 }
 
-// TODO error handling
-impl From<Variant> for HighlightNickType {
-    fn from(value: Variant) -> Self {
-        #[allow(clippy::unnecessary_fallible_conversions)]
-        HighlightNickType::try_from(value).unwrap()
+impl TryFrom<Variant> for HighlightNickType {
+    type Error = ProtocolError;
+
+    fn try_from(value: Variant) -> Result<Self, Self::Error> {
+        let i: i32 = value.try_into()?;
+        Self::try_from(i).map_err(|_| ProtocolError::WrongVariant)
     }
 }
 

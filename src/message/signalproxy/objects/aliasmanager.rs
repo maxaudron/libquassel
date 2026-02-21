@@ -40,7 +40,7 @@ impl StatefulSyncableClient for AliasManager {}
 
 #[cfg(feature = "server")]
 impl StatefulSyncableServer for AliasManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -50,6 +50,7 @@ impl StatefulSyncableServer for AliasManager {
             )),
             _ => (),
         }
+        Ok(())
     }
 }
 

@@ -96,7 +96,7 @@ impl Identity {
 
 #[cfg(feature = "client")]
 impl StatefulSyncableClient for Identity {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -123,6 +123,7 @@ impl StatefulSyncableClient for Identity {
             "setRealName" => self.set_real_name(get_param!(msg)),
             _ => (),
         }
+        Ok(())
     }
 }
 

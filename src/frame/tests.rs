@@ -149,7 +149,9 @@ pub fn read_multi_frame() {
 #[test]
 pub fn read_single_frame_compressed() {
     let io = FramedRead::new(
-        Builder::new().read(b"\x78\x9c\x63\x60\x60\xe0\x4c\x4c\x4a\x4e\x49\x4d\x4b\xcf\xc8\x04\x00\x11\xec\x03\x97").build(),
+        Builder::new()
+            .read(b"\x78\x9c\x63\x60\x60\xe0\x4c\x4c\x4a\x4e\x49\x4d\x4b\xcf\xc8\x04\x00\x11\xec\x03\x97")
+            .build(),
         QuasselCodec::builder().compression(true).new_codec(),
     );
     pin_mut!(io);

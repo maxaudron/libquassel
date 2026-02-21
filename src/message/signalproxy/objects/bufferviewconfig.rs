@@ -15,7 +15,11 @@ pub struct BufferViewConfig {
     pub buffers: Vec<BufferId>,
     #[network(rename = "RemovedBuffers", network = "list", variant = "VariantList")]
     pub removed_buffers: Vec<BufferId>,
-    #[network(rename = "TemporarilyRemovedBuffers", network = "list", variant = "VariantList")]
+    #[network(
+        rename = "TemporarilyRemovedBuffers",
+        network = "list",
+        variant = "VariantList"
+    )]
     pub temporarily_removed_buffers: Vec<BufferId>,
 
     #[network(rename = "bufferViewId", default, skip)]
@@ -124,7 +128,7 @@ impl BufferViewConfig {
 
 #[cfg(feature = "client")]
 impl StatefulSyncableClient for BufferViewConfig {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -144,12 +148,13 @@ impl StatefulSyncableClient for BufferViewConfig {
             }
             _ => (),
         }
+        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl StatefulSyncableServer for BufferViewConfig {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -182,6 +187,7 @@ impl StatefulSyncableServer for BufferViewConfig {
             "setSortAlphabetically" => self.sort_alphabetically = msg.params.remove(0).try_into().unwrap(),
             _ => (),
         }
+        Ok(())
     }
 }
 

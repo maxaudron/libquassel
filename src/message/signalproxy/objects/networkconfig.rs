@@ -28,7 +28,7 @@ impl Syncable for NetworkConfig {
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for NetworkConfig {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -43,12 +43,13 @@ impl crate::message::StatefulSyncableClient for NetworkConfig {
             "setStandardCtcp" => self.set_standard_ctcp(get_param!(msg)),
             _ => (),
         }
+        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for NetworkConfig {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -63,5 +64,6 @@ impl crate::message::StatefulSyncableServer for NetworkConfig {
             "requestSetStandardCtcp" => self.set_standard_ctcp(get_param!(msg)),
             _ => (),
         }
+        Ok(())
     }
 }

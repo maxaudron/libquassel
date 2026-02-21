@@ -22,7 +22,7 @@ impl CoreInfo {
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for CoreInfo {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -31,6 +31,7 @@ impl crate::message::StatefulSyncableClient for CoreInfo {
             "setCoreData" => self.set_core_data(CoreData::from_network_map(&mut get_param!(msg))),
             _ => (),
         }
+        Ok(())
     }
 
     /// Not Implemented
@@ -44,10 +45,14 @@ impl crate::message::StatefulSyncableClient for CoreInfo {
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for CoreInfo {
     /// Not Implemented
-    fn request_update(&mut self, mut _param: <CoreInfo as NetworkMap>::Item)
+    fn request_update(
+        &mut self,
+        mut _param: <CoreInfo as NetworkMap>::Item,
+    ) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
+        Ok(())
     }
 }
 

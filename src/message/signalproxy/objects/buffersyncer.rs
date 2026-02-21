@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
+    error::ProtocolError,
     message::{Class, Syncable},
     primitive::{BufferId, MessageType, MsgId},
 };
@@ -135,7 +136,7 @@ impl BufferSyncer {
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for BufferSyncer {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
@@ -153,12 +154,13 @@ impl crate::message::StatefulSyncableClient for BufferSyncer {
             "setMarkerLine" => self.set_marker_line(get_param!(msg), get_param!(msg)),
             _ => (),
         }
+        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for BufferSyncer {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
@@ -174,6 +176,7 @@ impl crate::message::StatefulSyncableServer for BufferSyncer {
             "requestSetMarkerLine" => self.set_marker_line(get_param!(msg), get_param!(msg)),
             _ => (),
         }
+        Ok(())
     }
 }
 

@@ -122,4 +122,3 @@ impl Deserialize for SyncMessage {
         ))
     }
 }
-

@@ -56,7 +56,6 @@ impl NetworkList for Vec<BufferId> {
         input.iter().map(|b| b.try_into().unwrap()).collect()
     }
 }
- 
 
 #[cfg(test)]
 mod tests {

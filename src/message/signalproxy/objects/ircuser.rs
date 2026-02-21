@@ -111,7 +111,7 @@ impl IrcUser {
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for IrcUser {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -142,6 +142,7 @@ impl crate::message::StatefulSyncableClient for IrcUser {
             "updateHostmask" => self.update_hostmask(get_param!(msg)),
             _ => unimplemented!(),
         }
+        Ok(())
     }
 }
 

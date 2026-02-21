@@ -68,7 +68,7 @@ impl TryFrom<Variant> for String {
         match input {
             Variant::String(value) => Ok(value),
             Variant::ByteArray(value) => Ok(value),
-            _ => Err(ProtocolError::UnknownVariant)
+            _ => Err(ProtocolError::UnknownVariant),
         }
     }
 }

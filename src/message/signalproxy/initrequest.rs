@@ -35,5 +35,3 @@ impl Deserialize for InitRequest {
         ))
     }
 }
-
-

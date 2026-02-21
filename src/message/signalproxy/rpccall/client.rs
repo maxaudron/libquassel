@@ -13,10 +13,7 @@ impl RpcCallType for KickClient {
     const DIRECTION: Direction = Direction::ClientToServer;
 
     fn to_network(&self) -> Result<Vec<crate::primitive::Variant>, crate::ProtocolError> {
-        Ok(vec![
-            Variant::ByteArray(Self::NAME.to_string()),
-            self.id.into(),
-        ])
+        Ok(vec![Variant::ByteArray(Self::NAME.to_string()), self.id.into()])
     }
 
     fn from_network(

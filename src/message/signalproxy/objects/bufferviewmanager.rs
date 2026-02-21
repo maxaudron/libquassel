@@ -80,7 +80,7 @@ impl BufferViewManager {
 
 #[cfg(feature = "client")]
 impl StatefulSyncableClient for BufferViewManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -93,12 +93,13 @@ impl StatefulSyncableClient for BufferViewManager {
             }
             _ => (),
         }
+        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl StatefulSyncableServer for BufferViewManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -124,6 +125,7 @@ impl StatefulSyncableServer for BufferViewManager {
             }
             _ => (),
         }
+        Ok(())
     }
 }
 

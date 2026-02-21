@@ -13,6 +13,7 @@ use crate::message::StatefulSyncableServer;
 use log::{debug, error, warn};
 
 use crate::{
+    error::ProtocolError,
     message::{
         objects::{Types, *},
         Class, InitData, SessionInit, SyncMessage, Syncable,
@@ -56,7 +57,7 @@ pub trait SessionManager {
     fn network_config(&mut self) -> &mut NetworkConfig;
 
     /// Handles an incoming [SyncMessage] and passes it on to the correct destination Object.
-    fn sync(&mut self, msg: SyncMessage)
+    fn sync(&mut self, msg: SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
@@ -64,36 +65,41 @@ pub trait SessionManager {
             Class::AliasManager => self.alias_manager().sync(msg),
             Class::BacklogManager => self.backlog_manager().sync(msg),
             Class::BufferSyncer => self.buffer_syncer().sync(msg),
-            Class::BufferViewConfig => (),
+            Class::BufferViewConfig => Ok(()),
             Class::BufferViewManager => self.buffer_view_manager().sync(msg),
             Class::CoreInfo => self.core_info().sync(msg),
             // Synced via CoreInfo
-            Class::CoreData => (),
+            Class::CoreData => Ok(()),
             Class::HighlightRuleManager => self.highlight_rule_manager().sync(msg),
             Class::Identity => {
                 let identity_id: i32 = msg.object_name.parse().unwrap();
                 if let Some(identity) = self.identity(identity_id as usize) {
-                    identity.sync(msg);
+                    identity.sync(msg)?;
                 } else {
                     warn!("could not find identity with id: {:?}", identity_id);
                 }
+                Ok(())
             }
             Class::IgnoreListManager => self.ignore_list_manager().sync(msg),
             Class::CertManager => self.cert_manager().sync(msg),
             Class::Network => {
                 let id: i32 = msg.object_name.parse().unwrap();
                 if let Some(network) = self.network(id) {
-                    network.sync(msg)
+                    network.sync(msg)?;
                 }
+                Ok(())
             }
             // NetworkInfo does not receive SyncMessages directly but via Network
-            Class::NetworkInfo => (),
+            Class::NetworkInfo => Ok(()),
             Class::NetworkConfig => match msg.object_name.as_ref() {
                 "GlobalNetworkConfig" => self.network_config().sync(msg),
-                _ => error!(
-                    "received network config sync with unknown object name: {}",
-                    msg.object_name
-                ),
+                _ => {
+                    error!(
+                        "received network config sync with unknown object name: {}",
+                        msg.object_name
+                    );
+                    Ok(())
+                }
             },
             Class::IrcChannel => {
                 let mut object_name = msg.object_name.split('/');
@@ -120,6 +126,7 @@ pub trait SessionManager {
                                     mode,
                                     get_param!(msg),
                                 );
+                                Ok(())
                             }
                             "removeChannelMode" => {
                                 let mut msg = msg.clone();
@@ -131,13 +138,13 @@ pub trait SessionManager {
                                     .get_mut(channel)
                                     .unwrap()
                                     .remove_channel_mode(mode_type, mode, get_param!(msg));
+                                Ok(())
                             }
                             _ => network.irc_channels.get_mut(channel).unwrap().sync(msg.clone()),
-                        }
+                        }?;
                     }
-                } else {
-                    warn!("Could not find Network {:?}", network_id)
                 }
+                Ok(())
             }
             Class::IrcUser => {
                 let mut object_name = msg.object_name.split('/');
@@ -148,17 +155,19 @@ pub trait SessionManager {
 
                 if let Some(network) = self.network(network_id) {
                     if let Some(user) = network.irc_users.get_mut(user) {
-                        user.sync(msg);
+                        user.sync(msg)?;
                         // TODO we probably need to deal with the quit here?
                         // and remove the user from the network
                     } else {
                         warn!("Could not find IrcUser {} in Network {:?}", user, network_id)
                     }
-                } else {
-                    warn!("Could not find Network {:?}", network_id)
                 }
+                Ok(())
             }
-            Class::Unknown => warn!("received unknown object syncmessage: {:?}", msg),
+            Class::Unknown => {
+                warn!("received unknown object syncmessage: {:?}", msg);
+                Ok(())
+            }
         }
     }
 

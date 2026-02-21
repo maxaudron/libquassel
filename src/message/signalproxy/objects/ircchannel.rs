@@ -172,7 +172,7 @@ impl IrcChannel {
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for IrcChannel {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {
@@ -195,6 +195,7 @@ impl crate::message::StatefulSyncableClient for IrcChannel {
             "setUserModes" => self.set_user_modes(get_param!(msg), get_param!(msg)),
             _ => (),
         }
+        Ok(())
     }
 
     /// Not Implemented for this type
@@ -209,7 +210,10 @@ impl crate::message::StatefulSyncableClient for IrcChannel {
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for IrcChannel {
     /// Not Implemented for this type
-    fn request_update(&mut self, _param: <IrcChannel as crate::message::NetworkMap>::Item)
+    fn request_update(
+        &mut self,
+        _param: <IrcChannel as crate::message::NetworkMap>::Item,
+    ) -> Result<(), crate::error::ProtocolError>
     where
         Self: Sized,
     {

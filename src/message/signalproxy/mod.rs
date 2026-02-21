@@ -114,26 +114,30 @@ pub trait StatefulSyncableServer: Syncable + translation::NetworkMap
 where
     Variant: From<<Self as translation::NetworkMap>::Item>,
 {
-    fn sync(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
         match msg.slot_name.as_str() {
             "requestUpdate" => {
-                StatefulSyncableServer::request_update(self, msg.params.pop().unwrap().try_into().unwrap())
+                StatefulSyncableServer::request_update(
+                    self,
+                    msg.params.pop().ok_or(ProtocolError::WrongVariant)?.try_into()?,
+                )?;
+                Ok(())
             }
             _ => StatefulSyncableServer::sync_custom(self, msg),
         }
     }
 
     #[allow(unused_mut)]
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
         #[allow(clippy::match_single_binding)]
         match msg.slot_name.as_str() {
-            _ => (),
+            _ => Ok(()),
         }
     }
 
@@ -146,43 +150,54 @@ where
     }
 
     /// Server -> Client: Update the whole object with received data
-    fn request_update(&mut self, mut param: <Self as translation::NetworkMap>::Item)
+    fn request_update(
+        &mut self,
+        mut param: <Self as translation::NetworkMap>::Item,
+    ) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
         *self = Self::from_network_map(&mut param);
+        Ok(())
     }
 }
 
 /// Methods for a Stateful Syncable object on the server side.
 pub trait StatefulSyncableClient: Syncable + translation::NetworkMap {
-    fn sync(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
         match msg.slot_name.as_str() {
-            "update" => StatefulSyncableClient::update(self, msg.params.pop().unwrap().try_into().unwrap()),
+            "update" => {
+                StatefulSyncableClient::update(
+                    self,
+                    msg.params.pop().ok_or(ProtocolError::WrongVariant)?.try_into()?,
+                )?;
+                Ok(())
+            }
             _ => StatefulSyncableClient::sync_custom(self, msg),
         }
     }
 
     #[allow(unused_mut)]
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage)
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
         #[allow(clippy::match_single_binding)]
         match msg.slot_name.as_str() {
-            _ => (),
+            _ => Ok(()),
         }
     }
 
     /// Client -> Server: Update the whole object with received data
-    fn update(&mut self, mut param: <Self as translation::NetworkMap>::Item)
+    fn update(&mut self, mut param: <Self as translation::NetworkMap>::Item) -> Result<(), ProtocolError>
     where
         Self: Sized,
     {
         *self = Self::from_network_map(&mut param);
+        Ok(())
     }
 
     /// Server -> Client: Update the whole object with received data
