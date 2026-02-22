@@ -99,7 +99,8 @@ pub trait Syncable {
     /// Send a SyncMessage.
     fn send_sync(&self, function: &str, params: VariantList) -> Result<()> {
         crate::message::signalproxy::SYNC_PROXY
-            .get().ok_or(SyncProxyError::NotInitialized)?
+            .get()
+            .ok_or(SyncProxyError::NotInitialized)?
             .sync(Self::CLASS, None, function, params)?;
         Ok(())
     }
@@ -107,7 +108,8 @@ pub trait Syncable {
     /// Send a RpcCall
     fn send_rpc(&self, function: &str, params: VariantList) -> Result<()> {
         crate::message::signalproxy::SYNC_PROXY
-            .get().ok_or(SyncProxyError::NotInitialized)?
+            .get()
+            .ok_or(SyncProxyError::NotInitialized)?
             .rpc(function, params);
         Ok(())
     }

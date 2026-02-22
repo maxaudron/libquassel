@@ -124,7 +124,7 @@ impl StatefulSyncableClient for Identity {
             "setPartReason" => self.set_part_reason(get_param!(msg)),
             "setQuitReason" => self.set_quit_reason(get_param!(msg)),
             "setRealName" => self.set_real_name(get_param!(msg)),
-            _ => Ok(()),
+            unknown => Err(crate::ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }

@@ -53,7 +53,7 @@ impl StatefulSyncableServer for AliasManager {
                     .pop()
                     .ok_or(crate::ProtocolError::MissingSyncMessageParams)?,
             )?)),
-            _ => Ok(()),
+            unknown => Err(crate::ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }

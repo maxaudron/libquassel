@@ -8,7 +8,7 @@ use crate::message::StatefulSyncableServer;
 use crate::message::{Class, Syncable};
 
 use crate::primitive::{BufferId, NetworkId, VariantList};
-use crate::{Result, SyncProxyError};
+use crate::{ProtocolError, Result, SyncProxyError};
 
 #[derive(Debug, Default, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct BufferViewConfig {
@@ -157,7 +157,7 @@ impl StatefulSyncableClient for BufferViewConfig {
             ),
             "removeBuffer" => self.remove_buffer(msg.params.remove(0).try_into()?),
             "removeBufferPermanently" => self.remove_buffer_permanently(msg.params.remove(0).try_into()?),
-            _ => Ok(()),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }
@@ -193,8 +193,9 @@ impl StatefulSyncableServer for BufferViewConfig {
             "setNetworkId" => self.network_id = msg.params.remove(0).try_into()?,
             "setShowSearch" => self.show_search = msg.params.remove(0).try_into()?,
             "setSortAlphabetically" => self.sort_alphabetically = msg.params.remove(0).try_into()?,
-            _ => (),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string()))?,
         }
+
         Ok(())
     }
 }

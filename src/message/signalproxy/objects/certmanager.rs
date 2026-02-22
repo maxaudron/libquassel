@@ -28,7 +28,7 @@ impl CertManager {
         self.send_sync("setSslKey", vec![Variant::ByteArray(key.clone())])?;
 
         self.ssl_key = key;
-        
+
         Ok(())
     }
 }
@@ -42,7 +42,7 @@ impl crate::message::StatefulSyncableClient for CertManager {
         match msg.slot_name.as_str() {
             "setSslCert" => self.set_ssl_cert(get_param!(msg)),
             "setSslKey" => self.set_ssl_key(get_param!(msg)),
-            _ => Ok(()),
+            unknown => Err(crate::ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }

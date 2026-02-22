@@ -281,7 +281,7 @@ impl crate::message::StatefulSyncableClient for Network {
             "setUseCustomMessageRate" => self.network_info.set_use_custom_message_rate(get_param!(msg)),
             "setUseRandomServer" => self.network_info.set_use_random_server(get_param!(msg)),
             "setUseSasl" => self.network_info.set_use_sasl(get_param!(msg)),
-            _ => Ok(()),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }
@@ -299,7 +299,7 @@ impl crate::message::StatefulSyncableServer for Network {
                 let mut map = VariantMap::try_from(msg.params.remove(0))?;
                 self.set_network_info(NetworkInfo::from_network_map(&mut map))
             }
-            _ => Ok(()),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }

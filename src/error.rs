@@ -42,7 +42,8 @@ pub enum ProtocolError {
     UnknownStrictnessType(i32),
     #[error("got unkown ScopeType: {0}")]
     UnknownScopeType(i32),
-
+    #[error("got unkown message slot_name: {0}")]
+    UnknownMsgSlotName(String),
 }
 
 #[derive(Debug, Error)]

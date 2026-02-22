@@ -204,7 +204,7 @@ impl crate::message::StatefulSyncableClient for IrcChannel {
             "setPassword" => self.set_password(get_param!(msg)),
             "setTopic" => self.set_topic(get_param!(msg)),
             "setUserModes" => self.set_user_modes(get_param!(msg), get_param!(msg)),
-            _ => Ok(()),
+            unknown => Err(crate::ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 

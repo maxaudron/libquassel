@@ -157,7 +157,7 @@ impl crate::message::StatefulSyncableClient for IrcUser {
             "setUserModes" => self.set_user_modes(get_param!(msg)),
             "setWhoisServiceReply" => self.set_whois_service_reply(get_param!(msg)),
             "updateHostmask" => self.update_hostmask(get_param!(msg)),
-            _ => Ok(()),
+            unknown => Err(crate::ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }

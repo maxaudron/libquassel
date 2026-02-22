@@ -10,6 +10,7 @@ use crate::message::StatefulSyncableServer;
 use crate::message::{NetworkMap, Syncable};
 
 use crate::primitive::{Variant, VariantList, VariantMap};
+use crate::ProtocolError;
 use crate::Result;
 
 use super::BufferViewConfig;
@@ -94,7 +95,7 @@ impl StatefulSyncableClient for BufferViewManager {
                 self.add_buffer_view_config(msg.params.remove(0).try_into()?)
             }
             "deleteBufferViewConfig" => self.delete_buffer_view_config(msg.params.remove(0).try_into()?),
-            _ => Ok(()),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }
@@ -108,23 +109,24 @@ impl StatefulSyncableServer for BufferViewManager {
         match msg.slot_name.as_str() {
             "requestCreateBufferView" => self.add_buffer_view_config(BufferViewConfig::from_network_map(
                 &mut msg.params.remove(0).try_into()?,
-            ))?,
+            )),
             "requestCreateBufferViews" => {
                 let views: VariantList = msg.params.remove(0).try_into()?;
                 for view in views.into_iter() {
                     self.add_buffer_view_config(BufferViewConfig::from_network_map(&mut view.try_into()?))?
                 }
+                Ok(())
             }
-            "requestDeleteBufferView" => self.delete_buffer_view_config(msg.params.remove(0).try_into()?)?,
+            "requestDeleteBufferView" => self.delete_buffer_view_config(msg.params.remove(0).try_into()?),
             "requestDeleteBufferViews" => {
                 let ids: VariantList = msg.params.remove(0).try_into()?;
                 for id in ids.into_iter() {
                     self.delete_buffer_view_config(id.try_into()?)?
                 }
+                Ok(())
             }
-            _ => (),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
-        Ok(())
     }
 }
 

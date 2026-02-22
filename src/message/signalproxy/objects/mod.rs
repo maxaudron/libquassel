@@ -125,7 +125,9 @@ impl Types {
             "CertManager" => Types::CertManager(Box::new(CertManager::from_network_list(input).unwrap())),
             "Network" => Types::Network(Box::new(Network::from_network_list(input).unwrap())),
             "NetworkInfo" => Types::NetworkInfo(Box::new(NetworkInfo::from_network_list(input).unwrap())),
-            "NetworkConfig" => Types::NetworkConfig(Box::new(NetworkConfig::from_network_list(input).unwrap())),
+            "NetworkConfig" => {
+                Types::NetworkConfig(Box::new(NetworkConfig::from_network_list(input).unwrap()))
+            }
             "IrcChannel" => Types::IrcChannel(Box::new(IrcChannel::from_network_list(input).unwrap())),
             _ => Types::Unknown(Box::new(input.to_owned())),
         }

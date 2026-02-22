@@ -32,7 +32,7 @@ impl crate::message::StatefulSyncableClient for CoreInfo {
         #[allow(clippy::single_match)]
         match msg.slot_name.as_str() {
             "setCoreData" => self.set_core_data(CoreData::from_network_map(&mut get_param!(msg))),
-            _ => Ok(()),
+            unknown => Err(crate::ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 
@@ -48,10 +48,7 @@ impl crate::message::StatefulSyncableClient for CoreInfo {
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for CoreInfo {
     /// Not Implemented
-    fn request_update(
-        &mut self,
-        mut _param: <CoreInfo as NetworkMap>::Item,
-    ) -> Result<()>
+    fn request_update(&mut self, mut _param: <CoreInfo as NetworkMap>::Item) -> Result<()>
     where
         Self: Sized,
     {

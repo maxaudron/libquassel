@@ -149,7 +149,7 @@ impl crate::message::StatefulSyncableClient for IgnoreListManager {
                 let rule: String = get_param!(msg);
                 self.toggle_ignore_rule(&rule)
             }
-            _ => Ok(()),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }
@@ -178,7 +178,7 @@ impl crate::message::StatefulSyncableServer for IgnoreListManager {
                 let rule: String = get_param!(msg);
                 self.toggle_ignore_rule(&rule)
             }
-            _ => Ok(()),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }

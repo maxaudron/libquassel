@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     message::{Class, Syncable},
     primitive::{BufferId, MessageType, MsgId},
-    Result,
+    ProtocolError, Result,
 };
 
 use libquassel_derive::{sync, NetworkList, NetworkMap};
@@ -57,7 +57,7 @@ impl BufferSyncer {
 
         #[cfg(feature = "server")]
         return sync!("markBufferAsRead", [id]);
-        
+
         #[cfg(feature = "client")]
         return Ok(());
     }
@@ -87,7 +87,7 @@ impl BufferSyncer {
 
         #[cfg(feature = "server")]
         return sync!("mergeBuffersPermanently", [source, target]);
-        
+
         #[cfg(feature = "client")]
         return Ok(());
     }
@@ -101,7 +101,7 @@ impl BufferSyncer {
 
         #[cfg(feature = "server")]
         return sync!("removeBuffer", [id]);
-        
+
         #[cfg(feature = "client")]
         return Ok(());
     }
@@ -112,7 +112,7 @@ impl BufferSyncer {
     pub fn rename_buffer(&mut self, id: i32, name: String) -> Result<()> {
         #[cfg(feature = "server")]
         return sync!("renameBuffer", [id, name]);
-        
+
         #[cfg(feature = "client")]
         return Ok(());
     }
@@ -122,7 +122,7 @@ impl BufferSyncer {
 
         #[cfg(feature = "server")]
         return sync!("setBufferActivity", [id, activity.bits()]);
-        
+
         #[cfg(feature = "client")]
         return Ok(());
     }
@@ -132,7 +132,7 @@ impl BufferSyncer {
 
         #[cfg(feature = "server")]
         return sync!("setHighlightCount", [id, count]);
-        
+
         #[cfg(feature = "client")]
         return Ok(());
     }
@@ -142,7 +142,7 @@ impl BufferSyncer {
 
         #[cfg(feature = "server")]
         return sync!("setHighlightCount", [id, msg_id]);
-        
+
         #[cfg(feature = "client")]
         return Ok(());
     }
@@ -152,7 +152,7 @@ impl BufferSyncer {
 
         #[cfg(feature = "server")]
         return sync!("setHighlightCount", [id, msg_id]);
-        
+
         #[cfg(feature = "client")]
         return Ok(());
     }
@@ -176,7 +176,7 @@ impl crate::message::StatefulSyncableClient for BufferSyncer {
             "setHighlightCount" => self.set_highlight_count(get_param!(msg), get_param!(msg)),
             "setLastSeenMsg" => self.set_last_seen_msg(get_param!(msg), get_param!(msg)),
             "setMarkerLine" => self.set_marker_line(get_param!(msg), get_param!(msg)),
-            _ => Ok(()),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }
@@ -197,7 +197,7 @@ impl crate::message::StatefulSyncableServer for BufferSyncer {
             "requestRenameBuffer" => self.rename_buffer(get_param!(msg), get_param!(msg)),
             "requestSetLastSeenMsg" => self.set_last_seen_msg(get_param!(msg), get_param!(msg)),
             "requestSetMarkerLine" => self.set_marker_line(get_param!(msg), get_param!(msg)),
-            _ => Ok(()),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }

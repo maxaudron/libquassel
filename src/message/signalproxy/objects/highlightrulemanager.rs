@@ -168,7 +168,7 @@ impl StatefulSyncableClient for HighlightRuleManager {
             }),
             "setHighlightNick" => self.set_highlight_nick(get_param!(msg)),
             "setNicksCaseSensitive" => self.set_nicks_case_sensitive(get_param!(msg)),
-            _ => Ok(()),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }
@@ -194,7 +194,7 @@ impl StatefulSyncableServer for HighlightRuleManager {
             }),
             "requestSetHighlightNick" => self.set_highlight_nick(get_param!(msg)),
             "requestSetNicksCaseSensitive" => self.set_nicks_case_sensitive(get_param!(msg)),
-            _ => Ok(()),
+            unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }
 }
