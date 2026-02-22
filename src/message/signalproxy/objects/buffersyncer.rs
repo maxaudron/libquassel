@@ -312,7 +312,7 @@ mod tests {
     #[test]
     fn buffersyncer_from_network() {
         assert_eq!(
-            BufferSyncer::from_network_list(&mut get_network()).unwrap(),
+            BufferSyncer::from_network_list(get_network()).unwrap(),
             get_runtime()
         )
     }

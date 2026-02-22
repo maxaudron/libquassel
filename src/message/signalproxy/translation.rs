@@ -122,7 +122,37 @@ where
 
 pub trait NetworkList {
     fn to_network_list(&self) -> Result<VariantList>;
-    fn from_network_list(input: &mut VariantList) -> Result<Self>
+    fn from_network_list(input: VariantList) -> Result<Self>
     where
         Self: std::marker::Sized;
 }
+
+// impl<T: NetworkMap<Item = VariantMap>> NetworkList for T {
+//     fn from_network_list(input: VariantList) -> Result<Self>
+//     where
+//         Self: std::marker::Sized + NetworkMap<Item = VariantMap>,
+//     {
+//         let mut i = input.into_iter();
+//         let mut map: VariantMap = VariantMap::new();
+//
+//         while let Some(key) = i.next() {
+//             let key: String = key.try_into()?;
+//             let value = i.next().ok_or(ProtocolError::MissingField(key.clone()))?;
+//             map.insert(key, value);
+//         }
+//
+//         Self::from_network_map(&mut map)
+//     }
+//
+//     fn to_network_list(&self) -> Result<VariantList> {
+//         let map = Self::to_network_map(self)?;
+//
+//         let mut list = VariantList::new();
+//         for (k, v) in map {
+//             list.push(Variant::ByteArray(k));
+//             list.push(v);
+//         }
+//
+//         Ok(list)
+//     }
+// }

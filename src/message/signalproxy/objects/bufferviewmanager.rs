@@ -144,9 +144,9 @@ impl super::NetworkList for BufferViewManager {
         ])
     }
 
-    fn from_network_list(input: &mut VariantList) -> Result<Self> {
-        let mut i = input.iter();
-        i.position(|x| *x == Variant::ByteArray(String::from("BufferViewIds")))
+    fn from_network_list(input: VariantList) -> Result<Self> {
+        let mut i = input.into_iter();
+        i.position(|x| x == Variant::ByteArray(String::from("BufferViewIds")))
             .expect("failed to get field BufferViewIds");
 
         let ids = match i.next().expect("failed to get next field") {

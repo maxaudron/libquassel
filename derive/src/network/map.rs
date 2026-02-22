@@ -59,14 +59,14 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
             match field.network {
                 super::NetworkRepr::List => quote! {
                     #field_name: libquassel::message::NetworkList::from_network_list(
-                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap)?,
+                        std::convert::TryInto::try_into(input.remove(#field_rename).#unwrap).#unwrap)?,
                 },
                 super::NetworkRepr::Map => quote! {
                     #field_name: libquassel::message::NetworkMap::from_network_map(
-                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap)?,
+                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).#unwrap).#unwrap)?,
                 },
                 super::NetworkRepr::None => quote! {
-                    #field_name: std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap,
+                    #field_name: std::convert::TryInto::try_into(input.remove(#field_rename).#unwrap).#unwrap,
                 },
             }
         })

@@ -98,7 +98,7 @@ impl Types {
         })
     }
 
-    pub fn from_network(class_name: &str, object_name: &str, input: &mut VariantList) -> Result<Self> {
+    pub fn from_network(class_name: &str, object_name: &str, mut input: VariantList) -> Result<Self> {
         debug!("converting {} from network object: {:#?}", class_name, input);
         Ok(match class_name {
             "AliasManager" => Types::AliasManager(Box::new(AliasManager::from_network_list(input)?)),

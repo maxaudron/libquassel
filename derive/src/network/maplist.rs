@@ -150,7 +150,7 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
 
             let field_inner = match field.network {
                 super::NetworkRepr::List => quote! {
-                    libquassel::message::NetworkList::from_network_list(&mut std::convert::TryInto::try_into(input.remove(0)).#unwrap)?
+                    libquassel::message::NetworkList::from_network_list(std::convert::TryInto::try_into(input.remove(0)).#unwrap)?
                 },
                 super::NetworkRepr::Map => quote! {
                     libquassel::message::NetworkMap::from_network_map(&mut std::convert::TryInto::try_into(input.remove(0)).#unwrap)?
@@ -162,14 +162,14 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
 
             if field.stringlist {
                 quote! {
-                    #field_name: match input.get_mut(#field_rename).unwrap() {
+                    #field_name: match input.get_mut(#field_rename).#unwrap {
                         libquassel::primitive::Variant::StringList(input) => #field_inner,
                         _ => panic!("#field_name: wrong variant")
                     },
                 }
             } else {
                 quote! {
-                    #field_name: match input.get_mut(#field_rename).unwrap() {
+                    #field_name: match input.get_mut(#field_rename).#unwrap {
                         libquassel::primitive::Variant::VariantList(input) => #field_inner,
                         _ => panic!("#field_name: wrong variant")
                     },

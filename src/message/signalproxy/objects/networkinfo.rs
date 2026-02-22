@@ -212,7 +212,7 @@ mod tests {
     #[test]
     fn networkinfo_from_network() {
         assert_eq!(
-            NetworkInfo::from_network_list(&mut get_network()).unwrap(),
+            NetworkInfo::from_network_list(get_network()).unwrap(),
             get_runtime()
         );
 
@@ -221,7 +221,7 @@ mod tests {
         network.remove(20);
         network.remove(20);
 
-        let left = NetworkInfo::from_network_list(&mut network).unwrap();
+        let left = NetworkInfo::from_network_list(network).unwrap();
         assert_eq!(left.network_id, NetworkId(0));
     }
 }

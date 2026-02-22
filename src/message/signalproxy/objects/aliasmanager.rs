@@ -133,7 +133,7 @@ mod tests {
     #[test]
     fn aliasmanager_from_network() {
         assert_eq!(
-            AliasManager::from_network_list(&mut get_dest()).unwrap(),
+            AliasManager::from_network_list(get_dest()).unwrap(),
             get_src()
         )
     }

@@ -22,8 +22,9 @@ use libquassel_derive::From;
 ///
 /// ByteArray is de-/serialized as a C ByteArray.
 #[allow(non_camel_case_types, dead_code)]
-#[derive(Clone, Debug, PartialEq, From)]
+#[derive(Clone, Default, Debug, PartialEq, From)]
 pub enum Variant {
+    #[default]
     Unknown,
     #[from(ignore)]
     UserType(String, Vec<u8>),
@@ -103,10 +104,10 @@ where
         Ok(res)
     }
 
-    fn from_network_list(input: &mut VariantList) -> Result<Self> {
+    fn from_network_list(input: VariantList) -> Result<Self> {
         let mut res = HashMap::with_capacity(input.len() / 2);
 
-        input.iter().tuples().for_each(|(k, v)| {
+        input.into_iter().tuples().for_each(|(k, v)| {
             res.insert(
                 match T::try_from(k.clone()) {
                     Ok(it) => it,

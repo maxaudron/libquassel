@@ -54,6 +54,7 @@ impl Network {
 
     /// The `channel_modes` field is populated by the ``supports["CHANMODES"]` string,
     /// which is represented as the channel mode types a,b,c,d in a comma sepperated string.
+    #[allow(dead_code)]
     fn determine_channel_mode_types(&mut self) {
         let mut modes: Vec<&str> = self.supports.get("CHANMODES").unwrap().split(',').collect();
 
@@ -67,6 +68,7 @@ impl Network {
             .insert(ChannelModeType::AChanmode, modes.pop().unwrap().to_owned());
     }
 
+    #[allow(dead_code)]
     fn determine_prefixes(&mut self) {
         let default_prefixes = vec!['~', '&', '@', '%', '+'];
         let default_prefix_modes = vec!['q', 'a', 'o', 'h', 'v'];
@@ -369,14 +371,14 @@ impl crate::message::signalproxy::NetworkList for Network {
     }
 
     // TODO VariantList -> VariantMap conversion
-    fn from_network_list(input: &mut VariantList) -> Result<Self> {
+    fn from_network_list(input: VariantList) -> Result<Self> {
         let mut i = input.into_iter();
         let mut map: VariantMap = VariantMap::new();
 
         while let Some(key) = i.next() {
-            let key: String = key.clone().try_into()?;
+            let key: String = key.try_into()?;
             let value = i.next().ok_or(ProtocolError::MissingField(key.clone()))?;
-            map.insert(key, value.clone());
+            map.insert(key, value);
         }
 
         Self::from_network_map(&mut map)
@@ -552,8 +554,8 @@ impl NetworkList for Vec<NetworkServer> {
         Ok(self.iter().map(|b| Variant::NetworkServer(b.clone())).collect())
     }
 
-    fn from_network_list(input: &mut super::VariantList) -> Result<Self> {
-        Ok(input.iter().map(|b| b.try_into().unwrap()).collect())
+    fn from_network_list(input: super::VariantList) -> Result<Self> {
+        Ok(input.into_iter().map(|b| b.try_into().unwrap()).collect())
     }
 }
 

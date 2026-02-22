@@ -52,8 +52,8 @@ impl NetworkList for Vec<BufferId> {
         Ok(self.iter().map(|b| Variant::BufferId(*b)).collect())
     }
 
-    fn from_network_list(input: &mut super::VariantList) -> Result<Self, ProtocolError> {
-        input.iter().map(|b| b.try_into()).collect()
+    fn from_network_list(input: super::VariantList) -> Result<Self, ProtocolError> {
+        input.into_iter().map(|b| b.try_into()).collect()
     }
 }
 

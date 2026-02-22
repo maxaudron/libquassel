@@ -277,14 +277,14 @@ mod tests {
         vec![
             Variant::ByteArray(s!("HighlightRuleList")),
             Variant::VariantMap(map! {
-                s!("id") => Variant::VariantList(vec![Variant::i32(1)]),
-                s!("name") => Variant::StringList(vec![s!("testrule")]),
-                s!("isRegEx") => Variant::VariantList(vec![Variant::bool(false)]),
                 s!("isCaseSensitive") => Variant::VariantList(vec![Variant::bool(false)]),
                 s!("isEnabled") => Variant::VariantList(vec![Variant::bool(true)]),
                 s!("isInverse") => Variant::VariantList(vec![Variant::bool(false)]),
+                s!("id") => Variant::VariantList(vec![Variant::i32(1)]),
                 s!("sender") => Variant::StringList(vec![s!("testuser")]),
                 s!("channel") => Variant::StringList(vec![s!("#test")]),
+                s!("name") => Variant::StringList(vec![s!("testrule")]),
+                s!("isRegEx") => Variant::VariantList(vec![Variant::bool(false)]),
             }),
             Variant::ByteArray(s!("highlightNick")),
             Variant::i32(1),
@@ -318,7 +318,7 @@ mod tests {
     #[test]
     fn highlightrulemanager_from_network() {
         assert_eq!(
-            HighlightRuleManager::from_network_list(&mut get_network()).unwrap(),
+            HighlightRuleManager::from_network_list(get_network()).unwrap(),
             get_runtime()
         )
     }

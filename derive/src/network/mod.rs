@@ -186,7 +186,6 @@ pub fn network_list(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let name_str = name.to_string();
 
     let to_network_list = list::to(&fields);
-    let from_network_list = list::from(&fields);
 
     let gen = quote! {
         impl libquassel::message::signalproxy::NetworkList for #name {
@@ -198,11 +197,19 @@ pub fn network_list(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 Ok(res)
             }
 
-            fn from_network_list(input: &mut libquassel::primitive::VariantList) -> crate::Result<Self> {
+            fn from_network_list(input: libquassel::primitive::VariantList) -> crate::Result<Self> {
+                use crate::message::signalproxy::translation::NetworkMap;
                 log::trace!("converting {} from network object: {:#?}", #name_str, input);
-                Ok(Self {
-                    #(#from_network_list)*
-                })
+                let mut i = input.into_iter();
+                let mut map = libquassel::primitive::VariantMap::new();
+
+                while let Some(key) = i.next() {
+                    let key: String = key.try_into()?;
+                    let value = i.next().ok_or(crate::ProtocolError::MissingField(key.clone()))?;
+                    map.insert(key, value);
+                }
+
+                Self::from_network_map(&mut map)
             }
         }
     };

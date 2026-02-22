@@ -40,7 +40,7 @@ impl Deserialize for InitData {
             Self {
                 class_name: class_name.clone(),
                 object_name: object_name.clone(),
-                init_data: Types::from_network(class_name.as_str(), object_name.as_str(), &mut res)?,
+                init_data: Types::from_network(class_name.as_str(), object_name.as_str(), res)?,
             },
         ))
     }

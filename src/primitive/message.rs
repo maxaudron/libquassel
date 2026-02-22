@@ -206,12 +206,12 @@ where
         Ok(res)
     }
 
-    fn from_network_list(input: &mut VariantList) -> Result<Self, ProtocolError> {
+    fn from_network_list(input: VariantList) -> Result<Self, ProtocolError> {
         use itertools::Itertools;
 
         let mut res = HashMap::with_capacity(input.len() / 2);
 
-        input.iter().tuples().for_each(|(k, v)| {
+        input.into_iter().tuples().for_each(|(k, v)| {
             res.insert(
                 match T::try_from(k.clone()) {
                     Ok(it) => it,
