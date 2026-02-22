@@ -8,6 +8,7 @@ use log::{error, warn};
 use crate::message::{signalproxy::translation::NetworkMap, Class, Syncable};
 use crate::primitive::{StringList, VariantMap};
 use crate::serialize::{Deserialize, Serialize, UserType};
+use crate::Result;
 
 use super::{ChanModes, ChannelModeType};
 
@@ -36,13 +37,13 @@ impl UserType for IrcChannel {
 }
 
 impl Serialize for IrcChannel {
-    fn serialize(&self) -> Result<Vec<u8>, crate::ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>> {
         self.to_network_map().serialize()
     }
 }
 
 impl Deserialize for IrcChannel {
-    fn parse(b: &[u8]) -> Result<(usize, Self), crate::ProtocolError>
+    fn parse(b: &[u8]) -> Result<(usize, Self)>
     where
         Self: std::marker::Sized,
     {
@@ -99,7 +100,7 @@ impl IrcChannel {
 
     // TODO add user mode validation
     /// Add one or more mode flags to a user
-    pub fn add_user_mode(&mut self, nick: String, mode: String) {
+    pub fn add_user_mode(&mut self, nick: String, mode: String) -> Result<()> {
         if let Some(user_modes) = self.user_modes.get_mut(&nick) {
             mode.chars().for_each(|c| {
                 if !user_modes.contains(c) {
@@ -115,16 +116,18 @@ impl IrcChannel {
         // TODO this might actually be dumb can IRC even into mutiple modes at once?
         #[cfg(feature = "server")]
         if let Some(user_modes) = self.user_modes.get(&nick) {
-            mode.chars().for_each(|c| {
+            for c in mode.chars() {
                 if !user_modes.contains(c) {
-                    sync!("addUserMode", [nick.clone(), c.to_string()]);
+                    sync!("addUserMode", [nick.clone(), c.to_string()])?;
                 }
-            });
+            }
         };
+
+        Ok(())
     }
 
     /// Remove one or more mode flags from a user
-    pub fn remove_user_mode(&mut self, nick: String, mode: String) {
+    pub fn remove_user_mode(&mut self, nick: String, mode: String) -> Result<()> {
         if let Some(user_modes) = self.user_modes.get_mut(&nick) {
             mode.chars().for_each(|c| {
                 *user_modes = user_modes.replace(c, "");
@@ -132,24 +135,28 @@ impl IrcChannel {
         }
 
         #[cfg(feature = "server")]
-        sync!("removeUserMode", [nick, mode]);
+        return sync!("removeUserMode", [nick, mode]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn join_irc_users(&mut self, nicks: StringList, modes: StringList) {
+    pub fn join_irc_users(&mut self, nicks: StringList, modes: StringList) -> Result<()> {
         if nicks.len() != modes.len() {
             error!("number of nicks does not match number of modes");
         }
 
         #[cfg(feature = "server")]
-        sync!("joinIrcUsers", [nicks.clone(), modes.clone()]);
+        sync!("joinIrcUsers", [nicks.clone(), modes.clone()])?;
 
-        nicks
-            .into_iter()
-            .zip(modes)
-            .for_each(|(nick, mode)| self.add_user_mode(nick, mode));
+        for (nick, mode) in nicks.into_iter().zip(modes) {
+            self.add_user_mode(nick, mode)?
+        }
+
+        Ok(())
     }
 
-    pub fn part(&mut self, nick: String) {
+    pub fn part(&mut self, nick: String) -> Result<()> {
         match self.user_modes.remove(&nick) {
             Some(_) => (),
             None => warn!("tried to remove a user that is not joined to the channel"),
@@ -160,30 +167,34 @@ impl IrcChannel {
         {
             // TODO Clean up channel and delete
         }
+
+        Ok(())
     }
 
-    pub fn set_user_modes(&mut self, nick: String, modes: String) {
+    pub fn set_user_modes(&mut self, nick: String, modes: String) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("setUserModes", [nick.clone(), modes.clone()]);
+        sync!("setUserModes", [nick.clone(), modes.clone()])?;
 
         *self.user_modes.entry(nick).or_default() = modes;
+
+        Ok(())
     }
 }
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for IrcChannel {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
         match msg.slot_name.as_str() {
             // "addChannelMode" => {
             //     let mode: String = get_param!(msg);
-            //     self.add_channel_mode(mode.chars().next().unwrap(), get_param!(msg));
+            //     self.add_channel_mode(mode.chars().next()?, get_param!(msg));
             // }
             // "removeChannelMode" => {
             //     let mode: String = get_param!(msg);
-            //     self.remove_channel_mode(mode.chars().next().unwrap(), get_param!(msg));
+            //     self.remove_channel_mode(mode.chars().next()?, get_param!(msg));
             // }
             "addUserMode" => self.add_user_mode(get_param!(msg), get_param!(msg)),
             "removeUserMode" => self.remove_user_mode(get_param!(msg), get_param!(msg)),
@@ -193,13 +204,12 @@ impl crate::message::StatefulSyncableClient for IrcChannel {
             "setPassword" => self.set_password(get_param!(msg)),
             "setTopic" => self.set_topic(get_param!(msg)),
             "setUserModes" => self.set_user_modes(get_param!(msg), get_param!(msg)),
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 
     /// Not Implemented for this type
-    fn request_update(&mut self)
+    fn request_update(&mut self) -> crate::Result<()>
     where
         Self: Sized,
     {
@@ -210,10 +220,7 @@ impl crate::message::StatefulSyncableClient for IrcChannel {
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for IrcChannel {
     /// Not Implemented for this type
-    fn request_update(
-        &mut self,
-        _param: <IrcChannel as crate::message::NetworkMap>::Item,
-    ) -> Result<(), crate::error::ProtocolError>
+    fn request_update(&mut self, _param: <IrcChannel as crate::message::NetworkMap>::Item) -> Result<()>
     where
         Self: Sized,
     {
@@ -324,13 +331,13 @@ mod tests {
         let mut res = get_runtime();
         res.user_modes = map! { s!("audron") => s!("oh"), s!("audron_") => s!("") };
 
-        base.add_user_mode(s!("audron"), s!("h"));
+        base.add_user_mode(s!("audron"), s!("h")).unwrap();
         assert_eq!(res, base);
-        base.add_user_mode(s!("audron"), s!("o"));
+        base.add_user_mode(s!("audron"), s!("o")).unwrap();
         assert_eq!(res, base);
 
         res.user_modes = map! { s!("audron") => s!("oh"), s!("audron_") => s!(""), s!("test") => s!("h") };
-        base.add_user_mode(s!("test"), s!("h"));
+        base.add_user_mode(s!("test"), s!("h")).unwrap();
         assert_eq!(res, base);
     }
 }

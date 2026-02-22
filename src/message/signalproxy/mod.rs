@@ -1,8 +1,7 @@
 use crate::{
-    error::ProtocolError,
+    error::{ProtocolError, SyncProxyError},
     primitive::{Variant, VariantList},
-    serialize::Deserialize,
-    serialize::Serialize,
+    serialize::{Deserialize, Serialize},
 };
 
 use rpccall::RpcCall;
@@ -27,6 +26,8 @@ pub use syncmessage::*;
 
 use once_cell::sync::OnceCell;
 
+use crate::error::Result;
+
 pub static SYNC_PROXY: OnceCell<SyncProxy> = OnceCell::new();
 
 #[derive(Debug, Clone)]
@@ -41,10 +42,10 @@ impl SyncProxy {
     /// Initialize the global SYNC_PROXY object and return receiver ends for the SyncMessage and RpcCall channels
     pub fn init(
         cap: usize,
-    ) -> (
+    ) -> Result<(
         crossbeam_channel::Receiver<SyncMessage>,
         crossbeam_channel::Receiver<RpcCall>,
-    ) {
+    )> {
         let (sync_tx, sync_rx) = crossbeam_channel::bounded(cap);
         let (rpc_tx, rpc_rx) = crossbeam_channel::bounded(cap);
 
@@ -53,13 +54,19 @@ impl SyncProxy {
                 sync_channel: sync_tx,
                 rpc_channel: rpc_tx,
             })
-            .unwrap();
+            .map_err(|_| SyncProxyError::AlreadyInitialized)?;
 
-        (sync_rx, rpc_rx)
+        Ok((sync_rx, rpc_rx))
     }
 
     /// Send a SyncMessage
-    fn sync(&self, class_name: Class, object_name: Option<&str>, function: &str, params: VariantList) {
+    fn sync(
+        &self,
+        class_name: Class,
+        object_name: Option<&str>,
+        function: &str,
+        params: VariantList,
+    ) -> Result<()> {
         let msg = SyncMessage {
             class_name,
             object_name: object_name.unwrap_or("").to_string(),
@@ -68,7 +75,11 @@ impl SyncProxy {
         };
 
         debug!("submitting {:#?}", msg);
-        self.sync_channel.send(msg).unwrap();
+        self.sync_channel
+            .send(msg)
+            .map_err(|_| SyncProxyError::AlreadyInitialized)?;
+
+        Ok(())
     }
 
     /// Send an RpcCall
@@ -86,19 +97,19 @@ pub trait Syncable {
     const CLASS: Class;
 
     /// Send a SyncMessage.
-    fn send_sync(&self, function: &str, params: VariantList) {
+    fn send_sync(&self, function: &str, params: VariantList) -> Result<()> {
         crate::message::signalproxy::SYNC_PROXY
-            .get()
-            .unwrap()
-            .sync(Self::CLASS, None, function, params);
+            .get().ok_or(SyncProxyError::NotInitialized)?
+            .sync(Self::CLASS, None, function, params)?;
+        Ok(())
     }
 
     /// Send a RpcCall
-    fn send_rpc(&self, function: &str, params: VariantList) {
+    fn send_rpc(&self, function: &str, params: VariantList) -> Result<()> {
         crate::message::signalproxy::SYNC_PROXY
-            .get()
-            .unwrap()
+            .get().ok_or(SyncProxyError::NotInitialized)?
             .rpc(function, params);
+        Ok(())
     }
 
     fn init(&mut self, data: Self)
@@ -114,7 +125,7 @@ pub trait StatefulSyncableServer: Syncable + translation::NetworkMap
 where
     Variant: From<<Self as translation::NetworkMap>::Item>,
 {
-    fn sync(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
+    fn sync(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -131,7 +142,7 @@ where
     }
 
     #[allow(unused_mut)]
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -142,18 +153,15 @@ where
     }
 
     /// Client -> Server: Update the whole object with received data
-    fn update(&mut self)
+    fn update(&mut self) -> Result<()>
     where
         Self: Sized,
     {
-        self.send_sync("update", vec![self.to_network_map().into()]);
+        self.send_sync("update", vec![self.to_network_map().into()])
     }
 
     /// Server -> Client: Update the whole object with received data
-    fn request_update(
-        &mut self,
-        mut param: <Self as translation::NetworkMap>::Item,
-    ) -> Result<(), ProtocolError>
+    fn request_update(&mut self, mut param: <Self as translation::NetworkMap>::Item) -> Result<()>
     where
         Self: Sized,
     {
@@ -164,7 +172,7 @@ where
 
 /// Methods for a Stateful Syncable object on the server side.
 pub trait StatefulSyncableClient: Syncable + translation::NetworkMap {
-    fn sync(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
+    fn sync(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -181,7 +189,7 @@ pub trait StatefulSyncableClient: Syncable + translation::NetworkMap {
     }
 
     #[allow(unused_mut)]
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -192,7 +200,7 @@ pub trait StatefulSyncableClient: Syncable + translation::NetworkMap {
     }
 
     /// Client -> Server: Update the whole object with received data
-    fn update(&mut self, mut param: <Self as translation::NetworkMap>::Item) -> Result<(), ProtocolError>
+    fn update(&mut self, mut param: <Self as translation::NetworkMap>::Item) -> Result<()>
     where
         Self: Sized,
     {
@@ -201,11 +209,11 @@ pub trait StatefulSyncableClient: Syncable + translation::NetworkMap {
     }
 
     /// Server -> Client: Update the whole object with received data
-    fn request_update(&mut self)
+    fn request_update(&mut self) -> Result<()>
     where
         Self: Sized,
     {
-        self.send_sync("requestUpdate", vec![self.to_network_map().into()]);
+        self.send_sync("requestUpdate", vec![self.to_network_map().into()])
     }
 }
 
@@ -237,7 +245,7 @@ pub enum Message {
 // }
 
 impl Serialize for Message {
-    fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
+    fn serialize(&self) -> Result<Vec<std::primitive::u8>> {
         match &self {
             Message::SyncMessage(value) => value.serialize(),
             Message::RpcCall(value) => value.serialize(),
@@ -250,7 +258,7 @@ impl Serialize for Message {
 }
 
 impl Deserialize for Message {
-    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
+    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self)> {
         let (_, message_type) = i32::parse(&b[9..13])?;
 
         match MessageType::from(message_type) {

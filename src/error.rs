@@ -4,8 +4,12 @@ use thiserror::Error;
 pub enum ProtocolError {
     #[error("message has wrong type")]
     WrongMsgType,
+    #[error("message has unkown type")]
+    UnknownMsgType,
     #[error("bool value is neither 0 nor 1")]
     BoolOutOfRange,
+    #[error("Sync Message does not contain any more parameters")]
+    MissingSyncMessageParams,
     #[error("QVariant is not known")]
     UnknownVariant,
     #[error("UserType is not known: {0}")]
@@ -20,11 +24,36 @@ pub enum ProtocolError {
     TryFromIntError(#[from] std::num::TryFromIntError),
     #[error("utf8 error: {0}")]
     Utf8Error(#[from] std::string::FromUtf8Error),
+    #[error("utf16 error: {0}")]
+    Utf16Error(#[from] std::string::FromUtf16Error),
     #[error("errored to parse char as utf16")]
     CharError,
     #[error("failed to deal with time: {0}")]
     TimeError(#[from] time::error::ComponentRange),
+    #[error("failed to parse int: {0}")]
+    ParseIntError(#[from] std::num::ParseIntError),
+    #[error("error in sync proxy: {0}")]
+    SyncProxyError(#[from] SyncProxyError),
+    #[error("got unkown HighlightNickType: {0}")]
+    UnknownHighlightNickType(i32),
+    #[error("got unkown IgnoreType: {0}")]
+    UnknownIgnoreType(i32),
+    #[error("got unkown StrictnessType: {0}")]
+    UnknownStrictnessType(i32),
+    #[error("got unkown ScopeType: {0}")]
+    UnknownScopeType(i32),
+
 }
+
+#[derive(Debug, Error)]
+pub enum SyncProxyError {
+    #[error("SYNC_PROXY was already initialized")]
+    AlreadyInitialized,
+    #[error("SYNC_PROXY was not yet initialized")]
+    NotInitialized,
+}
+
+pub type Result<T> = std::result::Result<T, ProtocolError>;
 
 // impl std::error::Error for ErrorKind {}
 //

@@ -1,7 +1,7 @@
 use crate::{
-    error::ProtocolError,
     message::{Class, Syncable},
     primitive::Variant,
+    ProtocolError, Result,
 };
 
 use libquassel_derive::{sync, NetworkList, NetworkMap};
@@ -51,7 +51,7 @@ impl IgnoreListManager {
             scope_rule,
             is_active,
         }: IgnoreListItem,
-    ) {
+    ) -> Result<()> {
         sync!(
             "requestAddIgnoreListItem",
             [
@@ -66,15 +66,15 @@ impl IgnoreListManager {
         )
     }
 
-    pub fn request_remove_ignore_list_item(&self, rule: String) {
+    pub fn request_remove_ignore_list_item(&self, rule: String) -> Result<()> {
         sync!("requestRemoveIgnoreListItem", [rule])
     }
 
-    pub fn request_toggle_ignore_rule(&self, rule: String) {
+    pub fn request_toggle_ignore_rule(&self, rule: String) -> Result<()> {
         sync!("requestToggleIgnoreRule", [rule])
     }
 
-    pub fn add_ignore_list_item(&mut self, item: IgnoreListItem) {
+    pub fn add_ignore_list_item(&mut self, item: IgnoreListItem) -> Result<()> {
         #[cfg(feature = "server")]
         sync!(
             "addIgnoreListItem",
@@ -87,14 +87,16 @@ impl IgnoreListManager {
                 item.scope_rule.clone(),
                 item.is_active
             ]
-        );
+        )?;
 
         if self.ignore_list_item(&item.ignore_rule).is_none() {
             self.ignore_list.push(item)
         };
+
+        Ok(())
     }
 
-    pub fn remove_ignore_list_item(&mut self, rule: &str) {
+    pub fn remove_ignore_list_item(&mut self, rule: &str) -> Result<()> {
         if let Some(position) = self
             .ignore_list
             .iter()
@@ -104,22 +106,28 @@ impl IgnoreListManager {
         };
 
         #[cfg(feature = "server")]
-        sync!("removeIgnoreListItem", [rule])
+        return sync!("removeIgnoreListItem", [rule]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn toggle_ignore_rule(&mut self, rule: &str) {
+    pub fn toggle_ignore_rule(&mut self, rule: &str) -> Result<()> {
         if let Some(item) = self.ignore_list_item_mut(rule) {
             item.is_active = !item.is_active
         }
 
         #[cfg(feature = "server")]
-        sync!("toggleIgnoreRule", [rule])
+        return sync!("toggleIgnoreRule", [rule]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 }
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for IgnoreListManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -135,21 +143,20 @@ impl crate::message::StatefulSyncableClient for IgnoreListManager {
             }),
             "removeIgnoreListItem" => {
                 let rule: String = get_param!(msg);
-                self.remove_ignore_list_item(&rule);
+                self.remove_ignore_list_item(&rule)
             }
             "toggleIgnoreRule" => {
                 let rule: String = get_param!(msg);
-                self.toggle_ignore_rule(&rule);
+                self.toggle_ignore_rule(&rule)
             }
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for IgnoreListManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -165,15 +172,14 @@ impl crate::message::StatefulSyncableServer for IgnoreListManager {
             }),
             "requestRemoveIgnoreListItem" => {
                 let rule: String = get_param!(msg);
-                self.remove_ignore_list_item(&rule);
+                self.remove_ignore_list_item(&rule)
             }
             "requestToggleIgnoreRule" => {
                 let rule: String = get_param!(msg);
-                self.toggle_ignore_rule(&rule);
+                self.toggle_ignore_rule(&rule)
             }
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
@@ -221,7 +227,7 @@ impl From<IgnoreType> for Variant {
 impl TryFrom<Variant> for IgnoreType {
     type Error = ProtocolError;
 
-    fn try_from(value: Variant) -> Result<Self, Self::Error> {
+    fn try_from(value: Variant) -> Result<Self> {
         let i: i32 = value.try_into()?;
         Self::try_from(i).map_err(|_| ProtocolError::WrongVariant)
     }
@@ -234,14 +240,14 @@ impl From<IgnoreType> for i32 {
 }
 
 impl TryFrom<i32> for IgnoreType {
-    type Error = &'static str;
+    type Error = ProtocolError;
 
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
+    fn try_from(value: i32) -> Result<Self> {
         match value {
             0x00 => Ok(IgnoreType::SenderIgnore),
             0x01 => Ok(IgnoreType::MessageIgnore),
             0x02 => Ok(IgnoreType::CtcpIgnore),
-            _ => Err("no matching IgnoreType found"),
+            err => Err(ProtocolError::UnknownIgnoreType(err)),
         }
     }
 }
@@ -263,7 +269,7 @@ impl From<StrictnessType> for Variant {
 impl TryFrom<Variant> for StrictnessType {
     type Error = ProtocolError;
 
-    fn try_from(value: Variant) -> Result<Self, Self::Error> {
+    fn try_from(value: Variant) -> Result<Self> {
         let i: i32 = value.try_into()?;
         Self::try_from(i).map_err(|_| ProtocolError::WrongVariant)
     }
@@ -276,14 +282,14 @@ impl From<StrictnessType> for i32 {
 }
 
 impl TryFrom<i32> for StrictnessType {
-    type Error = &'static str;
+    type Error = ProtocolError;
 
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
+    fn try_from(value: i32) -> Result<Self> {
         match value {
             0x00 => Ok(StrictnessType::UnmatchedStrictness),
             0x01 => Ok(StrictnessType::SoftStrictness),
             0x02 => Ok(StrictnessType::HardStrictness),
-            _ => Err("no matching StrictnessType found"),
+            err => Err(ProtocolError::UnknownStrictnessType(err)),
         }
     }
 }
@@ -305,7 +311,7 @@ impl From<ScopeType> for Variant {
 impl TryFrom<Variant> for ScopeType {
     type Error = ProtocolError;
 
-    fn try_from(value: Variant) -> Result<Self, Self::Error> {
+    fn try_from(value: Variant) -> Result<Self> {
         let i: i32 = value.try_into()?;
         Self::try_from(i).map_err(|_| ProtocolError::WrongVariant)
     }
@@ -318,14 +324,14 @@ impl From<ScopeType> for i32 {
 }
 
 impl TryFrom<i32> for ScopeType {
-    type Error = &'static str;
+    type Error = ProtocolError;
 
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
+    fn try_from(value: i32) -> Result<Self> {
         match value {
             0x00 => Ok(ScopeType::GlobalScope),
             0x01 => Ok(ScopeType::NetworkScope),
             0x02 => Ok(ScopeType::ChannelScope),
-            _ => Err("no matching ScopeType found"),
+            err => Err(ProtocolError::UnknownScopeType(err)),
         }
     }
 }

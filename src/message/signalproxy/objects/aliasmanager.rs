@@ -14,6 +14,7 @@ use crate::message::Syncable;
 
 #[allow(unused_imports)]
 use crate::primitive::VariantMap;
+use crate::Result;
 
 /// AliasManager
 /// keeps a list of all registered aliases
@@ -25,13 +26,15 @@ pub struct AliasManager {
 }
 
 impl AliasManager {
-    pub fn add_alias(&mut self, alias: Alias) {
+    pub fn add_alias(&mut self, alias: Alias) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("addAlias", [alias.to_network_map()]);
+        sync!("addAlias", [alias.to_network_map()])?;
 
         if !self.aliases.contains(&alias) {
             self.aliases.push(alias)
         }
+
+        Ok(())
     }
 }
 
@@ -40,17 +43,18 @@ impl StatefulSyncableClient for AliasManager {}
 
 #[cfg(feature = "server")]
 impl StatefulSyncableServer for AliasManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> crate::Result<()>
     where
         Self: Sized,
     {
         match msg.slot_name.as_str() {
-            "addAlias" => self.add_alias(Alias::from_network_map(
-                &mut VariantMap::try_from(msg.params.pop().unwrap()).unwrap(),
-            )),
-            _ => (),
+            "addAlias" => self.add_alias(Alias::from_network_map(&mut VariantMap::try_from(
+                msg.params
+                    .pop()
+                    .ok_or(crate::ProtocolError::MissingSyncMessageParams)?,
+            )?)),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
@@ -123,11 +127,14 @@ mod tests {
 
     #[test]
     fn aliasmanager_to_network() {
-        assert_eq!(get_src().to_network_list(), get_dest())
+        assert_eq!(get_src().to_network_list().unwrap(), get_dest())
     }
 
     #[test]
     fn aliasmanager_from_network() {
-        assert_eq!(AliasManager::from_network_list(&mut get_dest()), get_src())
+        assert_eq!(
+            AliasManager::from_network_list(&mut get_dest()).unwrap(),
+            get_src()
+        )
     }
 }

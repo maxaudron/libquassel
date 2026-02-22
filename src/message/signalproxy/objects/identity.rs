@@ -17,6 +17,7 @@ use crate::primitive::VariantMap;
 use crate::serialize::Deserialize;
 use crate::serialize::Serialize;
 use crate::serialize::UserType;
+use crate::{Result, SyncProxyError};
 
 #[derive(Default, Debug, Clone, PartialEq, NetworkMap, NetworkList, Setters)]
 pub struct Identity {
@@ -70,13 +71,13 @@ impl UserType for Identity {
 }
 
 impl Serialize for Identity {
-    fn serialize(&self) -> Result<Vec<u8>, crate::ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>> {
         self.to_network_map().serialize()
     }
 }
 
 impl Deserialize for Identity {
-    fn parse(b: &[u8]) -> Result<(usize, Self), crate::ProtocolError>
+    fn parse(b: &[u8]) -> Result<(usize, Self)>
     where
         Self: std::marker::Sized,
     {
@@ -86,17 +87,19 @@ impl Deserialize for Identity {
 }
 
 impl Identity {
-    pub fn copy_from(&mut self, other: Identity) {
+    pub fn copy_from(&mut self, other: Identity) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("copyFrom", [other.to_network_map()]);
+        sync!("copyFrom", [other.to_network_map()])?;
 
         *self = other;
+
+        Ok(())
     }
 }
 
 #[cfg(feature = "client")]
 impl StatefulSyncableClient for Identity {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -121,9 +124,8 @@ impl StatefulSyncableClient for Identity {
             "setPartReason" => self.set_part_reason(get_param!(msg)),
             "setQuitReason" => self.set_quit_reason(get_param!(msg)),
             "setRealName" => self.set_real_name(get_param!(msg)),
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
@@ -133,12 +135,10 @@ impl StatefulSyncableServer for Identity {}
 impl Syncable for Identity {
     const CLASS: Class = Class::Identity;
 
-    fn send_sync(&self, function: &str, params: crate::primitive::VariantList) {
-        crate::message::signalproxy::SYNC_PROXY.get().unwrap().sync(
-            Self::CLASS,
-            Some(&self.identity_id.to_string()),
-            function,
-            params,
-        );
+    fn send_sync(&self, function: &str, params: crate::primitive::VariantList) -> crate::Result<()> {
+        crate::message::signalproxy::SYNC_PROXY
+            .get()
+            .ok_or(SyncProxyError::NotInitialized)?
+            .sync(Self::CLASS, Some(&self.identity_id.to_string()), function, params)
     }
 }

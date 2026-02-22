@@ -2,6 +2,7 @@ use crate::{
     message::{Class, NetworkMap, Syncable},
     primitive::{DateTime, StringList, VariantMap},
     serialize::{Deserialize, Serialize, UserType},
+    Result, SyncProxyError,
 };
 
 use itertools::Itertools;
@@ -48,13 +49,13 @@ impl UserType for IrcUser {
 }
 
 impl Serialize for IrcUser {
-    fn serialize(&self) -> Result<Vec<u8>, crate::ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>> {
         self.to_network_map().serialize()
     }
 }
 
 impl Deserialize for IrcUser {
-    fn parse(b: &[u8]) -> Result<(usize, Self), crate::ProtocolError>
+    fn parse(b: &[u8]) -> Result<(usize, Self)>
     where
         Self: std::marker::Sized,
     {
@@ -64,7 +65,7 @@ impl Deserialize for IrcUser {
 }
 
 impl IrcUser {
-    pub fn add_user_modes(&mut self, modes: String) {
+    pub fn add_user_modes(&mut self, modes: String) -> Result<()> {
         for mode in modes.chars() {
             if !self.user_modes.contains(mode) {
                 self.user_modes.push(mode);
@@ -72,10 +73,13 @@ impl IrcUser {
         }
 
         #[cfg(feature = "server")]
-        sync!("addUserModes", [modes]);
+        return sync!("addUserModes", [modes]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn remove_user_modes(&mut self, modes: String) {
+    pub fn remove_user_modes(&mut self, modes: String) -> Result<()> {
         for mode in modes.chars() {
             if self.user_modes.contains(mode) {
                 self.user_modes = self.user_modes.chars().filter(|c| *c != mode).collect();
@@ -83,35 +87,48 @@ impl IrcUser {
         }
 
         #[cfg(feature = "server")]
-        sync!("removeUserModes", [modes]);
+        return sync!("removeUserModes", [modes]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn update_hostmask(&mut self, _mask: String) {}
+    pub fn update_hostmask(&mut self, _mask: String) -> Result<()> {
+        Ok(())
+    }
 
-    pub fn join_channel(&mut self, channel: String) {
+    pub fn join_channel(&mut self, channel: String) -> Result<()> {
         if !self.channels.contains(&channel) {
             self.channels.push(channel.clone())
         }
 
         #[cfg(feature = "server")]
-        sync!("partChannel", [channel]);
+        return sync!("partChannel", [channel]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn part_channel(&mut self, channel: String) {
+    pub fn part_channel(&mut self, channel: String) -> Result<()> {
         if let Some((i, _)) = self.channels.iter().find_position(|c| **c == channel) {
             self.channels.remove(i);
         }
 
         #[cfg(feature = "server")]
-        sync!("partChannel", [channel]);
+        return sync!("partChannel", [channel]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn quit(&mut self) {}
+    pub fn quit(&mut self) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for IrcUser {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -140,9 +157,8 @@ impl crate::message::StatefulSyncableClient for IrcUser {
             "setUserModes" => self.set_user_modes(get_param!(msg)),
             "setWhoisServiceReply" => self.set_whois_service_reply(get_param!(msg)),
             "updateHostmask" => self.update_hostmask(get_param!(msg)),
-            _ => unimplemented!(),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
@@ -152,11 +168,11 @@ impl crate::message::StatefulSyncableServer for IrcUser {}
 impl Syncable for IrcUser {
     const CLASS: Class = Class::IrcUser;
 
-    fn send_sync(&self, function: &str, params: crate::primitive::VariantList) {
+    fn send_sync(&self, function: &str, params: crate::primitive::VariantList) -> Result<()> {
         crate::message::signalproxy::SYNC_PROXY
             .get()
-            .unwrap()
-            .sync(Self::CLASS, None, function, params);
+            .ok_or(SyncProxyError::NotInitialized)?
+            .sync(Self::CLASS, None, function, params)
     }
 }
 

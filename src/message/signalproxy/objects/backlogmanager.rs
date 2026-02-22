@@ -55,6 +55,7 @@ use libquassel_derive::{sync, NetworkMap};
 
 use crate::message::{Class, Syncable};
 use crate::primitive::{BufferId, MessageType, MsgId, VariantList};
+use crate::Result;
 
 /// Receive and Request Backlog
 /// All "request" functions are Client to Server and all "receive" functions are Server to Client
@@ -73,8 +74,8 @@ impl BacklogManager {
         last: MsgId,
         limit: i32,
         additional: i32,
-    ) {
-        sync!("requestBacklog", [buffer_id, first, last, limit, additional]);
+    ) -> Result<()> {
+        sync!("requestBacklog", [buffer_id, first, last, limit, additional])
     }
 
     /// Same as `requestBacklog`, but only messages of a certain message `type`
@@ -88,16 +89,16 @@ impl BacklogManager {
         additional: i32,
         msgtype: MessageType,
         flags: i32,
-    ) {
+    ) -> Result<()> {
         sync!(
             "requestBacklogFiltered",
             [buffer_id, first, last, limit, additional, msgtype.bits(), flags]
-        );
+        )
     }
 
     /// Same as `requestBacklog`, but applied to all buffers.
-    pub fn requestBacklogAll(&self, first: MsgId, last: MsgId, limit: i32, additional: i32) {
-        sync!("requestBacklogAll", [first, last, limit, additional]);
+    pub fn requestBacklogAll(&self, first: MsgId, last: MsgId, limit: i32, additional: i32) -> Result<()> {
+        sync!("requestBacklogAll", [first, last, limit, additional])
     }
 
     /// Same as `requestBacklogFiltered`, but applied to all buffers.
@@ -109,11 +110,11 @@ impl BacklogManager {
         additional: i32,
         msgtype: MessageType,
         flags: i32,
-    ) {
+    ) -> Result<()> {
         sync!(
             "requestBacklogAllFiltered",
             [first, last, limit, additional, msgtype.bits(), flags]
-        );
+        )
     }
 
     /// The response to `requestBacklog`, with the messages encoded as Variants
@@ -126,11 +127,11 @@ impl BacklogManager {
         limit: i32,
         additional: i32,
         messages: VariantList,
-    ) {
+    ) -> Result<()> {
         sync!(
             "receiveBacklog",
             [buffer_id, first, last, limit, additional, messages]
-        );
+        )
     }
 
     /// The response to `requestBacklogFiltered`, with the messages encoded as
@@ -145,7 +146,7 @@ impl BacklogManager {
         msgtype: MessageType,
         flags: i32,
         messages: VariantList,
-    ) {
+    ) -> Result<()> {
         sync!(
             "receiveBacklogFiltered",
             [
@@ -158,7 +159,7 @@ impl BacklogManager {
                 flags,
                 messages
             ]
-        );
+        )
     }
 
     /// Same as `receiveBacklog`, but applied to all buffers.
@@ -169,8 +170,8 @@ impl BacklogManager {
         limit: i32,
         additional: i32,
         messages: VariantList,
-    ) {
-        sync!("receiveBacklogAll", [first, last, limit, additional, messages]);
+    ) -> Result<()> {
+        sync!("receiveBacklogAll", [first, last, limit, additional, messages])
     }
 
     /// Same as `receiveBacklogFiltered`, but applied to all buffers.
@@ -183,11 +184,11 @@ impl BacklogManager {
         msgtype: MessageType,
         flags: i32,
         messages: VariantList,
-    ) {
+    ) -> Result<()> {
         sync!(
             "receiveBacklogAllFiltered",
             [first, last, limit, additional, msgtype.bits(), flags, messages]
-        );
+        )
     }
 }
 

@@ -18,7 +18,7 @@ pub(crate) fn to(fields: &[NetworkField]) -> Vec<TokenStream> {
 
                 let field_inner = match field.network {
                     crate::network::NetworkRepr::List => {
-                        quote! { libquassel::message::NetworkList::to_network_list(&self.#field_name).into() }
+                        quote! { libquassel::message::NetworkList::to_network_list(&self.#field_name)?.into() }
                     }
                     crate::network::NetworkRepr::Map => {
                         quote! { libquassel::message::NetworkMap::to_network_map(&self.#field_name).into() }
@@ -55,7 +55,7 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
                     let mut i = input.iter();
                     match i.position(|x| *x == libquassel::primitive::Variant::ByteArray(String::from(#field_rename))) {
                         Some(_) => {
-                            match i.next().expect("failed to get next field") {
+                            match i.next().ok_or_else(|| crate::ProtocolError::MissingField(#field_rename.to_string()))? {
                                 libquassel::primitive::Variant::#field_variant_type(var) => var
                                     .clone()
                                     .try_into()
@@ -83,7 +83,7 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
                 super::NetworkRepr::List => quote! {
                         #field_name: libquassel::message::NetworkList::from_network_list(&mut {
                             #extract_inner
-                        }),
+                        })?,
                     },
                 super::NetworkRepr::Map => quote! {
                         #field_name: libquassel::message::NetworkMap::from_network_map(&mut {

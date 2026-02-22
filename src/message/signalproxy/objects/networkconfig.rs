@@ -41,9 +41,8 @@ impl crate::message::StatefulSyncableClient for NetworkConfig {
             "setPingInterval" => self.set_ping_interval(get_param!(msg)),
             "setPingTimeoutEnabled" => self.set_ping_timeout_enabled(get_param!(msg)),
             "setStandardCtcp" => self.set_standard_ctcp(get_param!(msg)),
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
@@ -62,8 +61,7 @@ impl crate::message::StatefulSyncableServer for NetworkConfig {
             "requestSetPingInterval" => self.set_ping_interval(get_param!(msg)),
             "requestSetPingTimeoutEnabled" => self.set_ping_timeout_enabled(get_param!(msg)),
             "requestSetStandardCtcp" => self.set_standard_ctcp(get_param!(msg)),
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }

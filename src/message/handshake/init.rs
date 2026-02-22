@@ -1,4 +1,7 @@
-use crate::serialize::{Deserialize, Serialize};
+use crate::{
+    serialize::{Deserialize, Serialize},
+    ProtocolError,
+};
 
 /// The first few bytes sent to the core to initialize the connection and setup if we want to use tls and compression
 #[derive(Clone, Debug, Default)]
@@ -22,7 +25,7 @@ impl Init {
         self
     }
 
-    pub fn serialize(self) -> Vec<u8> {
+    pub fn serialize(self) -> Result<Vec<u8>, ProtocolError> {
         // The handshake message
         let mut handshake: u32 = 0x42b33f00;
 
@@ -41,14 +44,14 @@ impl Init {
         let mut init: Vec<u8> = vec![];
 
         // Add handshake and protocol to our buffer
-        init.extend(handshake.serialize().unwrap());
-        init.extend(crate::message::Protocol::Datastream.serialize());
+        init.extend(handshake.serialize()?);
+        init.extend(crate::message::Protocol::Datastream.serialize()?);
 
-        init
+        Ok(init)
     }
 
-    pub fn parse(buf: &[u8]) -> Self {
-        let (_, handshake) = u32::parse(&buf[0..4]).unwrap();
+    pub fn parse(buf: &[u8]) -> Result<Self, ProtocolError> {
+        let (_, handshake) = u32::parse(&buf[0..4])?;
 
         let mut init = Self {
             tls: false,
@@ -63,6 +66,6 @@ impl Init {
             init.tls = true
         }
 
-        init
+        Ok(init)
     }
 }

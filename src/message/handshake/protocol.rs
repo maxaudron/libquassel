@@ -1,4 +1,7 @@
-use crate::serialize::{Deserialize, Serialize};
+use crate::{
+    serialize::{Deserialize, Serialize},
+    ProtocolError,
+};
 
 #[derive(Debug, Default)]
 pub enum Protocol {
@@ -12,17 +15,17 @@ impl Protocol {
         Protocol::default()
     }
 
-    pub fn serialize(self) -> Vec<u8> {
+    pub fn serialize(self) -> Result<Vec<u8>, ProtocolError> {
         let proto: u32 = 0x80000002;
 
-        proto.serialize().unwrap()
+        proto.serialize()
     }
 
-    pub fn parse(buf: &[u8]) -> Self {
+    pub fn parse(buf: &[u8]) -> Result<Self, ProtocolError> {
         let mut protolist: Vec<u32> = Vec::new();
         let mut pos = 0;
         loop {
-            let (_, proto) = u32::parse(&buf[pos..(pos + 4)]).unwrap();
+            let (_, proto) = u32::parse(&buf[pos..(pos + 4)])?;
             if (proto & 0x80000000) >= 1 {
                 protolist.push(proto - 0x80000000);
                 break;
@@ -32,6 +35,6 @@ impl Protocol {
             }
         }
 
-        Protocol::Datastream
+        Ok(Protocol::Datastream)
     }
 }

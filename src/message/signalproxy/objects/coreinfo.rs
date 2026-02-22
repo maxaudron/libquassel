@@ -3,6 +3,7 @@ use libquassel_derive::{NetworkList, NetworkMap};
 use crate::message::signalproxy::translation::NetworkMap;
 use crate::message::{Class, Syncable};
 use crate::primitive::{DateTime, StringList};
+use crate::Result;
 
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
 #[network(repr = "map")]
@@ -12,33 +13,35 @@ pub struct CoreInfo {
 }
 
 impl CoreInfo {
-    pub fn set_core_data(&mut self, data: CoreData) {
+    pub fn set_core_data(&mut self, data: CoreData) -> Result<()> {
         #[cfg(feature = "server")]
-        libquassel_derive::sync!("setCoreData", [data.to_network_map()]);
+        libquassel_derive::sync!("setCoreData", [data.to_network_map()])?;
 
         self.core_data = data;
+
+        Ok(())
     }
 }
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for CoreInfo {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
         #[allow(clippy::single_match)]
         match msg.slot_name.as_str() {
             "setCoreData" => self.set_core_data(CoreData::from_network_map(&mut get_param!(msg))),
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 
     /// Not Implemented
-    fn request_update(&mut self)
+    fn request_update(&mut self) -> crate::Result<()>
     where
         Self: Sized,
     {
+        unimplemented!()
     }
 }
 
@@ -48,7 +51,7 @@ impl crate::message::StatefulSyncableServer for CoreInfo {
     fn request_update(
         &mut self,
         mut _param: <CoreInfo as NetworkMap>::Item,
-    ) -> Result<(), crate::error::ProtocolError>
+    ) -> Result<()>
     where
         Self: Sized,
     {

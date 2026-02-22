@@ -111,7 +111,7 @@ fn quasselcodec_read_oversized() {
     );
 
     tokio_test::block_on(async move {
-        let res = io.next().await.unwrap().map_err(|e| e.kind());
+        let res = io.next().await?.map_err(|e| e.kind());
         let want = Err(std::io::ErrorKind::InvalidData);
 
         assert_eq!(want, res);
@@ -170,7 +170,7 @@ fn write_single_frame() {
     );
 
     tokio_test::block_on(async move {
-        io.send(b"abcdefghi".to_vec()).await.unwrap();
+        io.send(b"abcdefghi".to_vec()).await?;
     });
 }
 
@@ -188,9 +188,9 @@ fn write_multi_frame() {
     );
 
     tokio_test::block_on(async move {
-        io.send(b"abcdefghi".to_vec()).await.unwrap();
-        io.send(b"123".to_vec()).await.unwrap();
-        io.send(b"hello world".to_vec()).await.unwrap();
+        io.send(b"abcdefghi".to_vec()).await?;
+        io.send(b"123".to_vec()).await?;
+        io.send(b"hello world".to_vec()).await?;
     });
 }
 
@@ -206,6 +206,6 @@ fn write_single_frame_compressed() {
     );
 
     tokio_test::block_on(async move {
-        io.send(b"abcdefghi".to_vec()).await.unwrap();
+        io.send(b"abcdefghi".to_vec()).await?;
     });
 }

@@ -8,6 +8,7 @@ use crate::message::StatefulSyncableServer;
 use crate::message::{Class, Syncable};
 
 use crate::primitive::{BufferId, NetworkId, VariantList};
+use crate::{Result, SyncProxyError};
 
 #[derive(Debug, Default, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct BufferViewConfig {
@@ -49,11 +50,11 @@ pub struct BufferViewConfig {
 
 #[allow(dead_code)]
 impl BufferViewConfig {
-    pub fn request_add_buffer(&self, id: BufferId, pos: usize) {
-        sync!("requestAddBuffer", [id, (pos as i32)]);
+    pub fn request_add_buffer(&self, id: BufferId, pos: usize) -> Result<()> {
+        sync!("requestAddBuffer", [id, (pos as i32)])
     }
 
-    pub fn add_buffer(&mut self, id: BufferId, pos: usize) {
+    pub fn add_buffer(&mut self, id: BufferId, pos: usize) -> Result<()> {
         if !self.buffers.contains(&id) {
             self.buffers.insert(pos, id)
         }
@@ -67,27 +68,33 @@ impl BufferViewConfig {
         }
 
         #[cfg(feature = "server")]
-        sync!("addBuffer", [id, (pos as i32)]);
+        return sync!("addBuffer", [id, (pos as i32)]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn request_move_buffer(&self, id: BufferId, pos: usize) {
-        sync!("requestMoveBuffer", [id, (pos as i32)]);
+    pub fn request_move_buffer(&self, id: BufferId, pos: usize) -> Result<()> {
+        sync!("requestMoveBuffer", [id, (pos as i32)])
     }
 
-    pub fn move_buffer(&mut self, id: BufferId, pos: usize) {
+    pub fn move_buffer(&mut self, id: BufferId, pos: usize) -> Result<()> {
         let old_pos = self.buffers.iter().position(|&x| x == id).unwrap();
         self.buffers.remove(old_pos);
         self.buffers.insert(pos, id);
 
         #[cfg(feature = "server")]
-        sync!("moveBuffer", [id, (pos as i32)]);
+        return sync!("moveBuffer", [id, (pos as i32)]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn request_remove_buffer(&mut self, id: BufferId) {
-        sync!("requestRemoveBuffer", [id]);
+    pub fn request_remove_buffer(&mut self, id: BufferId) -> Result<()> {
+        sync!("requestRemoveBuffer", [id])
     }
 
-    pub fn remove_buffer(&mut self, id: BufferId) {
+    pub fn remove_buffer(&mut self, id: BufferId) -> Result<()> {
         if let Some(old_pos) = self.buffers.iter().position(|&x| x == id) {
             self.buffers.remove(old_pos);
         }
@@ -101,14 +108,17 @@ impl BufferViewConfig {
         }
 
         #[cfg(feature = "server")]
-        sync!("removeBuffer", [id]);
+        return sync!("removeBuffer", [id]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn request_remove_buffer_permanently(&mut self, id: BufferId) {
-        sync!("requestRemoveBufferPermanently", [id]);
+    pub fn request_remove_buffer_permanently(&mut self, id: BufferId) -> Result<()> {
+        sync!("requestRemoveBufferPermanently", [id])
     }
 
-    pub fn remove_buffer_permanently(&mut self, id: BufferId) {
+    pub fn remove_buffer_permanently(&mut self, id: BufferId) -> Result<()> {
         if let Some(old_pos) = self.buffers.iter().position(|&x| x == id) {
             self.buffers.remove(old_pos);
         }
@@ -122,69 +132,67 @@ impl BufferViewConfig {
         }
 
         #[cfg(feature = "server")]
-        sync!("removeBufferPermanently", [id]);
+        return sync!("removeBufferPermanently", [id]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 }
 
 #[cfg(feature = "client")]
 impl StatefulSyncableClient for BufferViewConfig {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
         log::debug!("entering bufferviewconfig sync_custom()");
         match msg.slot_name.as_str() {
             "addBuffer" => self.add_buffer(
-                msg.params.remove(0).try_into().unwrap(),
-                i32::try_from(msg.params.remove(0)).unwrap() as usize,
+                msg.params.remove(0).try_into()?,
+                i32::try_from(msg.params.remove(0))? as usize,
             ),
             "moveBuffer" => self.move_buffer(
-                msg.params.remove(0).try_into().unwrap(),
-                i32::try_from(msg.params.remove(0)).unwrap() as usize,
+                msg.params.remove(0).try_into()?,
+                i32::try_from(msg.params.remove(0))? as usize,
             ),
-            "removeBuffer" => self.remove_buffer(msg.params.remove(0).try_into().unwrap()),
-            "removeBufferPermanently" => {
-                self.remove_buffer_permanently(msg.params.remove(0).try_into().unwrap())
-            }
-            _ => (),
+            "removeBuffer" => self.remove_buffer(msg.params.remove(0).try_into()?),
+            "removeBufferPermanently" => self.remove_buffer_permanently(msg.params.remove(0).try_into()?),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl StatefulSyncableServer for BufferViewConfig {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
         match msg.slot_name.as_str() {
             "requestAddBuffer" => self.add_buffer(
-                msg.params.remove(0).try_into().unwrap(),
-                i32::try_from(msg.params.remove(0)).unwrap() as usize,
-            ),
+                msg.params.remove(0).try_into()?,
+                i32::try_from(msg.params.remove(0))? as usize,
+            )?,
             "requestMoveBuffer" => self.move_buffer(
-                msg.params.remove(0).try_into().unwrap(),
-                i32::try_from(msg.params.remove(0)).unwrap() as usize,
-            ),
-            "requestRemoveBuffer" => self.remove_buffer(msg.params.remove(0).try_into().unwrap()),
+                msg.params.remove(0).try_into()?,
+                i32::try_from(msg.params.remove(0))? as usize,
+            )?,
+            "requestRemoveBuffer" => self.remove_buffer(msg.params.remove(0).try_into()?)?,
             "requestRemoveBufferPermanently" => {
-                self.remove_buffer_permanently(msg.params.remove(0).try_into().unwrap())
+                self.remove_buffer_permanently(msg.params.remove(0).try_into()?)?
             }
             "setAddNewBuffersAutomatically" => {
-                self.add_new_buffers_automatically = msg.params.remove(0).try_into().unwrap()
+                self.add_new_buffers_automatically = msg.params.remove(0).try_into()?
             }
-            "setAllowedBufferTypes" => self.allowed_buffer_types = msg.params.remove(0).try_into().unwrap(),
-            "setBufferViewName" => self.buffer_view_name = msg.params.remove(0).try_into().unwrap(),
-            "setDisableDecoration" => self.disable_decoration = msg.params.remove(0).try_into().unwrap(),
-            "setHideInactiveBuffers" => self.hide_inactive_buffers = msg.params.remove(0).try_into().unwrap(),
-            "setHideInactiveNetworks" => {
-                self.hide_inactive_networks = msg.params.remove(0).try_into().unwrap()
-            }
-            "setMinimumActivity" => self.minimum_activity = msg.params.remove(0).try_into().unwrap(),
-            "setNetworkId" => self.network_id = msg.params.remove(0).try_into().unwrap(),
-            "setShowSearch" => self.show_search = msg.params.remove(0).try_into().unwrap(),
-            "setSortAlphabetically" => self.sort_alphabetically = msg.params.remove(0).try_into().unwrap(),
+            "setAllowedBufferTypes" => self.allowed_buffer_types = msg.params.remove(0).try_into()?,
+            "setBufferViewName" => self.buffer_view_name = msg.params.remove(0).try_into()?,
+            "setDisableDecoration" => self.disable_decoration = msg.params.remove(0).try_into()?,
+            "setHideInactiveBuffers" => self.hide_inactive_buffers = msg.params.remove(0).try_into()?,
+            "setHideInactiveNetworks" => self.hide_inactive_networks = msg.params.remove(0).try_into()?,
+            "setMinimumActivity" => self.minimum_activity = msg.params.remove(0).try_into()?,
+            "setNetworkId" => self.network_id = msg.params.remove(0).try_into()?,
+            "setShowSearch" => self.show_search = msg.params.remove(0).try_into()?,
+            "setSortAlphabetically" => self.sort_alphabetically = msg.params.remove(0).try_into()?,
             _ => (),
         }
         Ok(())
@@ -194,13 +202,16 @@ impl StatefulSyncableServer for BufferViewConfig {
 impl Syncable for BufferViewConfig {
     const CLASS: Class = Class::BufferViewConfig;
 
-    fn send_sync(&self, function: &str, params: VariantList) {
-        crate::message::signalproxy::SYNC_PROXY.get().unwrap().sync(
-            Self::CLASS,
-            Some(&self.buffer_view_id.to_string()),
-            function,
-            params,
-        );
+    fn send_sync(&self, function: &str, params: VariantList) -> Result<()> {
+        crate::message::signalproxy::SYNC_PROXY
+            .get()
+            .ok_or(SyncProxyError::NotInitialized)?
+            .sync(
+                Self::CLASS,
+                Some(&self.buffer_view_id.to_string()),
+                function,
+                params,
+            )
     }
 }
 
@@ -221,12 +232,12 @@ mod tests {
     fn bufferviewconfig_add_buffer() {
         // Add existing buffer, no change
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.add_buffer(1.into(), 2);
+        buffer_view_config.add_buffer(1.into(), 2).unwrap();
         assert_eq!(bufferviewconfig_sample(), buffer_view_config);
 
         // Add new buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.add_buffer(10.into(), 1);
+        buffer_view_config.add_buffer(10.into(), 1).unwrap();
         assert_eq!(
             BufferViewConfig {
                 buffers: vec![1.into(), 10.into(), 2.into(), 3.into()],
@@ -244,7 +255,7 @@ mod tests {
             temporarily_removed_buffers: vec![6.into(), 7.into(), 10.into()],
             ..Default::default()
         };
-        buffer_view_config.add_buffer(10.into(), 1);
+        buffer_view_config.add_buffer(10.into(), 1).unwrap();
         assert_eq!(
             BufferViewConfig {
                 buffers: vec![1.into(), 10.into(), 2.into(), 3.into()],
@@ -260,12 +271,12 @@ mod tests {
     fn bufferviewconfig_remove_buffer() {
         // Remove already removed buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.remove_buffer(6.into());
+        buffer_view_config.remove_buffer(6.into()).unwrap();
         assert_eq!(bufferviewconfig_sample(), buffer_view_config);
 
         // Remove buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.remove_buffer(1.into());
+        buffer_view_config.remove_buffer(1.into()).unwrap();
         assert_eq!(
             BufferViewConfig {
                 buffers: vec![2.into(), 3.into()],
@@ -281,12 +292,12 @@ mod tests {
     fn bufferviewconfig_remove_buffer_permanently() {
         // Remove already removed buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.remove_buffer_permanently(4.into());
+        buffer_view_config.remove_buffer_permanently(4.into()).unwrap();
         assert_eq!(bufferviewconfig_sample(), buffer_view_config);
 
         // Remove buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.remove_buffer_permanently(1.into());
+        buffer_view_config.remove_buffer_permanently(1.into()).unwrap();
         assert_eq!(
             BufferViewConfig {
                 buffers: vec![2.into(), 3.into()],
@@ -302,12 +313,12 @@ mod tests {
     fn bufferviewconfig_move_buffer() {
         // Do nothing
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.move_buffer(1.into(), 0);
+        buffer_view_config.move_buffer(1.into(), 0).unwrap();
         assert_eq!(bufferviewconfig_sample(), buffer_view_config);
 
         // Move buffer
         let mut buffer_view_config = bufferviewconfig_sample();
-        buffer_view_config.move_buffer(1.into(), 1);
+        buffer_view_config.move_buffer(1.into(), 1).unwrap();
         assert_eq!(
             BufferViewConfig {
                 buffers: vec![2.into(), 1.into(), 3.into()],

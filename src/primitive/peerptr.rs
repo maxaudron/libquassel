@@ -40,7 +40,7 @@ mod tests {
     //     let test_bytes: &[u8] = &[
     //         0, 0, 0, 7, 80, 101, 101, 114, 80, 116, 114, 0, 0, 0, 0, 0, 0, 0, 1,
     //     ];
-    //     let (len, res) = PeerPtr::parse(test_bytes).unwrap();
+    //     let (len, res) = PeerPtr::parse(test_bytes)?;
     //     assert_eq!(len, test_bytes.len());
     //     assert_eq!(res, PeerPtr(1));
     // }

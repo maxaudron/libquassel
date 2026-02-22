@@ -51,6 +51,6 @@ macro_rules! s {
 #[macro_export]
 macro_rules! get_param {
     ( $msg:expr ) => {
-        $msg.params.remove(0).try_into().unwrap()
+        $msg.params.remove(0).try_into()?
     };
 }

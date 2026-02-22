@@ -32,7 +32,7 @@ pub mod frame;
 #[cfg(all(feature = "client", feature = "server"))]
 compile_error!("feature \"client\" and feature \"server\" cannot be enabled at the same time");
 
-pub use crate::error::ProtocolError;
+pub use crate::error::{ProtocolError, Result, SyncProxyError};
 
 /// Traits for Serialization & Deserialization of objects
 pub mod serialize;
@@ -41,14 +41,14 @@ pub mod serialize;
 ///
 /// The protocol has some minor differences during this phase compared to the regular parsing.
 pub trait HandshakeSerialize {
-    fn serialize(&self) -> Result<Vec<u8>, ProtocolError>;
+    fn serialize(&self) -> Result<Vec<u8>>;
 }
 
 /// HandshakeDeserialize implements the deserialization needed during the handhake phase.
 ///
 /// The protocol has some minor differences during this phase compared to the regular parsing.
 pub trait HandshakeDeserialize {
-    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError>
+    fn parse(b: &[u8]) -> Result<(usize, Self)>
     where
         Self: std::marker::Sized;
 }

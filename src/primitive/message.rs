@@ -143,7 +143,7 @@ impl Deserialize for Message {
             Self {
                 msg_id,
                 timestamp,
-                msg_type: MessageType::from_bits(msg_type).unwrap(),
+                msg_type: MessageType::from_bits(msg_type).ok_or(ProtocolError::UnknownMsgType)?,
                 flags,
                 buffer,
                 sender,
@@ -195,7 +195,7 @@ impl<T> crate::message::NetworkList for HashMap<T, MessageType>
 where
     T: std::convert::TryFrom<Variant> + Into<Variant> + Clone + std::hash::Hash + std::cmp::Eq,
 {
-    fn to_network_list(&self) -> VariantList {
+    fn to_network_list(&self) -> Result<VariantList, ProtocolError> {
         let mut res = Vec::with_capacity(self.len() * 2);
 
         self.iter().for_each(|(k, v)| {
@@ -203,10 +203,10 @@ where
             res.push((*v).clone().bits().into());
         });
 
-        res
+        Ok(res)
     }
 
-    fn from_network_list(input: &mut VariantList) -> Self {
+    fn from_network_list(input: &mut VariantList) -> Result<Self, ProtocolError> {
         use itertools::Itertools;
 
         let mut res = HashMap::with_capacity(input.len() / 2);
@@ -224,7 +224,7 @@ where
             );
         });
 
-        res
+        Ok(res)
     }
 }
 

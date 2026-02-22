@@ -48,12 +48,12 @@ impl UserType for BufferId {
 // TODO this is not correct usage, it's technically not really network repr were converting from
 // but just the conversion of VariantList -> Self directly
 impl NetworkList for Vec<BufferId> {
-    fn to_network_list(&self) -> super::VariantList {
-        self.iter().map(|b| Variant::BufferId(*b)).collect()
+    fn to_network_list(&self) -> Result<super::VariantList, ProtocolError> {
+        Ok(self.iter().map(|b| Variant::BufferId(*b)).collect())
     }
 
-    fn from_network_list(input: &mut super::VariantList) -> Self {
-        input.iter().map(|b| b.try_into().unwrap()).collect()
+    fn from_network_list(input: &mut super::VariantList) -> Result<Self, ProtocolError> {
+        input.iter().map(|b| b.try_into()).collect()
     }
 }
 

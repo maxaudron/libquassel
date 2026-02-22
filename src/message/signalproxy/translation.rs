@@ -91,7 +91,10 @@
 //!   ])
 //! })
 //! ```
-use crate::primitive::{Variant, VariantList};
+use crate::{
+    primitive::{Variant, VariantList},
+    ProtocolError,
+};
 
 #[deprecated(
     since = "0.1.0",
@@ -116,6 +119,8 @@ where
 }
 
 pub trait NetworkList {
-    fn to_network_list(&self) -> VariantList;
-    fn from_network_list(input: &mut VariantList) -> Self;
+    fn to_network_list(&self) -> Result<VariantList, ProtocolError>;
+    fn from_network_list(input: &mut VariantList) -> Result<Self, ProtocolError>
+    where
+        Self: std::marker::Sized;
 }

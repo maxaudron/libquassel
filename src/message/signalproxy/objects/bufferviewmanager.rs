@@ -10,6 +10,7 @@ use crate::message::StatefulSyncableServer;
 use crate::message::{NetworkMap, Syncable};
 
 use crate::primitive::{Variant, VariantList, VariantMap};
+use crate::Result;
 
 use super::BufferViewConfig;
 
@@ -21,11 +22,11 @@ pub struct BufferViewManager {
 // TODO initialize the BufferViewConfigs from somewhere
 // TODO add buffer view configs, where does the data come from?
 impl BufferViewManager {
-    pub fn request_create_buffer_view(&self, properties: BufferViewConfig) {
+    pub fn request_create_buffer_view(&self, properties: BufferViewConfig) -> Result<()> {
         sync!("requestCreateBufferView", [properties.to_network_map()])
     }
 
-    pub fn request_create_buffer_views(&self, properties: &[BufferViewConfig]) {
+    pub fn request_create_buffer_views(&self, properties: &[BufferViewConfig]) -> Result<()> {
         self.send_sync(
             "requestCreateBufferViews",
             properties
@@ -35,11 +36,11 @@ impl BufferViewManager {
         )
     }
 
-    pub fn request_delete_buffer_view(&self, id: i32) {
+    pub fn request_delete_buffer_view(&self, id: i32) -> Result<()> {
         sync!("requestDeleteBufferView", [id])
     }
 
-    pub fn request_delete_buffer_views(&self, ids: &[i32]) {
+    pub fn request_delete_buffer_views(&self, ids: &[i32]) -> Result<()> {
         self.send_sync(
             "requestCreateBufferViews",
             ids.iter().map(|id| (*id).into()).collect(),
@@ -48,24 +49,28 @@ impl BufferViewManager {
 
     #[cfg(feature = "client")]
     #[allow(unused_variables)]
-    pub fn add_buffer_view_config(&mut self, id: i32) {
+    pub fn add_buffer_view_config(&mut self, id: i32) -> Result<()> {
         // TODO init!("BufferViewConfig", id);
+        Ok(())
     }
 
     #[cfg(feature = "server")]
-    pub fn add_buffer_view_config(&mut self, config: BufferViewConfig) {
+    pub fn add_buffer_view_config(&mut self, config: BufferViewConfig) -> Result<()> {
         self.buffer_view_configs.insert(0, Some(config));
 
-        sync!("addBufferViewConfig", [0]);
+        sync!("addBufferViewConfig", [0])
     }
 
-    pub fn delete_buffer_view_config(&mut self, id: i32) {
+    pub fn delete_buffer_view_config(&mut self, id: i32) -> Result<()> {
         if self.buffer_view_configs.contains_key(&id) {
             self.buffer_view_configs.remove(&id);
         }
 
         #[cfg(feature = "server")]
-        sync!("deleteBufferViewConfig", [id])
+        return sync!("deleteBufferViewConfig", [id]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
     pub fn init_buffer_view_config(&mut self, config: BufferViewConfig) {
@@ -80,48 +85,42 @@ impl BufferViewManager {
 
 #[cfg(feature = "client")]
 impl StatefulSyncableClient for BufferViewManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
         match msg.slot_name.as_str() {
             "addBufferViewConfig" | "newBufferViewConfig" => {
-                self.add_buffer_view_config(msg.params.remove(0).try_into().unwrap())
+                self.add_buffer_view_config(msg.params.remove(0).try_into()?)
             }
-            "deleteBufferViewConfig" => {
-                self.delete_buffer_view_config(msg.params.remove(0).try_into().unwrap())
-            }
-            _ => (),
+            "deleteBufferViewConfig" => self.delete_buffer_view_config(msg.params.remove(0).try_into()?),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl StatefulSyncableServer for BufferViewManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
         match msg.slot_name.as_str() {
             "requestCreateBufferView" => self.add_buffer_view_config(BufferViewConfig::from_network_map(
-                &mut msg.params.remove(0).try_into().unwrap(),
-            )),
+                &mut msg.params.remove(0).try_into()?,
+            ))?,
             "requestCreateBufferViews" => {
-                let views: VariantList = msg.params.remove(0).try_into().unwrap();
-                views.into_iter().for_each(|view| {
-                    self.add_buffer_view_config(BufferViewConfig::from_network_map(
-                        &mut view.try_into().unwrap(),
-                    ))
-                });
+                let views: VariantList = msg.params.remove(0).try_into()?;
+                for view in views.into_iter() {
+                    self.add_buffer_view_config(BufferViewConfig::from_network_map(&mut view.try_into()?))?
+                }
             }
-            "requestDeleteBufferView" => {
-                self.delete_buffer_view_config(msg.params.remove(0).try_into().unwrap())
-            }
+            "requestDeleteBufferView" => self.delete_buffer_view_config(msg.params.remove(0).try_into()?)?,
             "requestDeleteBufferViews" => {
-                let ids: VariantList = msg.params.remove(0).try_into().unwrap();
-                ids.into_iter()
-                    .for_each(|id| self.delete_buffer_view_config(id.try_into().unwrap()));
+                let ids: VariantList = msg.params.remove(0).try_into()?;
+                for id in ids.into_iter() {
+                    self.delete_buffer_view_config(id.try_into()?)?
+                }
             }
             _ => (),
         }
@@ -134,14 +133,14 @@ impl Syncable for BufferViewManager {
 }
 
 impl super::NetworkList for BufferViewManager {
-    fn to_network_list(&self) -> VariantList {
-        vec![
+    fn to_network_list(&self) -> Result<VariantList> {
+        Ok(vec![
             Variant::ByteArray(s!("bufferViewIds")),
             Variant::VariantList(self.buffer_view_configs.keys().map(|k| i32::into(*k)).collect()),
-        ]
+        ])
     }
 
-    fn from_network_list(input: &mut VariantList) -> Self {
+    fn from_network_list(input: &mut VariantList) -> Result<Self> {
         let mut i = input.iter();
         i.position(|x| *x == Variant::ByteArray(String::from("BufferViewIds")))
             .expect("failed to get field BufferViewIds");
@@ -152,12 +151,12 @@ impl super::NetworkList for BufferViewManager {
         };
 
         // TODO Somehow do the initrequests for all the IDs we get here
-        Self {
+        Ok(Self {
             buffer_view_configs: ids
                 .into_iter()
                 .map(|id| (i32::try_from(id).unwrap(), Option::None))
                 .collect(),
-        }
+        })
     }
 }
 

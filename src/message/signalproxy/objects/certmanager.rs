@@ -3,6 +3,7 @@ use libquassel_derive::{NetworkList, NetworkMap};
 use crate::message::{Class, Syncable};
 #[allow(unused_imports)]
 use crate::primitive::Variant;
+use crate::Result;
 
 #[derive(Debug, Clone, PartialEq, NetworkList, NetworkMap, Default)]
 pub struct CertManager {
@@ -13,33 +14,36 @@ pub struct CertManager {
 }
 
 impl CertManager {
-    pub fn set_ssl_cert(&mut self, cert: String) {
+    pub fn set_ssl_cert(&mut self, cert: String) -> Result<()> {
         #[cfg(feature = "server")]
-        self.send_sync("setSslCert", vec![Variant::ByteArray(cert.clone())]);
+        self.send_sync("setSslCert", vec![Variant::ByteArray(cert.clone())])?;
 
         self.ssl_cert = cert;
+
+        Ok(())
     }
 
-    pub fn set_ssl_key(&mut self, key: String) {
+    pub fn set_ssl_key(&mut self, key: String) -> Result<()> {
         #[cfg(feature = "server")]
-        self.send_sync("setSslKey", vec![Variant::ByteArray(key.clone())]);
+        self.send_sync("setSslKey", vec![Variant::ByteArray(key.clone())])?;
 
         self.ssl_key = key;
+        
+        Ok(())
     }
 }
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for CertManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), crate::error::ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
         match msg.slot_name.as_str() {
             "setSslCert" => self.set_ssl_cert(get_param!(msg)),
             "setSslKey" => self.set_ssl_key(get_param!(msg)),
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 

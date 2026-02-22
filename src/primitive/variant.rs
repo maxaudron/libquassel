@@ -92,7 +92,7 @@ where
     T: std::convert::TryFrom<Variant> + Into<Variant> + Clone + std::hash::Hash + std::cmp::Eq,
     S: std::convert::TryFrom<Variant> + Into<Variant> + Clone + std::hash::Hash + std::cmp::Eq,
 {
-    fn to_network_list(&self) -> VariantList {
+    fn to_network_list(&self) -> Result<VariantList, ProtocolError> {
         let mut res = Vec::with_capacity(self.len() * 2);
 
         self.iter().for_each(|(k, v)| {
@@ -100,10 +100,10 @@ where
             res.push((*v).clone().into());
         });
 
-        res
+        Ok(res)
     }
 
-    fn from_network_list(input: &mut VariantList) -> Self {
+    fn from_network_list(input: &mut VariantList) -> Result<Self, ProtocolError> {
         let mut res = HashMap::with_capacity(input.len() / 2);
 
         input.iter().tuples().for_each(|(k, v)| {
@@ -119,7 +119,7 @@ where
             );
         });
 
-        res
+        Ok(res)
     }
 }
 

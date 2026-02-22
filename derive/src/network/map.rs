@@ -18,7 +18,7 @@ pub(crate) fn to(fields: &[NetworkField]) -> Vec<TokenStream> {
 
                 let field_inner = match field.network {
                     crate::network::NetworkRepr::List => quote! {
-                        libquassel::message::NetworkList::to_network_list(&self.#field_name).into()
+                        libquassel::message::NetworkList::to_network_list(&self.#field_name).unwrap().into()
                     },
                     crate::network::NetworkRepr::Map => quote! {
                         libquassel::message::NetworkMap::to_network_map(&self.#field_name).into()
@@ -59,7 +59,7 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
             match field.network {
                 super::NetworkRepr::List => quote! {
                     #field_name: libquassel::message::NetworkList::from_network_list(
-                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap),
+                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap).unwrap(),
                 },
                 super::NetworkRepr::Map => quote! {
                     #field_name: libquassel::message::NetworkMap::from_network_map(

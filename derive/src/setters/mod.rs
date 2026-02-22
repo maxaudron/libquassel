@@ -102,11 +102,13 @@ pub fn setters(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             let fn_name = syn::Ident::new(&format!("set_{}", fn_ident), Span::call_site());
 
             quote! {
-                pub fn #fn_name(&mut self, #var_name: #ty) {
+                pub fn #fn_name(&mut self, #var_name: #ty) -> crate::Result<()> {
                     #[cfg(feature = "server")]
-                    self.send_sync(#name, vec![#var_name.clone().into()]);
+                    self.send_sync(#name, vec![#var_name.clone().into()])?;
 
                     self.#ident = #var_name;
+
+                    Ok(())
                 }
             }
         })

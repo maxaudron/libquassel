@@ -99,7 +99,7 @@ impl Deserialize for String {
             pos += slen;
         }
 
-        let res: String = String::from_utf16(&chars).unwrap();
+        let res: String = String::from_utf16(&chars)?;
         trace!("parsed string: {}", res);
         Ok((pos, res))
     }

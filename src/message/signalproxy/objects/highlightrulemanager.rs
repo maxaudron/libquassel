@@ -10,6 +10,7 @@ use crate::message::StatefulSyncableServer;
 
 use crate::message::Syncable;
 use crate::primitive::Variant;
+use crate::Result;
 
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap)]
 pub struct HighlightRuleManager {
@@ -40,11 +41,11 @@ impl HighlightRuleManager {
         }
     }
 
-    pub fn request_remove_highlight_rule(&self, id: i32) {
+    pub fn request_remove_highlight_rule(&self, id: i32) -> Result<()> {
         sync!("requestRemoveHighlightRule", [id])
     }
 
-    pub fn request_toggle_highlight_rule(&self, id: i32) {
+    pub fn request_toggle_highlight_rule(&self, id: i32) -> Result<()> {
         sync!("requestToggleHighlightRule", [id])
     }
 
@@ -58,7 +59,7 @@ impl HighlightRuleManager {
         is_inverse: bool,
         sender: String,
         channel: String,
-    ) {
+    ) -> Result<()> {
         sync!(
             "requestAddHighlightRule",
             [
@@ -74,69 +75,81 @@ impl HighlightRuleManager {
         )
     }
 
-    pub fn request_set_highlight_nick(&self, nick: HighlightNickType) {
+    pub fn request_set_highlight_nick(&self, nick: HighlightNickType) -> Result<()> {
         sync!("requestSetHighlightNick", [nick])
     }
 
-    pub fn request_set_nicks_case_sensitive(&self, enabled: bool) {
+    pub fn request_set_nicks_case_sensitive(&self, enabled: bool) -> Result<()> {
         sync!("requestSetNicksCaseSensitive", [enabled])
     }
 
-    pub fn remove_highlight_rule(&mut self, id: i32) {
+    pub fn remove_highlight_rule(&mut self, id: i32) -> Result<()> {
         if let Some(position) = self.highlight_rule_list.iter().position(|rule| rule.id == id) {
             self.highlight_rule_list.remove(position);
         }
 
         #[cfg(feature = "server")]
-        sync!("removeHighlightRule", [id]);
+        return sync!("removeHighlightRule", [id]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn toggle_highlight_rule(&mut self, id: i32) {
+    pub fn toggle_highlight_rule(&mut self, id: i32) -> Result<()> {
         if let Some(rule) = self.highlight_rule_mut(id) {
             rule.is_enabled = !rule.is_enabled;
         }
 
         #[cfg(feature = "server")]
-        sync!("toggleHighlightRule", [id])
+        return sync!("toggleHighlightRule", [id]);
+
+        #[cfg(feature = "client")]
+        return Ok(());
     }
 
-    pub fn add_highlight_rule(&mut self, rule: HighlightRule) {
+    pub fn add_highlight_rule(&mut self, rule: HighlightRule) -> Result<()> {
         #[cfg(feature = "server")]
         sync!(
             "addHighlightRule",
             [
-                rule.id.clone(),
+                rule.id,
                 rule.name.clone(),
-                rule.is_regex.clone(),
-                rule.is_case_sensitive.clone(),
-                rule.is_enabled.clone(),
-                rule.is_inverse.clone(),
+                rule.is_regex,
+                rule.is_case_sensitive,
+                rule.is_enabled,
+                rule.is_inverse,
                 rule.sender.clone(),
                 rule.channel.clone()
             ]
-        );
+        )?;
 
         self.highlight_rule_list.push(rule);
+
+        Ok(())
     }
 
-    pub fn set_highlight_nick(&mut self, nick: HighlightNickType) {
+    pub fn set_highlight_nick(&mut self, nick: HighlightNickType) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("setHighlightNick", [Variant::from(nick)]);
+        sync!("setHighlightNick", [Variant::from(nick)])?;
 
         self.highlight_nick = nick;
+
+        Ok(())
     }
 
-    pub fn set_nicks_case_sensitive(&mut self, enabled: bool) {
+    pub fn set_nicks_case_sensitive(&mut self, enabled: bool) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("setNicksCaseSensitive", [enabled]);
+        sync!("setNicksCaseSensitive", [enabled])?;
 
         self.nicks_case_sensitive = enabled;
+
+        Ok(())
     }
 }
 
 #[cfg(feature = "client")]
 impl StatefulSyncableClient for HighlightRuleManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -155,15 +168,14 @@ impl StatefulSyncableClient for HighlightRuleManager {
             }),
             "setHighlightNick" => self.set_highlight_nick(get_param!(msg)),
             "setNicksCaseSensitive" => self.set_nicks_case_sensitive(get_param!(msg)),
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl StatefulSyncableServer for HighlightRuleManager {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -182,9 +194,8 @@ impl StatefulSyncableServer for HighlightRuleManager {
             }),
             "requestSetHighlightNick" => self.set_highlight_nick(get_param!(msg)),
             "requestSetNicksCaseSensitive" => self.set_nicks_case_sensitive(get_param!(msg)),
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
@@ -229,7 +240,7 @@ impl From<HighlightNickType> for Variant {
 impl TryFrom<Variant> for HighlightNickType {
     type Error = ProtocolError;
 
-    fn try_from(value: Variant) -> Result<Self, Self::Error> {
+    fn try_from(value: Variant) -> Result<Self> {
         let i: i32 = value.try_into()?;
         Self::try_from(i).map_err(|_| ProtocolError::WrongVariant)
     }
@@ -242,14 +253,14 @@ impl From<HighlightNickType> for i32 {
 }
 
 impl TryFrom<i32> for HighlightNickType {
-    type Error = &'static str;
+    type Error = ProtocolError;
 
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
+    fn try_from(value: i32) -> Result<Self> {
         match value {
             0x00 => Ok(HighlightNickType::NoNick),
             0x01 => Ok(HighlightNickType::CurrentNick),
             0x02 => Ok(HighlightNickType::AllNicks),
-            _ => Err("no matching HighlightNickType found"),
+            err => Err(ProtocolError::UnknownHighlightNickType(err)),
         }
     }
 }
@@ -301,13 +312,13 @@ mod tests {
 
     #[test]
     fn highlightrulemanager_to_network() {
-        assert_eq!(get_runtime().to_network_list(), get_network())
+        assert_eq!(get_runtime().to_network_list().unwrap(), get_network())
     }
 
     #[test]
     fn highlightrulemanager_from_network() {
         assert_eq!(
-            HighlightRuleManager::from_network_list(&mut get_network()),
+            HighlightRuleManager::from_network_list(&mut get_network()).unwrap(),
             get_runtime()
         )
     }

@@ -72,7 +72,7 @@ pub trait SessionManager {
             Class::CoreData => Ok(()),
             Class::HighlightRuleManager => self.highlight_rule_manager().sync(msg),
             Class::Identity => {
-                let identity_id: i32 = msg.object_name.parse().unwrap();
+                let identity_id: i32 = msg.object_name.parse()?;
                 if let Some(identity) = self.identity(identity_id as usize) {
                     identity.sync(msg)?;
                 } else {
@@ -83,7 +83,7 @@ pub trait SessionManager {
             Class::IgnoreListManager => self.ignore_list_manager().sync(msg),
             Class::CertManager => self.cert_manager().sync(msg),
             Class::Network => {
-                let id: i32 = msg.object_name.parse().unwrap();
+                let id: i32 = msg.object_name.parse()?;
                 if let Some(network) = self.network(id) {
                     network.sync(msg)?;
                 }
@@ -103,8 +103,13 @@ pub trait SessionManager {
             },
             Class::IrcChannel => {
                 let mut object_name = msg.object_name.split('/');
-                let network_id: i32 = object_name.next().unwrap().parse().unwrap();
-                let channel = object_name.next().unwrap();
+                let network_id: i32 = object_name
+                    .next()
+                    .ok_or_else(|| ProtocolError::MissingField("NetworkId".to_string()))?
+                    .parse()?;
+                let channel = object_name
+                    .next()
+                    .ok_or_else(|| ProtocolError::MissingField("Channel".to_string()))?;
 
                 debug!("Syncing IrcChannel {} in Network {:?}", channel, network_id);
 
@@ -121,11 +126,11 @@ pub trait SessionManager {
                                 let mode: char = get_param!(msg);
                                 let mode_type: ChannelModeType = network.get_channel_mode_type(mode);
 
-                                network.irc_channels.get_mut(channel).unwrap().add_channel_mode(
-                                    mode_type,
-                                    mode,
-                                    get_param!(msg),
-                                );
+                                network
+                                    .irc_channels
+                                    .get_mut(channel)
+                                    .ok_or_else(|| ProtocolError::MissingField(channel.to_string()))?
+                                    .add_channel_mode(mode_type, mode, get_param!(msg));
                                 Ok(())
                             }
                             "removeChannelMode" => {
@@ -136,11 +141,15 @@ pub trait SessionManager {
                                 network
                                     .irc_channels
                                     .get_mut(channel)
-                                    .unwrap()
+                                    .ok_or_else(|| ProtocolError::MissingField(channel.to_string()))?
                                     .remove_channel_mode(mode_type, mode, get_param!(msg));
                                 Ok(())
                             }
-                            _ => network.irc_channels.get_mut(channel).unwrap().sync(msg.clone()),
+                            _ => network
+                                .irc_channels
+                                .get_mut(channel)
+                                .ok_or_else(|| ProtocolError::MissingField(channel.to_string()))?
+                                .sync(msg.clone()),
                         }?;
                     }
                 }
@@ -148,8 +157,13 @@ pub trait SessionManager {
             }
             Class::IrcUser => {
                 let mut object_name = msg.object_name.split('/');
-                let network_id: i32 = object_name.next().unwrap().parse().unwrap();
-                let user = object_name.next().unwrap();
+                let network_id: i32 = object_name
+                    .next()
+                    .ok_or_else(|| ProtocolError::MissingField("NetworkId".to_string()))?
+                    .parse()?;
+                let user = object_name
+                    .next()
+                    .ok_or_else(|| ProtocolError::MissingField("User".to_string()))?;
 
                 debug!("Syncing IrcUser {} in Network {:?}", user, network_id);
 
@@ -177,32 +191,39 @@ pub trait SessionManager {
 
     /// Handles an [InitData] messages and initializes the SessionManagers Objects.
     /// TODO handle automatic sending of InitRequest for whatever objects will need that.
-    fn init(&mut self, data: InitData) {
+    fn init(&mut self, data: InitData) -> Result<(), ProtocolError> {
         match data.init_data {
             Types::AliasManager(data) => self.alias_manager().init(*data),
             Types::BufferSyncer(data) => self.buffer_syncer().init(*data),
             Types::BufferViewConfig(data) => self.buffer_view_manager().init_buffer_view_config(*data),
             Types::BufferViewManager(data) => self.buffer_view_manager().init(*data),
-            Types::CoreData(data) => self.core_info().set_core_data(*data),
+            Types::CoreData(data) => self.core_info().set_core_data(*data)?,
             Types::HighlightRuleManager(data) => self.highlight_rule_manager().init(*data),
             Types::IgnoreListManager(data) => self.ignore_list_manager().init(*data),
             Types::CertManager(data) => self.cert_manager().init(*data),
             Types::Network(network) => {
-                let id: NetworkId = NetworkId(data.object_name.parse().unwrap());
+                let id: NetworkId = NetworkId(data.object_name.parse()?);
                 self.networks().insert(id, *network);
             }
             Types::NetworkInfo(_) => (),
             Types::NetworkConfig(_) => (),
             Types::IrcChannel(channel) => {
                 let mut name = data.object_name.split("/");
-                let id: i32 = name.next().unwrap().parse().unwrap();
-                let name = name.next().unwrap();
+                let id: i32 = name
+                    .next()
+                    .ok_or_else(|| ProtocolError::MissingField("Irc Channel ID".to_string()))?
+                    .parse()?;
+                let name = name
+                    .next()
+                    .ok_or_else(|| ProtocolError::MissingField("Irc Channel Name".to_string()))?;
                 if let Some(network) = self.network(id) {
                     network.add_channel(name, *channel)
                 }
             }
             Types::Unknown(_) => (),
-        }
+        };
+
+        Ok(())
     }
 }
 

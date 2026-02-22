@@ -190,19 +190,19 @@ pub fn network_list(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     let gen = quote! {
         impl libquassel::message::signalproxy::NetworkList for #name {
-            fn to_network_list(&self) -> libquassel::primitive::VariantList {
+            fn to_network_list(&self) -> crate::Result<libquassel::primitive::VariantList> {
                 let mut res = libquassel::primitive::VariantList::new();
 
                 #(#to_network_list)*
 
-                return res;
+                Ok(res)
             }
 
-            fn from_network_list(input: &mut libquassel::primitive::VariantList) -> Self {
+            fn from_network_list(input: &mut libquassel::primitive::VariantList) -> crate::Result<Self> {
                 log::trace!("converting {} from network object: {:#?}", #name_str, input);
-                Self {
+                Ok(Self {
                     #(#from_network_list)*
-                }
+                })
             }
         }
     };

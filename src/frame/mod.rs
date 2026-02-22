@@ -162,7 +162,7 @@ impl Decoder for QuasselCodec {
             let after_in = self.decomp.total_in();
             let after_out = self.decomp.total_out();
 
-            let len = (after_out - before_out).try_into().unwrap();
+            let len = (after_out - before_out).try_into()?;
 
             // Reserve length of uncompressed stream
             // and put bytes into there
@@ -233,7 +233,7 @@ impl Encoder<Vec<u8>> for QuasselCodec {
             let after_in = self.comp.total_in();
             let after_out = self.comp.total_out();
 
-            cbuf.truncate((after_out - before_out).try_into().unwrap());
+            cbuf.truncate((after_out - before_out).try_into()?);
             *dst = BytesMut::from(&cbuf[..]);
         } else {
             *dst = buf.clone();

@@ -7,11 +7,11 @@ use num_traits::{FromPrimitive, ToPrimitive};
 
 use libquassel_derive::{sync, NetworkMap, Setters};
 
-use crate::error::ProtocolError;
 use crate::message::signalproxy::translation::NetworkMap;
 use crate::message::{Class, NetworkList, Syncable};
 use crate::primitive::{Variant, VariantList, VariantMap};
 use crate::serialize::{Deserialize, Serialize, UserType};
+use crate::{ProtocolError, Result};
 
 use super::{ircchannel::IrcChannel, ircuser::IrcUser, networkinfo::NetworkInfo};
 
@@ -90,99 +90,127 @@ impl Network {
         self.irc_channels.insert(name.to_owned(), channel);
     }
 
-    pub fn connect(&self) {
+    pub fn connect(&self) -> Result<()> {
         #[cfg(feature = "client")]
-        sync!("requestConnect", [])
+        return sync!("requestConnect", []);
+
+        #[cfg(feature = "server")]
+        return Ok(());
     }
 
-    pub fn disconnect(&self) {
+    pub fn disconnect(&self) -> Result<()> {
         #[cfg(feature = "client")]
-        sync!("requestDisconnect", [])
+        return sync!("requestDisconnect", []);
+
+        #[cfg(feature = "server")]
+        return Ok(());
     }
 
-    pub fn set_network_info(&mut self, network_info: NetworkInfo) {
+    pub fn set_network_info(&mut self, network_info: NetworkInfo) -> Result<()> {
         #[cfg(feature = "client")]
-        sync!("requestSetNetworkInfo", [network_info.to_network_map()]);
+        sync!("requestSetNetworkInfo", [network_info.to_network_map()])?;
 
         self.network_info = network_info;
+
+        Ok(())
     }
 
     /// Enable the capability `cap` if it is not already enabled
-    pub fn acknowledge_cap(&mut self, cap: String) {
+    pub fn acknowledge_cap(&mut self, cap: String) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("acknowledgeCap", [cap.clone()]);
+        sync!("acknowledgeCap", [cap.clone()])?;
 
         if !self.caps_enabled.contains(&cap) {
             self.caps_enabled.push(cap);
         } else {
             warn!("Capability {} already enabled", cap)
         }
+
+        Ok(())
     }
 
     /// Add a new capability supported by the server
-    pub fn add_cap(&mut self, cap: String, value: String) {
+    pub fn add_cap(&mut self, cap: String, value: String) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("addCap", [cap.clone(), value.clone()]);
+        sync!("addCap", [cap.clone(), value.clone()])?;
 
         self.caps.insert(cap, value);
+
+        Ok(())
     }
 
     /// Clear `caps` and `caps_enabled`
-    pub fn clear_caps(&mut self) {
+    pub fn clear_caps(&mut self) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("clearCaps", []);
+        sync!("clearCaps", [])?;
 
         self.caps.clear();
         self.caps_enabled.clear();
+
+        Ok(())
     }
 
     /// Remove a capability from `caps` and `caps_enabled`
-    pub fn remove_cap(&mut self, cap: String) {
+    pub fn remove_cap(&mut self, cap: String) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("removeCap", [cap.clone()]);
+        sync!("removeCap", [cap.clone()])?;
 
         self.caps.remove(&cap);
         if let Some((i, _)) = self.caps_enabled.iter().find_position(|c| **c == cap) {
             self.caps_enabled.remove(i);
         }
+
+        Ok(())
     }
 
     // TODO
-    pub fn add_irc_channel(&mut self, _name: String) {}
-    pub fn add_irc_user(&mut self, _hostmask: String) {}
+    pub fn add_irc_channel(&mut self, _name: String) -> Result<()> {
+        Ok(())
+    }
+    pub fn add_irc_user(&mut self, _hostmask: String) -> Result<()> {
+        Ok(())
+    }
 
-    pub fn add_support(&mut self, key: String, value: String) {
+    pub fn add_support(&mut self, key: String, value: String) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("addSupport", [key.clone(), value.clone()]);
+        sync!("addSupport", [key.clone(), value.clone()])?;
 
         self.supports.insert(key, value);
+
+        Ok(())
     }
 
-    pub fn remove_support(&mut self, key: String) {
+    pub fn remove_support(&mut self, key: String) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("removeSupport", [key.clone()]);
+        sync!("removeSupport", [key.clone()])?;
 
         self.supports.remove(&key);
+
+        Ok(())
     }
 
-    pub fn emit_connection_error(&mut self, error: String) {
+    pub fn emit_connection_error(&mut self, error: String) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("emitConnectionError", [error.clone()]);
+        sync!("emitConnectionError", [error.clone()])?;
 
-        error!("{}", error)
+        error!("{}", error);
+
+        Ok(())
     }
 
     /// Rename the user object in the network object
     /// TODO the actual nick change is done with a sepperate sync message against the IrcUser object?
-    pub fn irc_user_nick_changed(&mut self, before: String, after: String) {
+    pub fn irc_user_nick_changed(&mut self, before: String, after: String) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("ircUserNickChanged", [before.clone(), after.clone()]);
+        sync!("ircUserNickChanged", [before.clone(), after.clone()])?;
 
         if let Some(user) = self.irc_users.remove(&before) {
             self.irc_users.insert(after, user);
         } else {
             warn!("irc user {} not found", before);
         }
+
+        Ok(())
     }
 }
 
@@ -192,7 +220,7 @@ impl Syncable for Network {
 
 #[cfg(feature = "client")]
 impl crate::message::StatefulSyncableClient for Network {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -225,7 +253,7 @@ impl crate::message::StatefulSyncableClient for Network {
             "setNetworkName" => self.network_info.set_network_name(get_param!(msg)),
             "setNetworkInfo" => {
                 let mut map = VariantMap::try_from(msg.params.remove(0))?;
-                self.set_network_info(NetworkInfo::from_network_map(&mut map));
+                self.set_network_info(NetworkInfo::from_network_map(&mut map))
             }
             "setPerform" => self.network_info.set_perform(get_param!(msg)),
             "setRejoinChannels" => self.network_info.set_rejoin_channels(get_param!(msg)),
@@ -253,15 +281,14 @@ impl crate::message::StatefulSyncableClient for Network {
             "setUseCustomMessageRate" => self.network_info.set_use_custom_message_rate(get_param!(msg)),
             "setUseRandomServer" => self.network_info.set_use_random_server(get_param!(msg)),
             "setUseSasl" => self.network_info.set_use_sasl(get_param!(msg)),
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
 #[cfg(feature = "server")]
 impl crate::message::StatefulSyncableServer for Network {
-    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<(), ProtocolError>
+    fn sync_custom(&mut self, mut msg: crate::message::SyncMessage) -> Result<()>
     where
         Self: Sized,
     {
@@ -270,16 +297,15 @@ impl crate::message::StatefulSyncableServer for Network {
             "requestDisconnect" => self.disconnect(),
             "requestSetNetworkInfo" => {
                 let mut map = VariantMap::try_from(msg.params.remove(0))?;
-                self.set_network_info(NetworkInfo::from_network_map(&mut map));
+                self.set_network_info(NetworkInfo::from_network_map(&mut map))
             }
-            _ => (),
+            _ => Ok(()),
         }
-        Ok(())
     }
 }
 
 impl crate::message::signalproxy::NetworkList for Network {
-    fn to_network_list(&self) -> VariantList {
+    fn to_network_list(&self) -> Result<VariantList> {
         #![allow(clippy::vec_init_then_push)]
         let mut res = VariantList::new();
 
@@ -342,13 +368,13 @@ impl crate::message::signalproxy::NetworkList for Network {
             res.push(Variant::VariantMap(map));
         }
 
-        res.extend(self.network_info.to_network_list());
+        res.extend(self.network_info.to_network_list()?);
 
-        res
+        Ok(res)
     }
 
     // TODO VariantList -> VariantMap conversion
-    fn from_network_list(input: &mut VariantList) -> Self {
+    fn from_network_list(input: &mut VariantList) -> Result<Self> {
         let mut i = input.iter().cycle();
 
         let users_and_channels: VariantMap = {
@@ -411,7 +437,7 @@ impl crate::message::signalproxy::NetworkList for Network {
                 match users_and_channels.get("Channels") {
                     Some(channels) => {
                         let channels: Vec<IrcChannel> =
-                            Vec::<IrcChannel>::from_network_map(&mut channels.try_into().unwrap());
+                            Vec::<IrcChannel>::from_network_map(&mut channels.try_into()?);
                         channels
                             .into_iter()
                             .map(|channel| (channel.name.clone(), channel))
@@ -444,13 +470,13 @@ impl crate::message::signalproxy::NetworkList for Network {
 
                 var.into_iter().map(|v| v.try_into().unwrap()).collect()
             },
-            network_info: NetworkInfo::from_network_list(input),
+            network_info: NetworkInfo::from_network_list(input).unwrap(),
         };
 
         network.determine_channel_mode_types();
         network.determine_prefixes();
 
-        network
+        Ok(network)
     }
 }
 
@@ -624,12 +650,12 @@ pub struct NetworkServer {
 // we have this problem since now we have generic VariantList impls
 // for all the variants and this type is now also directly a variant
 impl NetworkList for Vec<NetworkServer> {
-    fn to_network_list(&self) -> super::VariantList {
-        self.iter().map(|b| Variant::NetworkServer(b.clone())).collect()
+    fn to_network_list(&self) -> Result<super::VariantList> {
+        Ok(self.iter().map(|b| Variant::NetworkServer(b.clone())).collect())
     }
 
-    fn from_network_list(input: &mut super::VariantList) -> Self {
-        input.iter().map(|b| b.try_into().unwrap()).collect()
+    fn from_network_list(input: &mut super::VariantList) -> Result<Self> {
+        Ok(input.iter().map(|b| b.try_into().unwrap()).collect())
     }
 }
 
@@ -638,13 +664,13 @@ impl UserType for NetworkServer {
 }
 
 impl Serialize for NetworkServer {
-    fn serialize(&self) -> Result<Vec<u8>, crate::ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>> {
         self.to_network_map().serialize()
     }
 }
 
 impl Deserialize for NetworkServer {
-    fn parse(b: &[u8]) -> Result<(usize, Self), crate::ProtocolError>
+    fn parse(b: &[u8]) -> Result<(usize, Self)>
     where
         Self: std::marker::Sized,
     {
@@ -812,7 +838,7 @@ impl From<ConnectionState> for Variant {
 impl TryFrom<Variant> for ConnectionState {
     type Error = ProtocolError;
 
-    fn try_from(value: Variant) -> Result<Self, Self::Error> {
+    fn try_from(value: Variant) -> Result<Self> {
         match value {
             Variant::i32(n) => Ok(ConnectionState::from_i32(n).unwrap()),
             _ => Err(ProtocolError::WrongVariant),

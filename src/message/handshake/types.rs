@@ -19,7 +19,7 @@ impl HandshakeSerialize for VariantMap {
             res.extend(v.serialize()?);
         }
 
-        let len: i32 = (self.len() * 2).try_into().unwrap();
+        let len: i32 = (self.len() * 2).try_into()?;
         util::insert_bytes(0, &mut res, &mut (len).to_be_bytes());
 
         Ok(res)

@@ -1,12 +1,11 @@
 use crate::{
-    message::{signalproxy::translation::NetworkMap, Class, Syncable},
+    message::{objects::network::NetworkServer, signalproxy::translation::NetworkMap, Class, Syncable},
     primitive::{IdentityId, NetworkId, StringList, VariantMap},
     serialize::{Deserialize, Serialize, UserType},
+    Result,
 };
 
 use libquassel_derive::{NetworkList, NetworkMap, Setters};
-
-use crate::message::objects::network::NetworkServer;
 
 #[derive(Default, Debug, Clone, PartialEq, NetworkList, NetworkMap, Setters)]
 pub struct NetworkInfo {
@@ -77,13 +76,13 @@ impl UserType for NetworkInfo {
 }
 
 impl Serialize for NetworkInfo {
-    fn serialize(&self) -> Result<Vec<u8>, crate::ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>> {
         self.to_network_map().serialize()
     }
 }
 
 impl Deserialize for NetworkInfo {
-    fn parse(b: &[u8]) -> Result<(usize, Self), crate::ProtocolError>
+    fn parse(b: &[u8]) -> Result<(usize, Self)>
     where
         Self: std::marker::Sized,
     {
@@ -93,16 +92,18 @@ impl Deserialize for NetworkInfo {
 }
 
 impl NetworkInfo {
-    pub fn set_server_list(&mut self, servers: Vec<NetworkServer>) {
+    pub fn set_server_list(&mut self, servers: Vec<NetworkServer>) -> Result<()> {
         #[cfg(feature = "server")]
         {
             use crate::message::NetworkMap;
             use libquassel_derive::sync;
 
-            sync!("setServerList", [Vec::<NetworkServer>::to_network_map(&servers)]);
+            sync!("setServerList", [Vec::<NetworkServer>::to_network_map(&servers)])?;
         }
 
         self.server_list = servers;
+
+        Ok(())
     }
 }
 
@@ -204,20 +205,23 @@ mod tests {
 
     #[test]
     fn networkinfo_to_network() {
-        assert_eq!(get_runtime().to_network_list(), get_network());
-        assert_eq!(get_runtime().to_network_list(), get_network());
+        assert_eq!(get_runtime().to_network_list().unwrap(), get_network());
+        assert_eq!(get_runtime().to_network_list().unwrap(), get_network());
     }
 
     #[test]
     fn networkinfo_from_network() {
-        assert_eq!(NetworkInfo::from_network_list(&mut get_network()), get_runtime());
+        assert_eq!(
+            NetworkInfo::from_network_list(&mut get_network()).unwrap(),
+            get_runtime()
+        );
 
         // Test serialization without given network id
         let mut network = get_network();
         network.remove(20);
         network.remove(20);
 
-        let left = NetworkInfo::from_network_list(&mut network);
+        let left = NetworkInfo::from_network_list(&mut network).unwrap();
         assert_eq!(left.network_id, NetworkId(0));
     }
 }
