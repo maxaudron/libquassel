@@ -15,7 +15,7 @@ pub struct CoreInfo {
 impl CoreInfo {
     pub fn set_core_data(&mut self, data: CoreData) -> Result<()> {
         #[cfg(feature = "server")]
-        libquassel_derive::sync!("setCoreData", [data.to_network_map()])?;
+        libquassel_derive::sync!("setCoreData", [data.to_network_map()?])?;
 
         self.core_data = data;
 
@@ -31,7 +31,7 @@ impl crate::message::StatefulSyncableClient for CoreInfo {
     {
         #[allow(clippy::single_match)]
         match msg.slot_name.as_str() {
-            "setCoreData" => self.set_core_data(CoreData::from_network_map(&mut get_param!(msg))),
+            "setCoreData" => self.set_core_data(CoreData::from_network_map(&mut get_param!(msg))?),
             unknown => Err(crate::ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }

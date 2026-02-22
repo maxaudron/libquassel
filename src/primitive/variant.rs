@@ -3,11 +3,11 @@ use std::{collections::HashMap, vec::Vec};
 use itertools::Itertools;
 use log::{error, trace};
 
-use crate::error::ProtocolError;
 use crate::message::objects::{Identity, IrcChannel, IrcUser, NetworkInfo, NetworkServer};
 use crate::primitive::{self, NetworkId, PeerPtr};
 use crate::primitive::{IdentityId, StringList};
 use crate::serialize::*;
+use crate::{ProtocolError, Result};
 
 use crate::primitive::{BufferId, BufferInfo, Date, DateTime, Message, MsgId, Time, VariantList, VariantMap};
 
@@ -64,7 +64,7 @@ pub enum Variant {
 impl TryFrom<Variant> for String {
     type Error = ProtocolError;
 
-    fn try_from(input: Variant) -> Result<Self, Self::Error> {
+    fn try_from(input: Variant) -> Result<Self> {
         match input {
             Variant::String(value) => Ok(value),
             Variant::ByteArray(value) => Ok(value),
@@ -92,7 +92,7 @@ where
     T: std::convert::TryFrom<Variant> + Into<Variant> + Clone + std::hash::Hash + std::cmp::Eq,
     S: std::convert::TryFrom<Variant> + Into<Variant> + Clone + std::hash::Hash + std::cmp::Eq,
 {
-    fn to_network_list(&self) -> Result<VariantList, ProtocolError> {
+    fn to_network_list(&self) -> Result<VariantList> {
         let mut res = Vec::with_capacity(self.len() * 2);
 
         self.iter().for_each(|(k, v)| {
@@ -103,7 +103,7 @@ where
         Ok(res)
     }
 
-    fn from_network_list(input: &mut VariantList) -> Result<Self, ProtocolError> {
+    fn from_network_list(input: &mut VariantList) -> Result<Self> {
         let mut res = HashMap::with_capacity(input.len() / 2);
 
         input.iter().tuples().for_each(|(k, v)| {
@@ -129,18 +129,18 @@ where
 {
     type Item = super::VariantMap;
 
-    fn to_network_map(&self) -> Self::Item {
+    fn to_network_map(&self) -> Result<Self::Item> {
         let mut res = HashMap::with_capacity(self.len());
 
         self.iter().for_each(|(k, v)| {
             res.insert(k.clone(), (*v).clone().into());
         });
 
-        res
+        Ok(res)
     }
 
-    fn from_network_map(input: &mut Self::Item) -> Self {
-        input
+    fn from_network_map(input: &mut Self::Item) -> Result<Self> {
+        Ok(input
             .iter_mut()
             .map(|(k, v)| {
                 (
@@ -151,12 +151,12 @@ where
                     },
                 )
             })
-            .collect()
+            .collect())
     }
 }
 
 impl Serialize for Variant {
-    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>> {
         match self {
             Variant::Unknown => Err(ProtocolError::UnknownVariant),
             Variant::VariantMap(v) => v.serialize_variant(),
@@ -208,7 +208,7 @@ impl Serialize for Variant {
 }
 
 impl Deserialize for Variant {
-    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
+    fn parse(b: &[u8]) -> Result<(usize, Self)> {
         trace!("trying to parse variant with bytes: {:x?}", b);
         let (_, qtype) = i32::parse(&b[0..4])?;
         let qtype = qtype as u32;

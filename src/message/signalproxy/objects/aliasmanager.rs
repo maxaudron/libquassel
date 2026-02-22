@@ -28,7 +28,7 @@ pub struct AliasManager {
 impl AliasManager {
     pub fn add_alias(&mut self, alias: Alias) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("addAlias", [alias.to_network_map()])?;
+        sync!("addAlias", [alias.to_network_map()?])?;
 
         if !self.aliases.contains(&alias) {
             self.aliases.push(alias)
@@ -52,7 +52,7 @@ impl StatefulSyncableServer for AliasManager {
                 msg.params
                     .pop()
                     .ok_or(crate::ProtocolError::MissingSyncMessageParams)?,
-            )?)),
+            )?)?),
             unknown => Err(crate::ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
     }

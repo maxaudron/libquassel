@@ -18,10 +18,10 @@ pub(crate) fn to(fields: &[NetworkField]) -> Vec<TokenStream> {
 
                 let field_inner = match field.network {
                     crate::network::NetworkRepr::List => quote! {
-                        libquassel::message::NetworkList::to_network_list(&self.#field_name).unwrap().into()
+                        libquassel::message::NetworkList::to_network_list(&self.#field_name)?.into()
                     },
                     crate::network::NetworkRepr::Map => quote! {
-                        libquassel::message::NetworkMap::to_network_map(&self.#field_name).into()
+                        libquassel::message::NetworkMap::to_network_map(&self.#field_name)?.into()
                     },
                     crate::network::NetworkRepr::None => quote! {
                         self.#field_name.clone().into()
@@ -59,11 +59,11 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
             match field.network {
                 super::NetworkRepr::List => quote! {
                     #field_name: libquassel::message::NetworkList::from_network_list(
-                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap).unwrap(),
+                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap)?,
                 },
                 super::NetworkRepr::Map => quote! {
                     #field_name: libquassel::message::NetworkMap::from_network_map(
-                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap),
+                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap)?,
                 },
                 super::NetworkRepr::None => quote! {
                     #field_name: std::convert::TryInto::try_into(input.remove(#field_rename).unwrap()).#unwrap,
@@ -75,9 +75,8 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
 
 pub(crate) fn to_vec(_type_name: &Ident, _fields: &[NetworkField]) -> TokenStream {
     quote! {
-        self.iter().map(|item| {
-            item.to_network_map().into()
-        }).collect()
+        let res: Vec<libquassel::primitive::VariantMap> = self.iter().map(|item| { item.to_network_map() }).collect::<crate::Result<Vec<libquassel::primitive::VariantMap>>>()?;
+        Ok(res.into_iter().map(|item| item.into()).collect())
     }
 }
 

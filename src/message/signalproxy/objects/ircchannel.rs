@@ -38,7 +38,7 @@ impl UserType for IrcChannel {
 
 impl Serialize for IrcChannel {
     fn serialize(&self) -> Result<Vec<u8>> {
-        self.to_network_map().serialize()
+        self.to_network_map()?.serialize()
     }
 }
 
@@ -48,7 +48,7 @@ impl Deserialize for IrcChannel {
         Self: std::marker::Sized,
     {
         let (vlen, mut value) = VariantMap::parse(b)?;
-        Ok((vlen, Self::from_network_map(&mut value)))
+        Ok((vlen, Self::from_network_map(&mut value)?))
     }
 }
 
@@ -317,12 +317,12 @@ mod tests {
 
     #[test]
     fn ircchannel_to_network() {
-        assert_eq!(get_runtime().to_network_map(), get_network())
+        assert_eq!(get_runtime().to_network_map().unwrap(), get_network())
     }
 
     #[test]
     fn ircchannel_from_network() {
-        assert_eq!(IrcChannel::from_network_map(&mut get_network()), get_runtime())
+        assert_eq!(IrcChannel::from_network_map(&mut get_network()).unwrap(), get_runtime())
     }
 
     #[test]

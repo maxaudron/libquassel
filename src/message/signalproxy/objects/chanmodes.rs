@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::{
     message::NetworkMap,
     primitive::{StringList, Variant, VariantMap},
+    Result,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -26,7 +27,7 @@ pub struct ChanModes {
 impl NetworkMap for ChanModes {
     type Item = VariantMap;
 
-    fn to_network_map(&self) -> Self::Item {
+    fn to_network_map(&self) -> Result<Self::Item> {
         let mut map = VariantMap::new();
 
         map.insert(
@@ -58,15 +59,15 @@ impl NetworkMap for ChanModes {
         );
         map.insert(s!("D"), Variant::String(self.channel_modes_d.clone()));
 
-        map
+        Ok(map)
     }
 
-    fn from_network_map(input: &mut Self::Item) -> Self {
+    fn from_network_map(input: &mut Self::Item) -> Result<Self> {
         let channel_modes_a: VariantMap = input.remove("A").unwrap().try_into().unwrap();
         let channel_modes_b: VariantMap = input.remove("B").unwrap().try_into().unwrap();
         let channel_modes_c: VariantMap = input.remove("C").unwrap().try_into().unwrap();
 
-        ChanModes {
+        Ok(ChanModes {
             channel_modes_a: channel_modes_a
                 .into_iter()
                 .map(|(mut k, v)| (k.remove(0), v.try_into().unwrap()))
@@ -80,7 +81,7 @@ impl NetworkMap for ChanModes {
                 .map(|(mut k, v)| (k.remove(0), v.try_into().unwrap()))
                 .collect(),
             channel_modes_d: input.remove("D").unwrap().try_into().unwrap(),
-        }
+        })
     }
 }
 
@@ -129,11 +130,11 @@ mod tests {
 
     #[test]
     fn chanmodes_to_network() {
-        assert_eq!(get_runtime().to_network_map(), get_network())
+        assert_eq!(get_runtime().to_network_map().unwrap(), get_network())
     }
 
     #[test]
     fn chanmodes_from_network() {
-        assert_eq!(ChanModes::from_network_map(&mut get_network()), get_runtime())
+        assert_eq!(ChanModes::from_network_map(&mut get_network()).unwrap(), get_runtime())
     }
 }

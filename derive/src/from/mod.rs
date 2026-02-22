@@ -54,7 +54,7 @@ pub fn from(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 impl std::convert::TryFrom<#enum_name> for #inner_type {
                     type Error = crate::error::ProtocolError;
 
-                    fn try_from(input: #enum_name) -> Result<Self, Self::Error> {
+                    fn try_from(input: #enum_name) -> std::result::Result<Self, Self::Error> {
                         match input {
                             #enum_name::#variant(input) => Ok(input),
                             _ => Err(crate::error::ProtocolError::WrongVariant),
@@ -65,7 +65,7 @@ pub fn from(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 impl std::convert::TryFrom<&#enum_name> for #inner_type {
                     type Error = crate::error::ProtocolError;
 
-                    fn try_from(input: &#enum_name) -> Result<Self, Self::Error> {
+                    fn try_from(input: &#enum_name) -> std::result::Result<Self, Self::Error> {
                         match input {
                             #enum_name::#variant(input) => Ok(input.clone()),
                             _ => Err(crate::error::ProtocolError::WrongVariant),

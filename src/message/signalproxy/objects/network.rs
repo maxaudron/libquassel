@@ -108,7 +108,7 @@ impl Network {
 
     pub fn set_network_info(&mut self, network_info: NetworkInfo) -> Result<()> {
         #[cfg(feature = "client")]
-        sync!("requestSetNetworkInfo", [network_info.to_network_map()])?;
+        sync!("requestSetNetworkInfo", [network_info.to_network_map()?])?;
 
         self.network_info = network_info;
 
@@ -253,7 +253,7 @@ impl crate::message::StatefulSyncableClient for Network {
             "setNetworkName" => self.network_info.set_network_name(get_param!(msg)),
             "setNetworkInfo" => {
                 let mut map = VariantMap::try_from(msg.params.remove(0))?;
-                self.set_network_info(NetworkInfo::from_network_map(&mut map))
+                self.set_network_info(NetworkInfo::from_network_map(&mut map)?)
             }
             "setPerform" => self.network_info.set_perform(get_param!(msg)),
             "setRejoinChannels" => self.network_info.set_rejoin_channels(get_param!(msg)),
@@ -263,7 +263,7 @@ impl crate::message::StatefulSyncableClient for Network {
             "setActualServerList" => self.network_info.set_server_list({
                 match msg.params.remove(0) {
                     Variant::VariantList(mut variants) => {
-                        Vec::<NetworkServer>::from_network_map(&mut variants)
+                        Vec::<NetworkServer>::from_network_map(&mut variants)?
                     }
                     _ => {
                         error!("{}", ProtocolError::WrongVariant);
@@ -297,7 +297,7 @@ impl crate::message::StatefulSyncableServer for Network {
             "requestDisconnect" => self.disconnect(),
             "requestSetNetworkInfo" => {
                 let mut map = VariantMap::try_from(msg.params.remove(0))?;
-                self.set_network_info(NetworkInfo::from_network_map(&mut map))
+                self.set_network_info(NetworkInfo::from_network_map(&mut map)?)
             }
             unknown => Err(ProtocolError::UnknownMsgSlotName(unknown.to_string())),
         }
@@ -347,22 +347,17 @@ impl crate::message::signalproxy::NetworkList for Network {
         {
             let mut map = VariantMap::new();
 
-            map.insert(
-                s!("Users"),
-                Variant::VariantMap(self.irc_users.iter().fold(HashMap::new(), |mut res, (_, v)| {
-                    res.extend(v.to_network_map());
+            let mut irc_users = HashMap::new();
+            for (_, user) in self.irc_users.clone() {
+                irc_users.extend(user.to_network_map()?);
+            }
+            map.insert(s!("Users"), Variant::VariantMap(irc_users));
 
-                    res
-                })),
-            );
-
-            let channels = self.irc_channels.iter().fold(HashMap::new(), |mut res, (_, v)| {
-                res.extend(v.to_network_map());
-
-                res
-            });
-
-            map.insert(s!("Channels"), Variant::VariantMap(channels));
+            let mut irc_channels = HashMap::new();
+            for (_, channel) in self.irc_channels.clone() {
+                irc_channels.extend(channel.to_network_map()?);
+            }
+            map.insert(s!("Channels"), Variant::VariantMap(irc_channels));
 
             res.push(Variant::ByteArray(s!("IrcUsersAndChannels")));
             res.push(Variant::VariantMap(map));
@@ -426,7 +421,7 @@ impl crate::message::signalproxy::NetworkList for Network {
                     Some(users) => {
                         let users: Vec<IrcUser> = Vec::<IrcUser>::from_network_map(
                             &mut users.try_into().expect("failed to convert Users"),
-                        );
+                        )?;
 
                         users.into_iter().map(|user| (user.nick.clone(), user)).collect()
                     }
@@ -437,7 +432,7 @@ impl crate::message::signalproxy::NetworkList for Network {
                 match users_and_channels.get("Channels") {
                     Some(channels) => {
                         let channels: Vec<IrcChannel> =
-                            Vec::<IrcChannel>::from_network_map(&mut channels.try_into()?);
+                            Vec::<IrcChannel>::from_network_map(&mut channels.try_into()?)?;
                         channels
                             .into_iter()
                             .map(|channel| (channel.name.clone(), channel))
@@ -483,7 +478,7 @@ impl crate::message::signalproxy::NetworkList for Network {
 impl crate::message::signalproxy::NetworkMap for Network {
     type Item = VariantMap;
 
-    fn to_network_map(&self) -> Self::Item {
+    fn to_network_map(&self) -> Result<Self::Item> {
         let mut res = VariantMap::new();
 
         res.insert("myNick".to_owned(), Variant::String(self.my_nick.clone()));
@@ -531,36 +526,31 @@ impl crate::message::signalproxy::NetworkMap for Network {
         res.insert(s!("IrcUsersAndChannels"), {
             let mut map = VariantMap::new();
 
-            map.insert(
-                s!("Users"),
-                Variant::VariantMap(self.irc_users.iter().fold(HashMap::new(), |mut res, (_, v)| {
-                    res.extend(v.to_network_map());
+            let mut irc_users = HashMap::new();
+            for (_, user) in self.irc_users.clone() {
+                irc_users.extend(user.to_network_map()?);
+            }
+            map.insert(s!("Users"), Variant::VariantMap(irc_users));
 
-                    res
-                })),
-            );
-
-            let channels = self.irc_channels.iter().fold(HashMap::new(), |mut res, (_, v)| {
-                res.extend(v.to_network_map());
-
-                res
-            });
-
-            map.insert(s!("Channels"), Variant::VariantMap(channels));
+            let mut irc_channels = HashMap::new();
+            for (_, channel) in self.irc_channels.clone() {
+                irc_channels.extend(channel.to_network_map()?);
+            }
+            map.insert(s!("Channels"), Variant::VariantMap(irc_channels));
 
             Variant::VariantMap(map)
         });
 
-        res.extend(self.network_info.to_network_map());
+        res.extend(self.network_info.to_network_map()?);
 
-        res
+        Ok(res)
     }
 
-    fn from_network_map(input: &mut Self::Item) -> Self {
+    fn from_network_map(input: &mut Self::Item) -> Result<Self> {
         let mut users_and_channels: VariantMap =
             { input.remove("IrcUsersAndChannels").unwrap().try_into().unwrap() };
 
-        Self {
+        Ok(Self {
             my_nick: input.remove("myNick").unwrap().try_into().unwrap(),
             latency: input.remove("latency").unwrap().try_into().unwrap(),
             current_server: input.remove("currentServer").unwrap().try_into().unwrap(),
@@ -577,7 +567,7 @@ impl crate::message::signalproxy::NetworkMap for Network {
                     Some(users) => {
                         let users: Vec<IrcUser> = Vec::<IrcUser>::from_network_map(
                             &mut users.try_into().expect("failed to convert Users"),
-                        );
+                        )?;
 
                         users.into_iter().map(|user| (user.nick.clone(), user)).collect()
                     }
@@ -588,7 +578,7 @@ impl crate::message::signalproxy::NetworkMap for Network {
                 match users_and_channels.remove("Channels") {
                     Some(channels) => {
                         let channels: Vec<IrcChannel> =
-                            Vec::<IrcChannel>::from_network_map(&mut channels.try_into().unwrap());
+                            Vec::<IrcChannel>::from_network_map(&mut channels.try_into().unwrap())?;
                         channels
                             .into_iter()
                             .map(|channel| (channel.name.clone(), channel))
@@ -612,8 +602,8 @@ impl crate::message::signalproxy::NetworkMap for Network {
                 .into_iter()
                 .map(|v| v.try_into().unwrap())
                 .collect(),
-            network_info: NetworkInfo::from_network_map(input),
-        }
+            network_info: NetworkInfo::from_network_map(input)?,
+        })
     }
 }
 
@@ -665,7 +655,7 @@ impl UserType for NetworkServer {
 
 impl Serialize for NetworkServer {
     fn serialize(&self) -> Result<Vec<u8>> {
-        self.to_network_map().serialize()
+        self.to_network_map()?.serialize()
     }
 }
 
@@ -675,7 +665,7 @@ impl Deserialize for NetworkServer {
         Self: std::marker::Sized,
     {
         let (vlen, mut value) = VariantMap::parse(b)?;
-        Ok((vlen, Self::from_network_map(&mut value)))
+        Ok((vlen, Self::from_network_map(&mut value)?))
     }
 }
 
@@ -743,7 +733,7 @@ mod tests {
     #[test]
     fn network_server_to_network() {
         assert_eq!(
-            networkserver_get_runtime().to_network_map(),
+            networkserver_get_runtime().to_network_map().unwrap(),
             networkserver_get_network()
         )
     }

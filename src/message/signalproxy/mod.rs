@@ -159,7 +159,7 @@ where
     where
         Self: Sized,
     {
-        self.send_sync("update", vec![self.to_network_map().into()])
+        self.send_sync("update", vec![self.to_network_map()?.into()])
     }
 
     /// Server -> Client: Update the whole object with received data
@@ -167,7 +167,7 @@ where
     where
         Self: Sized,
     {
-        *self = Self::from_network_map(&mut param);
+        *self = Self::from_network_map(&mut param)?;
         Ok(())
     }
 }
@@ -206,7 +206,7 @@ pub trait StatefulSyncableClient: Syncable + translation::NetworkMap {
     where
         Self: Sized,
     {
-        *self = Self::from_network_map(&mut param);
+        *self = Self::from_network_map(&mut param)?;
         Ok(())
     }
 
@@ -215,7 +215,7 @@ pub trait StatefulSyncableClient: Syncable + translation::NetworkMap {
     where
         Self: Sized,
     {
-        self.send_sync("requestUpdate", vec![self.to_network_map().into()])
+        self.send_sync("requestUpdate", vec![self.to_network_map()?.into()])
     }
 }
 

@@ -93,7 +93,7 @@
 //! ```
 use crate::{
     primitive::{Variant, VariantList},
-    ProtocolError,
+    ProtocolError, Result,
 };
 
 #[deprecated(
@@ -109,18 +109,20 @@ pub trait Network {
 
 pub trait NetworkMap
 where
-    Self::Item: TryFrom<Variant, Error = crate::error::ProtocolError>,
+    Self::Item: TryFrom<Variant, Error = ProtocolError>,
     Self::Item: Into<Variant>,
 {
     type Item;
 
-    fn to_network_map(&self) -> Self::Item;
-    fn from_network_map(input: &mut Self::Item) -> Self;
+    fn to_network_map(&self) -> Result<Self::Item>;
+    fn from_network_map(input: &mut Self::Item) -> Result<Self>
+    where
+        Self: std::marker::Sized;
 }
 
 pub trait NetworkList {
-    fn to_network_list(&self) -> Result<VariantList, ProtocolError>;
-    fn from_network_list(input: &mut VariantList) -> Result<Self, ProtocolError>
+    fn to_network_list(&self) -> Result<VariantList>;
+    fn from_network_list(input: &mut VariantList) -> Result<Self>
     where
         Self: std::marker::Sized;
 }

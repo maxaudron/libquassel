@@ -20,7 +20,7 @@ impl Serialize for InitData {
         res.push(Variant::ByteArray(self.class_name.clone()));
         res.push(Variant::ByteArray(self.object_name.clone()));
 
-        res.append(&mut self.init_data.to_network());
+        res.append(&mut self.init_data.to_network()?);
 
         res.serialize()
     }
@@ -40,7 +40,7 @@ impl Deserialize for InitData {
             Self {
                 class_name: class_name.clone(),
                 object_name: object_name.clone(),
-                init_data: Types::from_network(class_name.as_str(), object_name.as_str(), &mut res),
+                init_data: Types::from_network(class_name.as_str(), object_name.as_str(), &mut res)?,
             },
         ))
     }

@@ -37,6 +37,7 @@ use log::debug;
 
 use super::{NetworkList, NetworkMap};
 use crate::primitive::VariantList;
+use crate::Result;
 
 /// Central Enum containing and identifying all Quassel Protocol Types:
 ///
@@ -77,31 +78,31 @@ pub enum Types {
 }
 
 impl Types {
-    pub fn to_network(&self) -> VariantList {
+    pub fn to_network(&self) -> Result<VariantList> {
         debug!("converting to network object: {:#?}", self);
-        match self {
-            Types::AliasManager(val) => val.to_network_list().unwrap(),
-            Types::BufferSyncer(val) => val.to_network_list().unwrap(),
-            Types::BufferViewConfig(val) => val.to_network_list().unwrap(),
-            Types::BufferViewManager(val) => val.to_network_list().unwrap(),
+        Ok(match self {
+            Types::AliasManager(val) => val.to_network_list()?,
+            Types::BufferSyncer(val) => val.to_network_list()?,
+            Types::BufferViewConfig(val) => val.to_network_list()?,
+            Types::BufferViewManager(val) => val.to_network_list()?,
             // Types::CoreInfo(val) => vec![val.to_network_map().into()],
-            Types::CoreData(val) => vec![val.to_network_map().into()],
-            Types::HighlightRuleManager(val) => val.to_network_list().unwrap(),
-            Types::IgnoreListManager(val) => val.to_network_list().unwrap(),
-            Types::CertManager(val) => val.to_network_list().unwrap(),
-            Types::Network(val) => val.to_network_list().unwrap(),
-            Types::NetworkInfo(val) => val.to_network_list().unwrap(),
-            Types::NetworkConfig(val) => val.to_network_list().unwrap(),
-            Types::IrcChannel(val) => val.to_network_list().unwrap(),
+            Types::CoreData(val) => vec![val.to_network_map()?.into()],
+            Types::HighlightRuleManager(val) => val.to_network_list()?,
+            Types::IgnoreListManager(val) => val.to_network_list()?,
+            Types::CertManager(val) => val.to_network_list()?,
+            Types::Network(val) => val.to_network_list()?,
+            Types::NetworkInfo(val) => val.to_network_list()?,
+            Types::NetworkConfig(val) => val.to_network_list()?,
+            Types::IrcChannel(val) => val.to_network_list()?,
             Types::Unknown(val) => *val.clone(),
-        }
+        })
     }
 
-    pub fn from_network(class_name: &str, object_name: &str, input: &mut VariantList) -> Self {
+    pub fn from_network(class_name: &str, object_name: &str, input: &mut VariantList) -> Result<Self> {
         debug!("converting {} from network object: {:#?}", class_name, input);
-        match class_name {
-            "AliasManager" => Types::AliasManager(Box::new(AliasManager::from_network_list(input).unwrap())),
-            "BufferSyncer" => Types::BufferSyncer(Box::new(BufferSyncer::from_network_list(input).unwrap())),
+        Ok(match class_name {
+            "AliasManager" => Types::AliasManager(Box::new(AliasManager::from_network_list(input)?)),
+            "BufferSyncer" => Types::BufferSyncer(Box::new(BufferSyncer::from_network_list(input)?)),
             "BufferViewConfig" => {
                 let mut config = BufferViewConfig::from_network_list(input).unwrap();
                 config.buffer_view_id = object_name.parse().unwrap();
@@ -115,7 +116,7 @@ impl Types {
             // )),
             "CoreData" => Types::CoreData(Box::new(CoreData::from_network_map(
                 &mut input.remove(0).try_into().unwrap(),
-            ))),
+            )?)),
             "HighlightRuleManager" => {
                 Types::HighlightRuleManager(Box::new(HighlightRuleManager::from_network_list(input).unwrap()))
             }
@@ -130,6 +131,6 @@ impl Types {
             }
             "IrcChannel" => Types::IrcChannel(Box::new(IrcChannel::from_network_list(input).unwrap())),
             _ => Types::Unknown(Box::new(input.to_owned())),
-        }
+        })
     }
 }

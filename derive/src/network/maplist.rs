@@ -19,10 +19,10 @@ pub(crate) fn to(fields: &[NetworkField]) -> Vec<TokenStream> {
 
                 let field_inner = match field.network {
                     crate::network::NetworkRepr::List => quote! {
-                        self.#field_name.to_network_list().unwrap().into()
+                        self.#field_name.to_network_list()?.into()
                     },
                     crate::network::NetworkRepr::Map => quote! {
-                        self.#field_name.to_network_map().into()
+                        self.#field_name.to_network_map()?.into()
                     },
                     crate::network::NetworkRepr::None => quote! {
                         self.#field_name.clone().into()
@@ -73,10 +73,10 @@ pub(crate) fn to_vec(_type_name: &Ident, fields: &[NetworkField]) -> TokenStream
 
                 let field_inner = match field.network {
                     crate::network::NetworkRepr::List => quote! {
-                        item.#field_name.to_network_list().unwrap().into()
+                        item.#field_name.to_network_list()?.into()
                     },
                     crate::network::NetworkRepr::Map => quote! {
-                        item.#field_name.to_network_map().into()
+                        item.#field_name.to_network_map()?.into()
                     },
                     crate::network::NetworkRepr::None => quote! {
                         item.#field_name.clone().into()
@@ -121,13 +121,13 @@ pub(crate) fn to_vec(_type_name: &Ident, fields: &[NetworkField]) -> TokenStream
 
         let mut map = libquassel::primitive::VariantMap::new();
 
-        self.iter().for_each(|item| {
+        for item in self.iter() {
             #(#for_each_inner)*
-        });
+        }
 
         #(#map_inserts)*
 
-        return map;
+        Ok(map)
     }
 }
 
@@ -150,10 +150,10 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
 
             let field_inner = match field.network {
                 super::NetworkRepr::List => quote! {
-                    libquassel::message::NetworkList::from_network_list(&mut std::convert::TryInto::try_into(input.remove(0)).#unwrap).unwrap()
+                    libquassel::message::NetworkList::from_network_list(&mut std::convert::TryInto::try_into(input.remove(0)).#unwrap)?
                 },
                 super::NetworkRepr::Map => quote! {
-                    libquassel::message::NetworkMap::from_network_map(&mut std::convert::TryInto::try_into(input.remove(0)).#unwrap)
+                    libquassel::message::NetworkMap::from_network_map(&mut std::convert::TryInto::try_into(input.remove(0)).#unwrap)?
                 },
                 super::NetworkRepr::None => quote! {
                     std::convert::TryInto::try_into(input.remove(0)).#unwrap
@@ -194,7 +194,7 @@ pub(crate) fn from_vec(type_name: &Ident, fields: &[NetworkField]) -> TokenStrea
     };
 
     let inner = quote! {
-        #type_name::from_network_map(input)
+        #type_name::from_network_map(input)?
     };
 
     quote! {
@@ -205,6 +205,6 @@ pub(crate) fn from_vec(type_name: &Ident, fields: &[NetworkField]) -> TokenStrea
             res.push(#inner);
         }
 
-        return res;
+        Ok(res)
     }
 }

@@ -114,19 +114,19 @@ pub fn network_map(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         impl libquassel::message::signalproxy::NetworkMap for #name {
             type Item = libquassel::primitive::VariantMap;
 
-            fn to_network_map(&self) -> libquassel::primitive::VariantMap {
+            fn to_network_map(&self) -> crate::Result<libquassel::primitive::VariantMap> {
                 let mut res = libquassel::primitive::VariantMap::new();
 
                 #(#to_network_map)*
 
-                return res;
+                Ok(res)
             }
 
-            fn from_network_map(input: &mut libquassel::primitive::VariantMap) -> Self {
+            fn from_network_map(input: &mut libquassel::primitive::VariantMap) -> crate::Result<Self> {
                 log::trace!("converting {} from network object: {:#?}", #name_str, input);
-                Self {
+                Ok(Self {
                     #(#from_network_map)*
-                }
+                })
             }
         }
     };
@@ -153,11 +153,11 @@ pub fn network_map(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         impl libquassel::message::signalproxy::NetworkMap for Vec<#name> {
             type Item = #network_map_vec_item;
 
-            fn to_network_map(&self) -> Self::Item {
+            fn to_network_map(&self) -> crate::Result<Self::Item> {
                 #to_network_map_vec
             }
 
-            fn from_network_map(input: &mut Self::Item) -> Self {
+            fn from_network_map(input: &mut Self::Item) -> crate::Result<Self> {
                 #from_network_map_vec
             }
         }

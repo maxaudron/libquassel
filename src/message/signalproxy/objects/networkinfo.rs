@@ -77,7 +77,7 @@ impl UserType for NetworkInfo {
 
 impl Serialize for NetworkInfo {
     fn serialize(&self) -> Result<Vec<u8>> {
-        self.to_network_map().serialize()
+        self.to_network_map()?.serialize()
     }
 }
 
@@ -87,7 +87,7 @@ impl Deserialize for NetworkInfo {
         Self: std::marker::Sized,
     {
         let (vlen, mut value) = VariantMap::parse(b)?;
-        Ok((vlen, Self::from_network_map(&mut value)))
+        Ok((vlen, Self::from_network_map(&mut value)?))
     }
 }
 
@@ -98,7 +98,7 @@ impl NetworkInfo {
             use crate::message::NetworkMap;
             use libquassel_derive::sync;
 
-            sync!("setServerList", [Vec::<NetworkServer>::to_network_map(&servers)])?;
+            sync!("setServerList", [Vec::<NetworkServer>::to_network_map(&servers)?])?;
         }
 
         self.server_list = servers;

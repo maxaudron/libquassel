@@ -24,15 +24,17 @@ pub struct BufferViewManager {
 // TODO add buffer view configs, where does the data come from?
 impl BufferViewManager {
     pub fn request_create_buffer_view(&self, properties: BufferViewConfig) -> Result<()> {
-        sync!("requestCreateBufferView", [properties.to_network_map()])
+        sync!("requestCreateBufferView", [properties.to_network_map()?])
     }
 
     pub fn request_create_buffer_views(&self, properties: &[BufferViewConfig]) -> Result<()> {
+        let properties = properties.iter().map(|view| view.to_network_map()).collect::<Result<Vec<VariantMap>>>()?;
+
         self.send_sync(
             "requestCreateBufferViews",
             properties
-                .iter()
-                .map(|view| view.to_network_map().into())
+                .into_iter()
+                .map(|view| view.into())
                 .collect(),
         )
     }
@@ -109,11 +111,11 @@ impl StatefulSyncableServer for BufferViewManager {
         match msg.slot_name.as_str() {
             "requestCreateBufferView" => self.add_buffer_view_config(BufferViewConfig::from_network_map(
                 &mut msg.params.remove(0).try_into()?,
-            )),
+            )?),
             "requestCreateBufferViews" => {
                 let views: VariantList = msg.params.remove(0).try_into()?;
                 for view in views.into_iter() {
-                    self.add_buffer_view_config(BufferViewConfig::from_network_map(&mut view.try_into()?))?
+                    self.add_buffer_view_config(BufferViewConfig::from_network_map(&mut view.try_into()?)?)?
                 }
                 Ok(())
             }
@@ -165,7 +167,7 @@ impl super::NetworkList for BufferViewManager {
 impl super::NetworkMap for BufferViewManager {
     type Item = VariantMap;
 
-    fn to_network_map(&self) -> Self::Item {
+    fn to_network_map(&self) -> Result<Self::Item> {
         let mut res = VariantMap::new();
 
         res.insert(
@@ -173,13 +175,13 @@ impl super::NetworkMap for BufferViewManager {
             Variant::VariantList(self.buffer_view_configs.keys().map(|k| i32::into(*k)).collect()),
         );
 
-        res
+        Ok(res)
     }
 
-    fn from_network_map(_input: &mut Self::Item) -> Self {
+    fn from_network_map(_input: &mut Self::Item) -> Result<Self> {
         // TODO Somehow do the initrequests for all the IDs we get here
-        Self {
+        Ok(Self {
             buffer_view_configs: HashMap::new(),
-        }
+        })
     }
 }

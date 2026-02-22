@@ -72,7 +72,7 @@ impl UserType for Identity {
 
 impl Serialize for Identity {
     fn serialize(&self) -> Result<Vec<u8>> {
-        self.to_network_map().serialize()
+        self.to_network_map()?.serialize()
     }
 }
 
@@ -82,14 +82,14 @@ impl Deserialize for Identity {
         Self: std::marker::Sized,
     {
         let (vlen, mut value) = VariantMap::parse(b)?;
-        Ok((vlen, Self::from_network_map(&mut value)))
+        Ok((vlen, Self::from_network_map(&mut value)?))
     }
 }
 
 impl Identity {
     pub fn copy_from(&mut self, other: Identity) -> Result<()> {
         #[cfg(feature = "server")]
-        sync!("copyFrom", [other.to_network_map()])?;
+        sync!("copyFrom", [other.to_network_map()?])?;
 
         *self = other;
 
@@ -104,7 +104,7 @@ impl StatefulSyncableClient for Identity {
         Self: Sized,
     {
         match msg.slot_name.as_str() {
-            "copyFrom" => self.copy_from(Identity::from_network_map(&mut get_param!(msg))),
+            "copyFrom" => self.copy_from(Identity::from_network_map(&mut get_param!(msg))?),
             "setAutoAwayEnabled" => self.set_auto_away_enabled(get_param!(msg)),
             "setAutoAwayReason" => self.set_auto_away_reason(get_param!(msg)),
             "setAutoAwayReasonEnabled" => self.set_auto_away_reason_enabled(get_param!(msg)),
