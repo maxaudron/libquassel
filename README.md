@@ -1,3 +1,7 @@
+[![git mirror](https://img.shields.io/badge/git-repo-cba6f7?logo=git)](https://git.vapor.systems/libquassel.git)
+[![github mirror](https://img.shields.io/badge/github-repo-blue?logo=github)](https://github.com/maxaudron/libquassel)
+[![gitlab mirror](https://img.shields.io/badge/gitlab-repo-orange?logo=github)](https://gitlab.com/cocainefarm/libquassel)
+
 Native rust implementation of the Quassel protocol and library functions
 
 # Features
