@@ -60,7 +60,7 @@ impl Serialize for &str {
         self.encode_utf16()
             .for_each(|i| res.extend(i.to_be_bytes().iter()));
 
-        util::prepend_byte_len(&mut res);
+        util::prepend_byte_len(&mut res)?;
         Ok(res)
     }
 }
@@ -69,7 +69,7 @@ impl SerializeUTF8 for &str {
     fn serialize_utf8(&self) -> Result<Vec<u8>, ProtocolError> {
         let mut res: Vec<u8> = Vec::new();
         res.extend(self.bytes());
-        util::prepend_byte_len(&mut res);
+        util::prepend_byte_len(&mut res)?;
         Ok(res)
     }
 }

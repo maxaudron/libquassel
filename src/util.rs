@@ -1,11 +1,13 @@
 /// Prepend the length of `buf` to `buf`
-pub fn prepend_byte_len(buf: &mut Vec<u8>) {
-    let len: i32 = buf.len().try_into().unwrap();
+pub fn prepend_byte_len(buf: &mut Vec<u8>) -> crate::Result<()> {
+    let len: i32 = buf.len().try_into()?;
     let ulen: &[u8] = &len.to_be_bytes();
     buf.insert(0, ulen[3]);
     buf.insert(0, ulen[2]);
     buf.insert(0, ulen[1]);
     buf.insert(0, ulen[0]);
+
+    Ok(())
 }
 
 /// Insert a bytes `input` into `buf` at position `pos`

@@ -56,17 +56,44 @@ impl Network {
     /// The `channel_modes` field is populated by the ``supports["CHANMODES"]` string,
     /// which is represented as the channel mode types a,b,c,d in a comma sepperated string.
     #[allow(dead_code)]
-    fn determine_channel_mode_types(&mut self) {
-        let mut modes: Vec<&str> = self.supports.get("CHANMODES").unwrap().split(',').collect();
+    fn determine_channel_mode_types(&mut self) -> Result<()> {
+        let mut modes: Vec<&str> = self
+            .supports
+            .get("CHANMODES")
+            .ok_or(ProtocolError::MissingField(s!("CHANMODES")))?
+            .split(',')
+            .collect();
 
-        self.channel_modes
-            .insert(ChannelModeType::DChanmode, modes.pop().unwrap().to_owned());
-        self.channel_modes
-            .insert(ChannelModeType::CChanmode, modes.pop().unwrap().to_owned());
-        self.channel_modes
-            .insert(ChannelModeType::BChanmode, modes.pop().unwrap().to_owned());
-        self.channel_modes
-            .insert(ChannelModeType::AChanmode, modes.pop().unwrap().to_owned());
+        self.channel_modes.insert(
+            ChannelModeType::DChanmode,
+            modes
+                .pop()
+                .ok_or(ProtocolError::MissingField(s!("CHANMODES D")))?
+                .to_owned(),
+        );
+        self.channel_modes.insert(
+            ChannelModeType::CChanmode,
+            modes
+                .pop()
+                .ok_or(ProtocolError::MissingField(s!("CHANMODES C")))?
+                .to_owned(),
+        );
+        self.channel_modes.insert(
+            ChannelModeType::BChanmode,
+            modes
+                .pop()
+                .ok_or(ProtocolError::MissingField(s!("CHANMODES B")))?
+                .to_owned(),
+        );
+        self.channel_modes.insert(
+            ChannelModeType::AChanmode,
+            modes
+                .pop()
+                .ok_or(ProtocolError::MissingField(s!("CHANMODES A")))?
+                .to_owned(),
+        );
+
+        Ok(())
     }
 
     #[allow(dead_code)]
@@ -76,7 +103,8 @@ impl Network {
 
         if let Some(prefix) = self.supports.get("PREFIX") {
             if let Some(prefix) = prefix.strip_prefix('(') {
-                let (prefix_modes, prefixes) = prefix.split_once(')').unwrap();
+                // Shouldn't ever happen but just to be safe we give out empty strings as default value
+                let (prefix_modes, prefixes) = prefix.split_once(')').unwrap_or(("", ""));
 
                 self.prefix_modes = prefix_modes.chars().collect();
                 self.prefixes = prefixes.chars().collect();
@@ -685,7 +713,7 @@ mod tests {
             s!("IXZbegw,k,FHJLWdfjlx,ABCDKMNOPQRSTcimnprstuz"),
         );
 
-        network.determine_channel_mode_types();
+        network.determine_channel_mode_types().unwrap();
 
         assert_eq!(
             network.channel_modes.get(&ChannelModeType::AChanmode).unwrap(),
@@ -713,7 +741,7 @@ mod tests {
             s!("CHANMODES"),
             s!("IXZbegw,k,FHJLWdfjlx,ABCDKMNOPQRSTcimnprstuz"),
         );
-        network.determine_channel_mode_types();
+        network.determine_channel_mode_types().unwrap();
 
         assert_eq!(network.get_channel_mode_type('b'), ChannelModeType::AChanmode);
         assert_eq!(network.get_channel_mode_type('k'), ChannelModeType::BChanmode);
@@ -759,6 +787,7 @@ impl Default for ConnectionState {
 
 impl From<ConnectionState> for Variant {
     fn from(val: ConnectionState) -> Self {
+        #[allow(clippy::unwrap_used)]
         Variant::i32(val.to_i32().unwrap())
     }
 }
