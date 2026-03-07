@@ -15,8 +15,8 @@ use log::{debug, error, warn};
 use crate::{
     error::ProtocolError,
     message::{
-        objects::{Types, *},
         Class, InitData, SessionInit, SyncMessage, Syncable,
+        objects::{Types, *},
     },
     primitive::{IdentityId, NetworkId},
 };
@@ -208,28 +208,33 @@ pub trait SessionManager {
             Types::Network(network) => {
                 let id: NetworkId = NetworkId(data.object_name.parse()?);
                 self.networks().insert(id, *network);
-            },
+            }
             Types::Identity(identity) => {
                 let id: IdentityId = IdentityId(data.object_name.parse()?);
                 self.identities().insert(id, *identity);
-            },
+            }
             Types::IrcChannel(channel) => {
                 let mut name = data.object_name.split("/");
                 let id: i32 = name
                     .next()
-                    .ok_or_else(|| ProtocolError::MissingField("Irc Channel ID".to_string()))?
+                    .ok_or(ProtocolError::BrokenObjectName(data.object_name.clone()))?
                     .parse()?;
                 let name = name
                     .next()
-                    .ok_or_else(|| ProtocolError::MissingField("Irc Channel Name".to_string()))?;
+                    .ok_or(ProtocolError::BrokenObjectName(data.object_name.clone()))?;
                 if let Some(network) = self.network(id) {
                     network.add_channel(name, *channel)
                 }
             }
             Types::IrcUser(user) => {
                 let mut name = data.object_name.split("/");
-                let id: i32 = name.next().unwrap().parse().unwrap();
-                let name = name.next().unwrap();
+                let id: i32 = name
+                    .next()
+                    .ok_or(ProtocolError::BrokenObjectName(data.object_name.clone()))?
+                    .parse()?;
+                let name = name
+                    .next()
+                    .ok_or(ProtocolError::BrokenObjectName(data.object_name.clone()))?;
                 if let Some(network) = self.network(id) {
                     network.add_user(name, *user)
                 }

@@ -6,7 +6,7 @@ authors = ["Max Audron <audron@cocaine.farm>"]
 license = "ISC"
 homepage = "https://gitlab.com/cocainefarm/libquassel"
 repository = "https://gitlab.com/cocainefarm/libquassel"
-edition = "2021"
+edition = "2024"
 autobins = true
 include = ["src/**/*", "LICENSE", "README.md"]
 

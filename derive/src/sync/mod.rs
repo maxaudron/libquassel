@@ -22,7 +22,7 @@ impl Parse for Sync {
             name: input.parse()?,
             _token: input.parse()?,
             _brace_token: bracketed!(content in input),
-            fields: content.parse_terminated(Expr::parse)?,
+            fields: content.parse_terminated(Expr::parse, syn::token::Comma)?,
         })
     }
 }

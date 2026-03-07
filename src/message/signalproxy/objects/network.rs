@@ -5,7 +5,7 @@ use log::{error, warn};
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 
-use libquassel_derive::{sync, NetworkMap, Setters};
+use libquassel_derive::{NetworkMap, Setters, sync};
 
 use crate::message::signalproxy::translation::NetworkMap;
 use crate::message::{Class, NetworkList, Syncable};
@@ -101,16 +101,16 @@ impl Network {
         let default_prefixes = vec!['~', '&', '@', '%', '+'];
         let default_prefix_modes = vec!['q', 'a', 'o', 'h', 'v'];
 
-        if let Some(prefix) = self.supports.get("PREFIX") {
-            if let Some(prefix) = prefix.strip_prefix('(') {
-                // Shouldn't ever happen but just to be safe we give out empty strings as default value
-                let (prefix_modes, prefixes) = prefix.split_once(')').unwrap_or(("", ""));
+        if let Some(prefix) = self.supports.get("PREFIX")
+            && let Some(prefix) = prefix.strip_prefix('(')
+        {
+            // Shouldn't ever happen but just to be safe we give out empty strings as default value
+            let (prefix_modes, prefixes) = prefix.split_once(')').unwrap_or(("", ""));
 
-                self.prefix_modes = prefix_modes.chars().collect();
-                self.prefixes = prefixes.chars().collect();
+            self.prefix_modes = prefix_modes.chars().collect();
+            self.prefixes = prefixes.chars().collect();
 
-                return;
-            }
+            return;
         }
 
         self.prefixes = default_prefixes;
@@ -770,19 +770,15 @@ mod tests {
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, FromPrimitive, ToPrimitive)]
 #[repr(C)]
+#[derive(Default)]
 pub enum ConnectionState {
+    #[default]
     Disconnected = 0x00,
     Connecting = 0x01,
     Initializing = 0x02,
     Initialized = 0x03,
     Reconnecting = 0x04,
     Disconnecting = 0x05,
-}
-
-impl Default for ConnectionState {
-    fn default() -> Self {
-        Self::Disconnected
-    }
 }
 
 impl From<ConnectionState> for Variant {

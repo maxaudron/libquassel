@@ -46,6 +46,8 @@ pub enum ProtocolError {
     UnknownMsgSlotName(String),
     #[error("got unknown connection state")]
     UnknownConnectionState,
+    #[error("failed parsing object name: {0}")]
+    BrokenObjectName(String),
 
     // TODO potentially move this to a higher error type for the object implementations
     // to sepperate it from parser errors

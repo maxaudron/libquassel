@@ -224,29 +224,16 @@ pub trait StatefulSyncableClient: Syncable + translation::NetworkMap {
 #[derive(Clone, Debug, std::cmp::PartialEq)]
 pub enum Message {
     /// Bidirectional
-    SyncMessage(SyncMessage),
+    SyncMessage(Box<SyncMessage>),
     /// Bidirectional
-    RpcCall(RpcCall),
-    InitRequest(InitRequest),
+    RpcCall(Box<RpcCall>),
+    InitRequest(Box<InitRequest>),
     InitData(Box<InitData>),
     /// Bidirectional
-    HeartBeat(HeartBeat),
+    HeartBeat(Box<HeartBeat>),
     /// Bidirectional
-    HeartBeatReply(HeartBeatReply),
+    HeartBeatReply(Box<HeartBeatReply>),
 }
-
-// impl Message {
-//     fn act(&self) {
-//         match &self {
-//             Message::SyncMessage(value) => value.serialize(),
-//             Message::RpcCall(value) => value.serialize(),
-//             Message::InitRequest(value) => value.serialize(),
-//             Message::InitData(value) => value.serialize(),
-//             Message::HeartBeat(value) => value.serialize(),
-//             Message::HeartBeatReply(value) => value.serialize(),
-//         }
-//     }
-// }
 
 impl Serialize for Message {
     fn serialize(&self) -> Result<Vec<std::primitive::u8>> {
@@ -269,17 +256,17 @@ impl Deserialize for Message {
             MessageType::SyncMessage => {
                 let (size, res) = SyncMessage::parse(b)?;
 
-                Ok((size, Message::SyncMessage(res)))
+                Ok((size, Message::SyncMessage(Box::new(res))))
             }
             MessageType::RpcCall => {
                 let (size, res) = RpcCall::parse(b)?;
 
-                Ok((size, Message::RpcCall(res)))
+                Ok((size, Message::RpcCall(Box::new(res))))
             }
             MessageType::InitRequest => {
                 let (size, res) = InitRequest::parse(b)?;
 
-                Ok((size, Message::InitRequest(res)))
+                Ok((size, Message::InitRequest(Box::new(res))))
             }
             MessageType::InitData => {
                 let (size, res) = InitData::parse(b)?;
@@ -289,12 +276,12 @@ impl Deserialize for Message {
             MessageType::HeartBeat => {
                 let (size, res) = HeartBeat::parse(b)?;
 
-                Ok((size, Message::HeartBeat(res)))
+                Ok((size, Message::HeartBeat(Box::new(res))))
             }
             MessageType::HeartBeatReply => {
                 let (size, res) = HeartBeatReply::parse(b)?;
 
-                Ok((size, Message::HeartBeatReply(res)))
+                Ok((size, Message::HeartBeatReply(Box::new(res))))
             }
         }
     }

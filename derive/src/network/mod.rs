@@ -1,5 +1,5 @@
 use quote::quote;
-use syn::{self, parse_macro_input};
+use syn::{self, parse_macro_input, token::PathSep};
 
 use darling::{FromDeriveInput, FromField, FromMeta};
 
@@ -238,7 +238,7 @@ fn gen_type(typ: &str) -> syn::Type {
         path: syn::Path {
             leading_colon: None,
             segments: {
-                let mut res = syn::punctuated::Punctuated::<syn::PathSegment, syn::token::Colon2>::new();
+                let mut res = syn::punctuated::Punctuated::<syn::PathSegment, PathSep>::new();
 
                 res.push(syn::PathSegment {
                     ident: syn::Ident::new(typ, proc_macro2::Span::call_site()),
