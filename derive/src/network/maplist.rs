@@ -138,9 +138,9 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
             let field_name = field.ident.as_ref().unwrap();
 
             let unwrap = if field.default {
-                quote! { unwrap_or_default() }
+                quote! { .unwrap_or_default() }
             } else {
-                quote! { unwrap() }
+                quote! { ? }
             };
 
             let field_rename = match &field.rename {
@@ -150,28 +150,46 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
 
             let field_inner = match field.network {
                 super::NetworkRepr::List => quote! {
-                    libquassel::message::NetworkList::from_network_list(std::convert::TryInto::try_into(input.remove(0)).#unwrap)?
+                    libquassel::message::NetworkList::from_network_list(std::convert::TryInto::try_into(input.remove(0))#unwrap)?
                 },
                 super::NetworkRepr::Map => quote! {
-                    libquassel::message::NetworkMap::from_network_map(&mut std::convert::TryInto::try_into(input.remove(0)).#unwrap)?
+                    libquassel::message::NetworkMap::from_network_map(&mut std::convert::TryInto::try_into(input.remove(0))#unwrap)?
                 },
                 super::NetworkRepr::None => quote! {
-                    std::convert::TryInto::try_into(input.remove(0)).#unwrap
+                    std::convert::TryInto::try_into(input.remove(0))#unwrap
                 },
+            };
+            
+            let unwrap = if field.default {
+                quote! { unwrap_or_default() }
+            } else {
+                quote! { ok_or(crate::ProtocolError::MissingField(#field_rename.to_string()))? }
             };
 
             if field.stringlist {
+                let field_inner = match field.network {
+                    super::NetworkRepr::List => quote! {
+                        libquassel::message::NetworkList::from_network_list(input.remove(0))?
+                    },
+                    super::NetworkRepr::Map => quote! {
+                        libquassel::message::NetworkMap::from_network_map(&mut input.remove(0))?
+                    },
+                    super::NetworkRepr::None => quote! {
+                        input.remove(0)
+                    },
+                };
+
                 quote! {
                     #field_name: match input.get_mut(#field_rename).#unwrap {
                         libquassel::primitive::Variant::StringList(input) => #field_inner,
-                        _ => panic!("#field_name: wrong variant")
+                        _ => return Err(crate::ProtocolError::WrongVariant)
                     },
                 }
             } else {
                 quote! {
                     #field_name: match input.get_mut(#field_rename).#unwrap {
                         libquassel::primitive::Variant::VariantList(input) => #field_inner,
-                        _ => panic!("#field_name: wrong variant")
+                        _ => return Err(crate::ProtocolError::WrongVariant)
                     },
                 }
             }
@@ -198,7 +216,7 @@ pub(crate) fn from_vec(type_name: &Ident, fields: &[NetworkField]) -> TokenStrea
     };
 
     quote! {
-        let marker: #field_variant = std::convert::TryInto::try_into(input.get(#field_rename).unwrap()).unwrap();
+        let marker: #field_variant = std::convert::TryInto::try_into(input.get(#field_rename).ok_or(crate::ProtocolError::MissingField(#field_rename.to_string()))?)?;
 
         let mut res = Vec::new();
         for _ in 0..marker.len() {

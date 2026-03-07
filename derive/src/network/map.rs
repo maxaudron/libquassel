@@ -44,29 +44,34 @@ pub(crate) fn from(fields: &[NetworkField]) -> Vec<TokenStream> {
         .iter()
         .map(|field| {
             let field_name = field.ident.as_ref().unwrap();
-
-            let unwrap = if field.default {
-                quote! { unwrap_or_default() }
-            } else {
-                quote! { unwrap() }
-            };
-
             let field_rename = match &field.rename {
                 Some(name) => name.clone(),
                 None => format!("{}", field.ident.as_ref().unwrap()),
             };
 
+            let unwrap_remove = if field.default {
+                quote! { unwrap_or_default() }
+            } else {
+                quote! { ok_or(crate::ProtocolError::MissingField(#field_rename.to_string()))? }
+            };
+            
+            let unwrap_try = if field.default {
+                quote! { .unwrap_or_default() }
+            } else {
+                quote! { ? }
+            };
+
             match field.network {
                 super::NetworkRepr::List => quote! {
                     #field_name: libquassel::message::NetworkList::from_network_list(
-                        std::convert::TryInto::try_into(input.remove(#field_rename).#unwrap).#unwrap)?,
+                        std::convert::TryInto::try_into(input.remove(#field_rename).#unwrap_remove)#unwrap_try)?,
                 },
                 super::NetworkRepr::Map => quote! {
                     #field_name: libquassel::message::NetworkMap::from_network_map(
-                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).#unwrap).#unwrap)?,
+                        &mut std::convert::TryInto::try_into(input.remove(#field_rename).#unwrap_remove)#unwrap_try)?,
                 },
                 super::NetworkRepr::None => quote! {
-                    #field_name: std::convert::TryInto::try_into(input.remove(#field_rename).#unwrap).#unwrap,
+                    #field_name: std::convert::TryInto::try_into(input.remove(#field_rename).#unwrap_remove)#unwrap_try,
                 },
             }
         })
@@ -84,7 +89,7 @@ pub(crate) fn from_vec(type_name: &Ident, _fields: &[NetworkField]) -> TokenStre
     quote! {
         input.iter().map(
             |item| #type_name::from_network_map(
-                &mut std::convert::TryInto::try_into(item).unwrap()
-            )).collect()
+                &mut std::convert::TryInto::try_into(item)?
+            )).collect::<crate::Result<Vec<#type_name>>>()
     }
 }
