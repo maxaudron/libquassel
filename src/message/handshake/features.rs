@@ -1,5 +1,10 @@
-use crate::primitive::StringList;
+use once_cell::sync::OnceCell;
 
+use crate::{FeatureError, Result, primitive::StringList};
+
+pub static FEATURES: OnceCell<Vec<Feature>> = OnceCell::new();
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Feature {
     /// --
     SynchronizedMarkerLine = 0x00000001,
@@ -62,5 +67,24 @@ impl Feature {
             #[cfg(feature = "authenticators")]
             "Authenticators".to_string(),
         ]
+    }
+
+    pub fn enable_all() -> Result<()> {
+        FEATURES
+            .set(vec![
+                Feature::ExtendedFeatures,
+                Feature::LongMessageId,
+                Feature::LongTime,
+                Feature::RichMessages,
+                Feature::SenderPrefixes,
+                Feature::Authenticators,
+            ])
+            .map_err(|_| FeatureError::AlreadyInitialized)?;
+        Ok(())
+    }
+
+    pub fn enabled(self) -> Result<bool> {
+        let features = FEATURES.get().ok_or(FeatureError::NotInitialized)?;
+        Ok(features.contains(&self))
     }
 }

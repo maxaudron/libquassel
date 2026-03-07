@@ -33,7 +33,7 @@ pub mod frame;
 #[cfg(all(feature = "client", feature = "server"))]
 compile_error!("feature \"client\" and feature \"server\" cannot be enabled at the same time");
 
-pub use crate::error::{ProtocolError, Result, SyncProxyError};
+pub use crate::error::*;
 
 /// Traits for Serialization & Deserialization of objects
 pub mod serialize;

@@ -34,6 +34,8 @@ pub enum ProtocolError {
     ParseIntError(#[from] std::num::ParseIntError),
     #[error("error in sync proxy: {0}")]
     SyncProxyError(#[from] SyncProxyError),
+    #[error("error in features: {0}")]
+    FeatureError(#[from] FeatureError),
     #[error("got unkown HighlightNickType: {0}")]
     UnknownHighlightNickType(i32),
     #[error("got unkown IgnoreType: {0}")]
@@ -60,6 +62,14 @@ pub enum SyncProxyError {
     #[error("SYNC_PROXY was already initialized")]
     AlreadyInitialized,
     #[error("SYNC_PROXY was not yet initialized")]
+    NotInitialized,
+}
+
+#[derive(Debug, Error)]
+pub enum FeatureError {
+    #[error("FEATURES was already initialized")]
+    AlreadyInitialized,
+    #[error("FEAETURES was not yet initialized")]
     NotInitialized,
 }
 

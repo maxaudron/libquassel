@@ -43,7 +43,7 @@ Native rust implementation of the Quassel protocol and library functions
 - [X] Implement RPC Calls
   - [X] RPC Call Objects
   - [X] Serialization
-- [ ] Rework Error handling to actually handle errors
+- [X] Rework Error handling to actually handle errors
 - [ ] Rework Quassel feature flags to work at runtime, not compile time
 - [X] Rewrite NetworkList impl to convert to NetworkMap first
 

@@ -1,6 +1,7 @@
 use std::{collections::HashMap, vec::Vec};
 
 use crate::error::ProtocolError;
+use crate::message::Feature;
 use crate::serialize::*;
 
 use crate::primitive::{BufferInfo, MsgId};
@@ -33,17 +34,14 @@ pub struct Message {
     /// The sender as nick!ident@host
     pub sender: String,
     /// The prefix modes of the sender.
-    #[cfg(feature = "sender-prefixes")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "sender-prefixes")))]
-    pub sender_prefixes: String,
+    /// Feature: SenderPrefixes
+    pub sender_prefixes: Option<String>,
     /// The realName of the sender
-    #[cfg(feature = "rich-messages")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "rich-messages")))]
-    pub real_name: String,
+    /// Feature: RichMessages
+    pub real_name: Option<String>,
     /// The avatarUrl of the sender, if available
-    #[cfg(feature = "rich-messages")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "rich-messages")))]
-    pub avatar_url: String,
+    /// Feature: RichMessages
+    pub avatar_url: Option<String>,
     /// The message content, already stripped from CTCP formatting, but containing mIRC format codes
     pub content: String,
 }
@@ -64,13 +62,18 @@ impl Serialize for Message {
         values.append(&mut BufferInfo::serialize(&self.buffer)?);
         values.append(&mut String::serialize_utf8(&self.sender)?);
 
-        #[cfg(feature = "sender-prefixes")]
-        values.append(&mut String::serialize_utf8(&self.sender_prefixes)?);
-
-        #[cfg(feature = "rich-messages")]
+        if let Some(prefix) = self.sender_prefixes.as_ref()
+            && Feature::SenderPrefixes.enabled()?
         {
-            values.append(&mut String::serialize_utf8(&self.real_name)?);
-            values.append(&mut String::serialize_utf8(&self.avatar_url)?);
+            values.append(&mut String::serialize_utf8(prefix)?);
+        }
+
+        if Feature::RichMessages.enabled()?
+            && let Some(real_name) = self.real_name.as_ref()
+            && let Some(avatar_url) = self.avatar_url.as_ref()
+        {
+            values.append(&mut String::serialize_utf8(real_name)?);
+            values.append(&mut String::serialize_utf8(avatar_url)?);
         }
 
         values.append(&mut String::serialize_utf8(&self.content)?);
@@ -111,27 +114,22 @@ impl Deserialize for Message {
         let (parsed, sender) = String::parse_utf8(&b[pos..])?;
         pos += parsed;
 
-        #[cfg(feature = "sender-prefixes")]
-        let sender_prefixes: String;
-        #[cfg(feature = "sender-prefixes")]
-        {
+        let mut sender_prefixes = None;
+        if Feature::SenderPrefixes.enabled()? {
             let (parsed, temp) = String::parse_utf8(&b[pos..])?;
-            sender_prefixes = temp;
+            sender_prefixes = Some(temp);
             pos += parsed;
         }
 
-        #[cfg(feature = "rich-messages")]
-        let real_name: String;
-        #[cfg(feature = "rich-messages")]
-        let avatar_url: String;
-        #[cfg(feature = "rich-messages")]
-        {
+        let mut real_name = None;
+        let mut avatar_url = None;
+        if Feature::RichMessages.enabled()? {
             let (parsed, temp) = String::parse_utf8(&b[pos..])?;
-            real_name = temp;
+            real_name = Some(temp);
             pos += parsed;
 
             let (parsed, temp) = String::parse_utf8(&b[pos..])?;
-            avatar_url = temp;
+            avatar_url = Some(temp);
             pos += parsed;
         }
 
@@ -147,11 +145,8 @@ impl Deserialize for Message {
                 flags,
                 buffer,
                 sender,
-                #[cfg(feature = "sender-prefixes")]
                 sender_prefixes,
-                #[cfg(feature = "rich-messages")]
                 real_name,
-                #[cfg(feature = "rich-messages")]
                 avatar_url,
                 content,
             },
@@ -236,6 +231,7 @@ mod tests {
 
     #[test]
     fn message_serialize() {
+        Feature::enable_all().unwrap();
         let message = Message {
             msg_id: MsgId(1),
             timestamp: 1609846597,
@@ -249,9 +245,9 @@ mod tests {
             },
             sender: "test".to_string(),
             content: "this is a test message".to_string(),
-            sender_prefixes: "blabla".to_string(),
-            real_name: "test user".to_string(),
-            avatar_url: "https://jfkalsdkjfj.com/kjkj".to_string(),
+            sender_prefixes: Some("blabla".to_string()),
+            real_name: Some("test user".to_string()),
+            avatar_url: Some("https://jfkalsdkjfj.com/kjkj".to_string()),
         };
 
         assert_eq!(
@@ -271,6 +267,7 @@ mod tests {
 
     #[test]
     fn message_deserialize() {
+        Feature::enable_all().unwrap();
         let message = Message {
             msg_id: MsgId(1),
             timestamp: 1609846597,
@@ -284,9 +281,9 @@ mod tests {
             },
             sender: "test".to_string(),
             content: "this is a test message".to_string(),
-            sender_prefixes: "blabla".to_string(),
-            real_name: "test user".to_string(),
-            avatar_url: "https://jfkalsdkjfj.com/kjkj".to_string(),
+            sender_prefixes: Some("blabla".to_string()),
+            real_name: Some("test user".to_string()),
+            avatar_url: Some("https://jfkalsdkjfj.com/kjkj".to_string()),
         };
 
         let bytes = vec![
