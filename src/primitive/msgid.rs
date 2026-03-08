@@ -1,17 +1,15 @@
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[repr(transparent)]
-pub struct MsgId(
-    #[cfg(not(feature = "long-message-id"))] pub i32,
-    #[cfg(feature = "long-message-id")] pub i64,
-);
+pub struct MsgId(pub i64);
 
-use crate::error::ProtocolError;
+use crate::Result;
+use crate::message::Feature;
 use crate::serialize::*;
 
 use crate::serialize::UserType;
 
 impl Serialize for MsgId {
-    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>> {
         let mut res = Vec::new();
 
         res.append(&mut Self::NAME.serialize_utf8()?);
@@ -22,23 +20,24 @@ impl Serialize for MsgId {
 }
 
 impl Deserialize for MsgId {
-    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
-        #[cfg(not(feature = "long-message-id"))]
-        let (size, value) = i32::parse(b)?;
-        #[cfg(feature = "long-message-id")]
-        let (size, value) = i64::parse(b)?;
+    fn parse(b: &[u8]) -> Result<(usize, Self)> {
+        let (size, value) = if Feature::LongMessageId.enabled()? {
+            i64::parse(b)?
+        } else {
+            let (size, value) = i32::parse(b)?;
+            (size, value.into())
+        };
+
         Ok((size, MsgId(value)))
     }
 }
 
-#[cfg(not(feature = "long-message-id"))]
 impl From<i32> for MsgId {
     fn from(value: i32) -> Self {
-        Self(value)
+        Self(value.into())
     }
 }
 
-#[cfg(feature = "long-message-id")]
 impl From<i64> for MsgId {
     fn from(value: i64) -> Self {
         Self(value)
@@ -46,9 +45,6 @@ impl From<i64> for MsgId {
 }
 
 impl std::ops::Deref for MsgId {
-    #[cfg(not(feature = "long-message-id"))]
-    type Target = i32;
-    #[cfg(feature = "long-message-id")]
     type Target = i64;
 
     fn deref(&self) -> &Self::Target {
@@ -66,7 +62,8 @@ mod tests {
 
     #[test]
     pub fn msgid_parse_test() {
-        let test_bytes: &[u8] = if cfg!(feature = "long-message-id") {
+        let _ = Feature::enable_all();
+        let test_bytes: &[u8] = if Feature::LongMessageId.enabled().unwrap() {
             &[0, 0, 0, 0, 0, 0, 0, 1]
         } else {
             &[0, 0, 0, 1]
@@ -78,8 +75,9 @@ mod tests {
 
     #[test]
     pub fn msgid_serialize_test() {
+        let _ = Feature::enable_all();
         let res = MsgId(1).serialize().unwrap();
-        let expected_bytes: &[u8] = if cfg!(feature = "long-message-id") {
+        let expected_bytes: &[u8] = if Feature::LongMessageId.enabled().unwrap() {
             &[0, 0, 0, 5, 77, 115, 103, 73, 100, 0, 0, 0, 0, 0, 0, 0, 1]
         } else {
             &[0, 0, 0, 5, 77, 115, 103, 73, 100, 0, 0, 0, 1]

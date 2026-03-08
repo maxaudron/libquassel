@@ -17,8 +17,8 @@ pub struct Message {
     /// The unique, sequential id for the message
     pub msg_id: MsgId,
     /// The timestamp of the message in UNIX time.
-    /// If long-time is disabled this is an i32 representing the seconds since EPOCH.
-    /// If long-time is enabled this is an i64 representing the miliseconds since EPOCH.
+    /// If the LongTime feature is disabled this is an i32 on the network, representing the seconds since EPOCH.
+    /// If the LongTime feature is enabled this is an i64 on the network, representing the seconds since EPOCH.
     pub timestamp: DateTime,
     /// The message type as it's own type serialized as i32
     pub msg_type: MessageType,

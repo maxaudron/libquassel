@@ -274,7 +274,7 @@ impl Deserialize for Variant {
 
 #[cfg(test)]
 mod tests {
-    // use time::macros::format_description;
+    use crate::message::Feature;
 
     use super::*;
 
@@ -548,6 +548,7 @@ mod tests {
 
     #[test]
     fn msgid_serialize() {
+        let _ = Feature::enable_all();
         let test_msg_id = Variant::MsgId(MsgId(1));
 
         assert_eq!(
@@ -558,6 +559,7 @@ mod tests {
 
     #[test]
     fn msgid_deserialize() {
+        let _ = Feature::enable_all();
         let test_bytes = vec![
             0, 0, 0, 127, 0, 0, 0, 0, 5, 77, 115, 103, 73, 100, 0, 0, 0, 0, 0, 0, 0, 1,
         ];
