@@ -14,6 +14,8 @@ pub enum ProtocolError {
     UnknownVariant,
     #[error("UserType is not known: {0}")]
     UnknownUserType(String),
+    #[error("Feature is not known: {0}")]
+    UnknownFeature(String),
     #[error("wrong variant has been given")]
     WrongVariant,
     #[error("missing required field: {0}")]

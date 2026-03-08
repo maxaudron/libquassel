@@ -1,6 +1,11 @@
-use crate::HandshakeSerialize;
-use crate::error::ProtocolError;
-use crate::primitive::{Variant, VariantList, VariantMap};
+use std::str::FromStr;
+
+use crate::{
+    HandshakeSerialize, ProtocolError, Result,
+    primitive::{Variant, VariantList, VariantMap},
+};
+
+use super::Feature;
 
 /// ClientInitAck is received when the initialization was successfull
 #[derive(Debug, Clone)]
@@ -14,12 +19,12 @@ pub struct ClientInitAck {
     /// List of VariantMaps of info on available authenticators
     /// Will only be available if Authenticators feature is on
     pub authenticators: Option<VariantList>,
-    /// List of supported extended features
-    pub feature_list: Vec<String>,
+    /// List of supported extended [`Feature`]
+    pub feature_list: Vec<Feature>,
 }
 
 impl HandshakeSerialize for ClientInitAck {
-    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>> {
         let mut values: VariantMap = VariantMap::with_capacity(6);
         values.insert(
             "MsgType".to_string(),
@@ -40,7 +45,7 @@ impl HandshakeSerialize for ClientInitAck {
         }
         values.insert(
             "FeatureList".to_string(),
-            Variant::StringList(self.feature_list.clone()),
+            Variant::StringList(self.feature_list.iter().map(|f| f.to_string()).collect()),
         );
         HandshakeSerialize::serialize(&values)
     }
@@ -49,7 +54,7 @@ impl HandshakeSerialize for ClientInitAck {
 impl TryFrom<VariantMap> for ClientInitAck {
     type Error = ProtocolError;
 
-    fn try_from(input: VariantMap) -> Result<Self, Self::Error> {
+    fn try_from(input: VariantMap) -> Result<Self> {
         Ok(ClientInitAck {
             // TODO make this compatible with older clients
             core_features: 0,
@@ -67,10 +72,14 @@ impl TryFrom<VariantMap> for ClientInitAck {
                     .ok_or_else(|| ProtocolError::MissingField("Authenticators".to_string()))?
                     .try_into()?,
             ),
-            feature_list: input
-                .get("FeatureList")
-                .ok_or_else(|| ProtocolError::MissingField("FeatureList".to_string()))?
-                .try_into()?,
+            feature_list: TryInto::<Vec<String>>::try_into(
+                input
+                    .get("FeatureList")
+                    .ok_or_else(|| ProtocolError::MissingField("FeatureList".to_string()))?,
+            )?
+            .into_iter()
+            .map(|s| Feature::from_str(&s))
+            .collect::<Result<Vec<Feature>>>()?,
         })
     }
 }

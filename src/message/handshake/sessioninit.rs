@@ -5,13 +5,13 @@ use crate::primitive::{BufferInfo, NetworkId, Variant, VariantList, VariantMap};
 use crate::HandshakeSerialize;
 
 /// SessionInit is received along with ClientLoginAck to initialize that user Session
-/// Upon receiving this the client needs to send [InitRequest] for the Networks using the NetworkId
+/// Upon receiving this the client needs to send [`crate::message::InitRequest`] for the Networks using the NetworkId
 #[derive(Debug, Clone)]
 pub struct SessionInit {
     /// List of all configured identities
     pub identities: Vec<Identity>,
     /// List of all existing buffers
-    pub buffers: Vec<BufferInfo>, // Vec<Variant::BufferInfo()>
+    pub buffers: Vec<BufferInfo>,
     /// Ids of all networks
     pub network_ids: Vec<NetworkId>,
 }

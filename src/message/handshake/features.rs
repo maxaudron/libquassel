@@ -1,10 +1,21 @@
+use std::fmt::Display;
+
 use once_cell::sync::OnceCell;
 
-use crate::{FeatureError, Result, primitive::StringList};
+use crate::{FeatureError, ProtocolError, Result, primitive::StringList};
 
 pub static FEATURES: OnceCell<Vec<Feature>> = OnceCell::new();
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+/// ## Quassel Features
+///
+/// The quassel protocol implements feature flags to provide a wide range of up and downward compatibility.
+/// This enum represents these features.
+///
+/// When establishing a new connection between core and client, the client first sends it's list of
+/// supported features in the [`super::ClientInit`] handshake message, the core then returns it's
+/// supported features with [`super::ClientInitAck`]. The features that are common
+/// between both are then enabled.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Feature {
     /// --
     SynchronizedMarkerLine = 0x00000001,
@@ -50,6 +61,67 @@ pub enum Feature {
     LongMessageId,
     /// CoreInfo dynamically updated using signals
     SyncedCoreInfo,
+}
+
+impl Display for Feature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Feature::SynchronizedMarkerLine => f.write_str("SynchronizedMarkerLine"),
+            Feature::SaslAuthentication => f.write_str("SaslAuthentication"),
+            Feature::SaslExternal => f.write_str("SaslExternal"),
+            Feature::HideInactiveNetworks => f.write_str("HideInactiveNetworks"),
+            Feature::PasswordChange => f.write_str("PasswordChange"),
+            Feature::CapNegotiation => f.write_str("CapNegotiation"),
+            Feature::VerifyServerSSL => f.write_str("VerifyServerSSL"),
+            Feature::CustomRateLimits => f.write_str("CustomRateLimits"),
+            Feature::DccFileTransfer => f.write_str("DccFileTransfer"),
+            Feature::AwayFormatTimestamp => f.write_str("AwayFormatTimestamp"),
+            Feature::Authenticators => f.write_str("Authenticators"),
+            Feature::BufferActivitySync => f.write_str("BufferActivitySync"),
+            Feature::CoreSideHighlights => f.write_str("CoreSideHighlights"),
+            Feature::SenderPrefixes => f.write_str("SenderPrefixes"),
+            Feature::RemoteDisconnect => f.write_str("RemoteDisconnect"),
+            Feature::ExtendedFeatures => f.write_str("ExtendedFeatures"),
+            Feature::LongTime => f.write_str("LongTime"),
+            Feature::RichMessages => f.write_str("RichMessages"),
+            Feature::BacklogFilterType => f.write_str("BacklogFilterType"),
+            Feature::EcdsaCertfpKeys => f.write_str("EcdsaCertfpKeys"),
+            Feature::LongMessageId => f.write_str("LongMessageId"),
+            Feature::SyncedCoreInfo => f.write_str("SyncedCoreInfo"),
+        }
+    }
+}
+
+impl std::str::FromStr for Feature {
+    type Err = ProtocolError;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Ok(match s {
+            "SynchronizedMarkerLine" => Self::SynchronizedMarkerLine,
+            "SaslAuthentication" => Self::SaslAuthentication,
+            "SaslExternal" => Self::SaslExternal,
+            "HideInactiveNetworks" => Self::HideInactiveNetworks,
+            "PasswordChange" => Self::PasswordChange,
+            "CapNegotiation" => Self::CapNegotiation,
+            "VerifyServerSSL" => Self::VerifyServerSSL,
+            "CustomRateLimits" => Self::CustomRateLimits,
+            "DccFileTransfer" => Self::DccFileTransfer,
+            "AwayFormatTimestamp" => Self::AwayFormatTimestamp,
+            "Authenticators" => Self::Authenticators,
+            "BufferActivitySync" => Self::BufferActivitySync,
+            "CoreSideHighlights" => Self::CoreSideHighlights,
+            "SenderPrefixes" => Self::SenderPrefixes,
+            "RemoteDisconnect" => Self::RemoteDisconnect,
+            "ExtendedFeatures" => Self::ExtendedFeatures,
+            "LongTime" => Self::LongTime,
+            "RichMessages" => Self::RichMessages,
+            "BacklogFilterType" => Self::BacklogFilterType,
+            "EcdsaCertfpKeys" => Self::EcdsaCertfpKeys,
+            "LongMessageId" => Self::LongMessageId,
+            "SyncedCoreInfo" => Self::SyncedCoreInfo,
+            unknown => return Err(ProtocolError::UnknownFeature(unknown.to_string())),
+        })
+    }
 }
 
 impl Feature {
