@@ -2,7 +2,7 @@ use libquassel_derive::{NetworkList, NetworkMap};
 
 use crate::message::signalproxy::translation::NetworkMap;
 use crate::message::{Class, Syncable};
-use crate::primitive::{DateTime, StringList};
+use crate::primitive::{DateTime, DateTimeTools, StringList};
 use crate::Result;
 
 /// Metadata about the Core a client is connected to
@@ -86,7 +86,7 @@ impl Default for CoreData {
         Self {
             quassel_version: Default::default(),
             quassel_build_date: Default::default(),
-            start_time: DateTime::UNIX_EPOCH,
+            start_time: DateTime::epoch(),
             session_connected_clients: Default::default(),
             session_connected_client_data: Default::default(),
         }

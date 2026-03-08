@@ -1,50 +1,34 @@
-use crate::{error::ProtocolError, primitive, serialize::*};
-
 use time::{Duration, OffsetDateTime, PrimitiveDateTime, UtcOffset};
 
-/// The DateTime struct represents a DateTime as received in IRC
-///
-/// DateTime is, like all other struct based types, serialized sequentially.
-/// #[derive(Clone, Debug, std::cmp::PartialEq)]
-/// pub struct DateTime {
-///     /// Day in Julian calendar, unknown if signed or unsigned
-///     julian_day: i32,
-///     /// Milliseconds since start of day
-///     millis_of_day: i32,
-///     /// Timezone of DateTime, 0x00 is local, 0x01 is UTC
-///     zone: u8,
-/// }
 pub type DateTime = OffsetDateTime;
 pub use time::{Date, Time};
 
-use crate::serialize::VariantType;
+use super::TimeSpec;
+use crate::{ProtocolError, Result, primitive, serialize::*};
 
-/// TimeSpec specifies whether the time is a local time, daylightsaving local time or a form of UTC Offset
-#[repr(i8)]
-#[derive(Copy, Clone, Debug, std::cmp::PartialEq)]
-pub enum TimeSpec {
-    LocalUnknown = -0x01,
-    LocalStandard = 0x00,
-    LocalDST = 0x01,
-    UTC = 0x02,
-    OffsetFromUTC = 0x03,
-}
+impl super::DateTimeTools for DateTime {
+    fn epoch() -> Self {
+        DateTime::UNIX_EPOCH
+    }
 
-impl From<i8> for TimeSpec {
-    fn from(val: i8) -> Self {
-        match val {
-            -0x01 => TimeSpec::LocalUnknown,
-            0x00 => TimeSpec::LocalStandard,
-            0x01 => TimeSpec::LocalDST,
-            0x02 => TimeSpec::UTC,
-            0x03 => TimeSpec::OffsetFromUTC,
-            _ => unimplemented!(),
-        }
+    fn to_i64(&self) -> i64 {
+        self.unix_timestamp()
+    }
+
+    fn to_i32(&self) -> Result<i32> {
+        self.unix_timestamp()
+            .try_into()
+            .map_err(|_| ProtocolError::TimeStampOverflow)
+    }
+
+    fn from_i64(timestamp: i64) -> Result<Self> {
+        DateTime::from_unix_timestamp(timestamp)
+            .map_err(|_| ProtocolError::TimestampOutOfRange)
     }
 }
 
 impl Serialize for OffsetDateTime {
-    fn serialize(&self) -> Result<Vec<u8>, ProtocolError> {
+    fn serialize(&self) -> Result<Vec<u8>> {
         let mut values: Vec<u8> = Vec::new();
 
         values.extend(i32::serialize(&self.date().to_julian_day())?);
@@ -61,7 +45,7 @@ impl Serialize for OffsetDateTime {
 }
 
 impl Deserialize for OffsetDateTime {
-    fn parse(b: &[u8]) -> Result<(usize, Self), ProtocolError> {
+    fn parse(b: &[u8]) -> Result<(usize, Self)> {
         let (_, julian_day) = i32::parse(&b[0..4])?;
         let (_, millis_of_day) = i32::parse(&b[4..8])?;
         let (_, zone) = u8::parse(&b[8..9])?;
@@ -107,7 +91,7 @@ impl VariantType for OffsetDateTime {
 }
 
 impl Serialize for Date {
-    fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
+    fn serialize(&self) -> Result<Vec<std::primitive::u8>> {
         let mut values: Vec<u8> = Vec::new();
 
         values.extend(i32::serialize(&self.to_julian_day())?);
@@ -117,7 +101,7 @@ impl Serialize for Date {
 }
 
 impl Deserialize for Date {
-    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
+    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self)> {
         let (_, julian_day) = i32::parse(&b[0..4])?;
         let date = Date::from_julian_day(julian_day)?;
 
@@ -130,7 +114,7 @@ impl VariantType for Date {
 }
 
 impl Serialize for Time {
-    fn serialize(&self) -> Result<Vec<std::primitive::u8>, ProtocolError> {
+    fn serialize(&self) -> Result<Vec<std::primitive::u8>> {
         let mut values: Vec<u8> = Vec::new();
 
         let duration = *self - Time::MIDNIGHT;
@@ -143,7 +127,7 @@ impl Serialize for Time {
 }
 
 impl Deserialize for Time {
-    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self), ProtocolError> {
+    fn parse(b: &[std::primitive::u8]) -> Result<(std::primitive::usize, Self)> {
         let (_, millis_of_day) = i32::parse(&b[0..4])?;
 
         let duration = Duration::milliseconds(millis_of_day as i64);

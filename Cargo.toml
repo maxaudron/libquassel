@@ -15,7 +15,10 @@ include = ["src/**/*", "LICENSE", "README.md"]
 [dependencies]
 log = "0.4"
 byteorder = "1.3.2"
-time = { version = "0.3", features = ["macros", "parsing", "local-offset"] }
+time = { version = "0.3", features = ["macros", "parsing", "local-offset"], optional = true }
+chrono = { version = "0.4", optional = true }
+chrono-tz = { version = "0.10", optional = true }
+julianday = { version = "1", optional = true }
 
 thiserror = "2"
 
@@ -38,6 +41,9 @@ tokio-util = { version = "0.7", features = ["codec"], optional = true }
 
 [features]
 framing = ["tokio", "tokio-util", "flate2", "bytes"]
+
+time = ["dep:time"]
+chrono = ["dep:chrono", "dep:chrono-tz", "dep:julianday"]
 
 # Enable all the quassel features
 all-quassel-features = [
@@ -66,7 +72,7 @@ authenticators = []
 # Enable the test crate/feature for running benchmarks
 bench = []
 
-default = ["all-quassel-features", "client"]
+default = ["all-quassel-features", "client", "time"]
 
 [package.metadata.docs.rs]
 # document all features

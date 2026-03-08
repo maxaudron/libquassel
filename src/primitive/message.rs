@@ -4,7 +4,7 @@ use crate::error::ProtocolError;
 use crate::message::Feature;
 use crate::serialize::*;
 
-use crate::primitive::{BufferInfo, MsgId};
+use crate::primitive::{BufferInfo, DateTime, DateTimeTools, MsgId};
 
 use super::{Variant, VariantList};
 use crate::serialize::UserType;
@@ -19,15 +19,10 @@ pub struct Message {
     /// The timestamp of the message in UNIX time.
     /// If long-time is disabled this is an i32 representing the seconds since EPOCH.
     /// If long-time is enabled this is an i64 representing the miliseconds since EPOCH.
-    #[cfg(feature = "long-time")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "long-time")))]
-    pub timestamp: i64,
-    #[cfg(not(feature = "long-time"))]
-    #[cfg_attr(docsrs, doc(cfg(not(feature = "long-time"))))]
-    pub timestamp: i32,
+    pub timestamp: DateTime,
     /// The message type as it's own type serialized as i32
     pub msg_type: MessageType,
-    /// The flags
+    /// TODO The flags
     pub flags: i8,
     /// The buffer the message belongs to, usually everything but BufferId is set to NULL
     pub buffer: BufferInfo,
@@ -52,10 +47,11 @@ impl Serialize for Message {
 
         values.append(&mut MsgId::serialize(&self.msg_id)?);
 
-        #[cfg(feature = "long-time")]
-        values.append(&mut i64::serialize(&self.timestamp)?);
-        #[cfg(not(feature = "long-time"))]
-        values.append(&mut i32::serialize(&self.timestamp)?);
+        if Feature::LongTime.enabled()? {
+            values.append(&mut self.timestamp.to_i64().serialize()?);
+        } else {
+            values.append(&mut self.timestamp.to_i32()?.serialize()?);
+        }
 
         values.append(&mut i32::serialize(&(self.msg_type.bits()))?);
         values.append(&mut i8::serialize(&self.flags)?);
@@ -88,22 +84,15 @@ impl Deserialize for Message {
         let (parsed, msg_id) = MsgId::parse(&b[pos..])?;
         pos += parsed;
 
-        // TODO LONGMESSAGES feature
-        let timestamp;
-
-        #[cfg(feature = "long-time")]
-        {
+        let timestamp = if Feature::LongTime.enabled()? {
             let (parsed, temp_timestamp) = i64::parse(&b[pos..])?;
             pos += parsed;
-            timestamp = temp_timestamp;
-        }
-
-        #[cfg(not(feature = "long-time"))]
-        {
+            DateTime::from_i64(temp_timestamp)?
+        } else {
             let (parsed, temp_timestamp) = i32::parse(&b[pos..])?;
             pos += parsed;
-            timestamp = temp_timestamp;
-        }
+            DateTime::from_i32(temp_timestamp)?
+        };
 
         let (parsed, msg_type) = i32::parse(&b[pos..])?;
         pos += parsed;
@@ -231,10 +220,10 @@ mod tests {
 
     #[test]
     fn message_serialize() {
-        Feature::enable_all().unwrap();
+        let _ = Feature::enable_all();
         let message = Message {
             msg_id: MsgId(1),
-            timestamp: 1609846597,
+            timestamp: DateTime::from_i64(1609846597).unwrap(),
             msg_type: MessageType::PLAIN,
             flags: 0,
             buffer: BufferInfo {
@@ -267,10 +256,10 @@ mod tests {
 
     #[test]
     fn message_deserialize() {
-        Feature::enable_all().unwrap();
+        let _ = Feature::enable_all();
         let message = Message {
             msg_id: MsgId(1),
-            timestamp: 1609846597,
+            timestamp: DateTime::from_i64(1609846597).unwrap(),
             msg_type: MessageType::PLAIN,
             flags: 0,
             buffer: BufferInfo {

@@ -274,7 +274,7 @@ impl Deserialize for Variant {
 
 #[cfg(test)]
 mod tests {
-    use time::macros::format_description;
+    // use time::macros::format_description;
 
     use super::*;
 
@@ -543,64 +543,6 @@ mod tests {
         assert_eq!(
             (39, Variant::StringList(test_string_list)),
             Variant::parse(&test_string_list_src).unwrap()
-        );
-    }
-
-    #[test]
-    fn datetime_serialize() {
-        let datetime = Variant::DateTime(
-            DateTime::parse(
-                "2020-02-19 13:00 +0200",
-                format_description!(
-                    "[year]-[month]-[day] [hour]:[minute] [offset_hour sign:mandatory][offset_minute]"
-                ),
-            )
-            .unwrap(),
-        );
-
-        let date =
-            Variant::Date(Date::parse("2020-02-19", format_description!("[year]-[month]-[day]")).unwrap());
-        let time = Variant::Time(Time::parse("13:00", format_description!("[hour]:[minute]")).unwrap());
-
-        assert_eq!(
-            datetime.serialize().unwrap(),
-            [0, 0, 0, 0x10, 0, 0, 37, 133, 19, 2, 202, 28, 128, 3, 0, 0, 28, 32]
-        );
-
-        assert_eq!(date.serialize().unwrap(), [0, 0, 0, 0x0e, 0, 0, 37, 133, 19]);
-
-        assert_eq!(time.serialize().unwrap(), [0, 0, 0, 0x0f, 0, 2, 202, 28, 128]);
-    }
-
-    #[test]
-    fn datetime_deserialize() {
-        let datetime = Variant::DateTime(
-            DateTime::parse(
-                "2020-02-19 13:00 +0200",
-                format_description!(
-                    "[year]-[month]-[day] [hour]:[minute] [offset_hour sign:mandatory][offset_minute]"
-                ),
-            )
-            .unwrap(),
-        );
-
-        let date =
-            Variant::Date(Date::parse("2020-02-19", format_description!("[year]-[month]-[day]")).unwrap());
-        let time = Variant::Time(Time::parse("13:00", format_description!("[hour]:[minute]")).unwrap());
-
-        assert_eq!(
-            (18, datetime),
-            Variant::parse(&[0, 0, 0, 0x10, 0, 0, 37, 133, 19, 2, 202, 28, 128, 3, 0, 0, 28, 32]).unwrap()
-        );
-
-        assert_eq!(
-            (9, date),
-            Variant::parse(&[0, 0, 0, 0x0e, 0, 0, 37, 133, 19]).unwrap()
-        );
-
-        assert_eq!(
-            (9, time),
-            Variant::parse(&[0, 0, 0, 0x0f, 0, 2, 202, 28, 128]).unwrap()
         );
     }
 

@@ -180,8 +180,7 @@ impl Syncable for IrcUser {
 #[cfg(test)]
 mod tests {
     use crate::message::signalproxy::NetworkMap;
-    use crate::primitive::{Variant, VariantMap};
-    use time::OffsetDateTime;
+    use crate::primitive::{DateTimeTools, Variant, VariantMap};
 
     use super::*;
 
@@ -194,12 +193,12 @@ mod tests {
             account: s!(""),
             away: false,
             away_message: s!(""),
-            idle_time: OffsetDateTime::UNIX_EPOCH,
-            login_time: OffsetDateTime::UNIX_EPOCH,
+            idle_time: DateTime::epoch(),
+            login_time: DateTime::epoch(),
             server: s!(""),
             irc_operator: s!(""),
             // last_away_message: 0,
-            last_away_message_time: OffsetDateTime::UNIX_EPOCH,
+            last_away_message_time: DateTime::epoch(),
             whois_service_reply: s!(""),
             suser_host: s!(""),
             encrypted: false,
@@ -220,7 +219,7 @@ mod tests {
             s!("lastAwayMessageTime") => Variant::VariantList(vec!
                 [
                     Variant::DateTime(
-                        OffsetDateTime::UNIX_EPOCH,
+                        DateTime::epoch(),
                     ),
                 ],
             ),
@@ -248,7 +247,7 @@ mod tests {
             s!("loginTime") => Variant::VariantList(vec!
                 [
                     Variant::DateTime(
-                        OffsetDateTime::UNIX_EPOCH
+                        DateTime::epoch()
                     ),
                 ],
             ),
@@ -297,7 +296,7 @@ mod tests {
             s!("idleTime") => Variant::VariantList(vec!
                 [
                     Variant::DateTime(
-                        OffsetDateTime::UNIX_EPOCH
+                        DateTime::epoch()
                     ),
                 ],
             ),

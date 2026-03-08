@@ -28,8 +28,15 @@ pub enum ProtocolError {
     Utf16Error(#[from] std::string::FromUtf16Error),
     #[error("errored to parse char as utf16")]
     CharError,
+    #[cfg(feature = "time")]
     #[error("failed to deal with time: {0}")]
     TimeError(#[from] time::error::ComponentRange),
+    #[error("undefined local time")]
+    UndefinedLocalTime,
+    #[error("timestamp out of range when creating DateTime")]
+    TimestampOutOfRange,
+    #[error("i32 timestamp has overflown, consider updating, like everything")]
+    TimeStampOverflow,
     #[error("failed to parse int: {0}")]
     ParseIntError(#[from] std::num::ParseIntError),
     #[error("error in sync proxy: {0}")]
