@@ -1,6 +1,6 @@
+use crate::HandshakeSerialize;
 use crate::error::ProtocolError;
 use crate::primitive::{Variant, VariantList, VariantMap};
-use crate::HandshakeSerialize;
 
 /// ClientInitAck is received when the initialization was successfull
 #[derive(Debug, Clone)]
@@ -12,9 +12,8 @@ pub struct ClientInitAck {
     /// List of VariantMaps of info on available backends
     pub storage_backends: VariantList,
     /// List of VariantMaps of info on available authenticators
-    #[cfg(feature = "authenticators")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "authenticators")))]
-    pub authenticators: VariantList,
+    /// Will only be available if Authenticators feature is on
+    pub authenticators: Option<VariantList>,
     /// List of supported extended features
     pub feature_list: Vec<String>,
 }
@@ -32,11 +31,13 @@ impl HandshakeSerialize for ClientInitAck {
             "StorageBackends".to_string(),
             Variant::VariantList(self.storage_backends.clone()),
         );
-        #[cfg(feature = "authenticators")]
-        values.insert(
-            "Authenticators".to_string(),
-            Variant::VariantList(self.authenticators.clone()),
-        );
+
+        if let Some(authenticators) = self.authenticators.as_ref() {
+            values.insert(
+                "Authenticators".to_string(),
+                Variant::VariantList(authenticators.clone()),
+            );
+        }
         values.insert(
             "FeatureList".to_string(),
             Variant::StringList(self.feature_list.clone()),
@@ -60,11 +61,12 @@ impl TryFrom<VariantMap> for ClientInitAck {
                 .get("StorageBackends")
                 .ok_or_else(|| ProtocolError::MissingField("StorageBackends".to_string()))?
                 .try_into()?,
-            #[cfg(feature = "authenticators")]
-            authenticators: input
-                .get("Authenticators")
-                .ok_or_else(|| ProtocolError::MissingField("Authenticators".to_string()))?
-                .try_into()?,
+            authenticators: Some(
+                input
+                    .get("Authenticators")
+                    .ok_or_else(|| ProtocolError::MissingField("Authenticators".to_string()))?
+                    .try_into()?,
+            ),
             feature_list: input
                 .get("FeatureList")
                 .ok_or_else(|| ProtocolError::MissingField("FeatureList".to_string()))?
