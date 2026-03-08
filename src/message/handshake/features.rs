@@ -55,17 +55,12 @@ pub enum Feature {
 impl Feature {
     pub fn get() -> StringList {
         vec![
-            "ExtendedFeatures".to_string(),
-            #[cfg(feature = "long-message-id")]
-            "LongMessageId".to_string(),
-            #[cfg(feature = "long-time")]
-            "LongTime".to_string(),
-            #[cfg(feature = "rich-messages")]
-            "RichMessages".to_string(),
-            #[cfg(feature = "sender-prefixes")]
-            "SenderPrefixes".to_string(),
-            #[cfg(feature = "authenticators")]
-            "Authenticators".to_string(),
+            s!("ExtendedFeatures"),
+            s!("LongMessageId"),
+            s!("LongTime"),
+            s!("RichMessages"),
+            s!("SenderPrefixes"),
+            s!("Authenticators"),
         ]
     }
 

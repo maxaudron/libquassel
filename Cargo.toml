@@ -45,34 +45,14 @@ framing = ["tokio", "tokio-util", "flate2", "bytes"]
 time = ["dep:time"]
 chrono = ["dep:chrono", "dep:chrono-tz", "dep:julianday"]
 
-# Enable all the quassel features
-all-quassel-features = [
-    "long-message-id",
-    "long-time",
-    "rich-messages",
-    "sender-prefixes",
-    "authenticators",
-]
-
 # Either act as a client or a server
 client = []
 server = []
 
-# Serialize message IDs as i64
-long-message-id = []
-# Serialize Message Time as i64
-long-time = []
-# Add avatar url and real name to messages
-rich-messages = []
-# Show prefixes for senders in backlog
-sender-prefixes = []
-# Support for exchangeable auth backends
-authenticators = []
-
 # Enable the test crate/feature for running benchmarks
 bench = []
 
-default = ["all-quassel-features", "client", "time"]
+default = ["client", "chrono"]
 
 [package.metadata.docs.rs]
 # document all features

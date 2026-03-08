@@ -213,7 +213,6 @@ where
 }
 
 #[cfg(test)]
-#[cfg(feature = "all-quassel-features")]
 mod tests {
     use super::*;
     use crate::primitive::{BufferId, BufferInfo, BufferType};
