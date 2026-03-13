@@ -20,10 +20,11 @@ pub struct Message {
     /// If the LongTime feature is disabled this is an i32 on the network, representing the seconds since EPOCH.
     /// If the LongTime feature is enabled this is an i64 on the network, representing the seconds since EPOCH.
     pub timestamp: DateTime,
+    /// IRC Message Type
     /// The message type as it's own type serialized as i32
     pub msg_type: MessageType,
-    /// TODO The flags
-    pub flags: i8,
+    /// Quassel message flags
+    pub flags: MessageFlag,
     /// The buffer the message belongs to, usually everything but BufferId is set to NULL
     pub buffer: BufferInfo,
     /// The sender as nick!ident@host
@@ -54,7 +55,7 @@ impl Serialize for Message {
         }
 
         values.append(&mut i32::serialize(&(self.msg_type.bits()))?);
-        values.append(&mut i8::serialize(&self.flags)?);
+        values.append(&mut u8::serialize(&self.flags.bits())?);
         values.append(&mut BufferInfo::serialize(&self.buffer)?);
         values.append(&mut String::serialize_utf8(&self.sender)?);
 
@@ -96,7 +97,7 @@ impl Deserialize for Message {
 
         let (parsed, msg_type) = i32::parse(&b[pos..])?;
         pos += parsed;
-        let (parsed, flags) = i8::parse(&b[pos..])?;
+        let (parsed, flags) = u8::parse(&b[pos..])?;
         pos += parsed;
         let (parsed, buffer) = BufferInfo::parse(&b[pos..])?;
         pos += parsed;
@@ -131,7 +132,7 @@ impl Deserialize for Message {
                 msg_id,
                 timestamp,
                 msg_type: MessageType::from_bits(msg_type).ok_or(ProtocolError::UnknownMsgType)?,
-                flags,
+                flags: MessageFlag::from_bits(flags).ok_or(ProtocolError::UnknownMsgFlag)?,
                 buffer,
                 sender,
                 sender_prefixes,
@@ -150,6 +151,31 @@ impl UserType for Message {
 use bitflags::bitflags;
 
 bitflags! {
+    /// Quassel Message flags representing various statuses
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct MessageFlag: u8 {
+        const NONE = 0x00;
+        /// A Message sent by the user
+        const SELF = 0x01;
+        /// A highlight rule matched this message
+        const HIGHLIGHT = 0x02;
+        /// This message was redirected from a different buffer
+        const REDIRECTED = 0x04;
+        const SERVER_MSG = 0x08;
+        const STATUS_MSG = 0x10;
+        /// This message matched an active ignore rule when first received
+        const IGNORED = 0x20;
+        /// This message was loaded from the backlog of the core
+        /// and not received "live" by the client
+        const BACKLOG = 0x80;
+    }
+}
+
+bitflags! {
+    /// The type of IRC Message that this quassel message is.
+    /// Used for display formatting by the client
+    ///
+    /// https://datatracker.ietf.org/doc/html/rfc1459#section-4
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
     pub struct MessageType: i32 {
         const NONE = 0x00000000;
@@ -224,7 +250,7 @@ mod tests {
             msg_id: MsgId(1),
             timestamp: DateTime::from_i64(1609846597).unwrap(),
             msg_type: MessageType::PLAIN,
-            flags: 0,
+            flags: MessageFlag::NONE,
             buffer: BufferInfo {
                 id: BufferId(1),
                 network_id: 1,
@@ -260,7 +286,7 @@ mod tests {
             msg_id: MsgId(1),
             timestamp: DateTime::from_i64(1609846597).unwrap(),
             msg_type: MessageType::PLAIN,
-            flags: 0,
+            flags: MessageFlag::NONE,
             buffer: BufferInfo {
                 id: BufferId(1),
                 network_id: 1,

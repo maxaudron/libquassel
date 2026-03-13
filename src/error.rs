@@ -6,6 +6,8 @@ pub enum ProtocolError {
     WrongMsgType,
     #[error("message has unkown type")]
     UnknownMsgType,
+    #[error("message has unkown flag")]
+    UnknownMsgFlag,
     #[error("bool value is neither 0 nor 1")]
     BoolOutOfRange,
     #[error("Sync Message does not contain any more parameters")]
