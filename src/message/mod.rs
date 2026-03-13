@@ -1,5 +1,6 @@
-mod handshake;
+pub mod handshake;
 mod signalproxy;
 
-pub use handshake::*;
+pub use handshake::features::Feature;
+
 pub use signalproxy::*;

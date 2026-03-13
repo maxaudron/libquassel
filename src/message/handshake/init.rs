@@ -1,6 +1,6 @@
 use crate::{
-    serialize::{Deserialize, Serialize},
     ProtocolError,
+    serialize::{Deserialize, Serialize},
 };
 
 /// The first few bytes sent to the core to initialize the connection and setup if we want to use tls and compression
@@ -45,7 +45,7 @@ impl Init {
 
         // Add handshake and protocol to our buffer
         init.extend(handshake.serialize()?);
-        init.extend(crate::message::Protocol::Datastream.serialize()?);
+        init.extend(crate::message::handshake::Protocol::Datastream.serialize()?);
 
         Ok(init)
     }

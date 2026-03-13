@@ -15,6 +15,17 @@ pub static FEATURES: OnceCell<Vec<Feature>> = OnceCell::new();
 /// supported features in the [`super::ClientInit`] handshake message, the core then returns it's
 /// supported features with [`super::ClientInitAck`]. The features that are common
 /// between both are then enabled.
+///
+/// The default set of features supported by this library are:
+/// - "ExtendedFeatures"
+/// - "LongMessageId"
+/// - "LongTime"
+/// - "RichMessages"
+/// - "SenderPrefixes"
+/// - "Authenticators"
+///
+/// Any other features will require support from your implementation of client or core
+/// and will need to be added by you in the init phase as appropriate.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Feature {
     /// --

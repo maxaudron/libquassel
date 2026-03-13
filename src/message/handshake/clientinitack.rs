@@ -2,10 +2,9 @@ use std::str::FromStr;
 
 use crate::{
     HandshakeSerialize, ProtocolError, Result,
+    message::Feature,
     primitive::{Variant, VariantList, VariantMap},
 };
-
-use super::Feature;
 
 /// ClientInitAck is received when the initialization was successfull
 #[derive(Debug, Clone)]

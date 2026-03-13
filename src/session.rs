@@ -15,7 +15,8 @@ use log::{debug, error, warn};
 use crate::{
     error::ProtocolError,
     message::{
-        Class, InitData, SessionInit, SyncMessage, Syncable,
+        Class, InitData, SyncMessage, Syncable,
+        handshake::SessionInit,
         objects::{Types, *},
     },
     primitive::{IdentityId, NetworkId},
